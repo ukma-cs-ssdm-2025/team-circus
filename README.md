@@ -1,6 +1,6 @@
 # Markdown Circus Docs
 
-Наш проект MCD (Markdown Circus Docs) - це інструмент спільного редагування документів у форматі Markdown.  
+Наш проект MCD (Markdown Circus Docs) - це інструмент спільного редагування документів у форматі Markdown. Детальний опис проєкту [тут](./Project-Description.md)
   
 **Чому ми обрали саме Markdown?**
 
