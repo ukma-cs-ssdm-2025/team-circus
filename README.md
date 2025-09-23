@@ -14,16 +14,16 @@
 ## Учасники команди
 
 - Артур Ключка
-  - Роль: Супроводжувач репозиторію (Repo Maintainer)
+  - Repo Maintainer, Requirements Lead
   - github: [velosypedno](https://github.com/velosypedno)
 - Владислав Панько
-  - Роль: Супроводжувач CI (CI Maintainer)
+  - CI Maintainer, Quality Lead
   - github: [xncff](https://github.com/xncff)
 - Олексій Костик
-  - Роль: Керівник документації (Documentation Lead)
+  - Documentation Lead
   - github: [kitmelancholic](https://github.com/kitmelancholic)
 - Ярослав Шах
-  - Роль: Керівник трекера завдань (Issue Tracker Lead)
+  - Issue Tracker Lead, Traceability Lead
   - github: [YaroslavShakh](https://github.com/YaroslavShakh)
 
 Командний статут знаходиться [тут](./TeamChapter.md).
@@ -34,3 +34,16 @@
 - Стратегія неймінгу комітів - [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/)
 - Мова програмування обрана для розробки серверної частини - [Go](https://go.dev/)
 - Мова програмування обрана для розробки клієнтської частини - [Typescript](https://www.typescriptlang.org/) ([React](https://react.dev/))
+
+## Структура репозиторію
+
+```
+.github/workflows/ci.yml
+docs/
+| requirements/          - артифакти вимог
+loom/                    - відео-презентації
+.gitignore
+Project-Description.md
+README.md
+TeamChapter.md
+```
