@@ -34,16 +34,4 @@
 - Стратегія неймінгу комітів - [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/)
 - Мова програмування обрана для розробки серверної частини - [Go](https://go.dev/)
 - Мова програмування обрана для розробки клієнтської частини - [Typescript](https://www.typescriptlang.org/) ([React](https://react.dev/))
-
-## Структура репозиторію
-
-```
-.github/workflows/ci.yml
-docs/
-| requirements/          - артифакти вимог
-loom/                    - відео-презентації
-.gitignore
-Project-Description.md
-README.md
-TeamChapter.md
-```
+- Артифакти вимог знаходяться [тут](/docs/requirements/)
