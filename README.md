@@ -26,12 +26,11 @@
   - Issue Tracker Lead, Traceability Lead
   - github: [YaroslavShakh](https://github.com/YaroslavShakh)
 
-Командний статут знаходиться [тут](./TeamChapter.md).
+Командний статут знаходиться [тут](./TeamChapter.md).  
+Документ Системного Дизайну (Обов'язковий до перегляду) [тут](./docs/requirements/system-design-document.md)
 
 ## Деталі розробки
 
-- Стратегію бранчування - [github flow](https://docs.github.com/en/get-started/using-github/github-flow)
-- Стратегія неймінгу комітів - [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/)
 - Мова програмування обрана для розробки серверної частини - [Go](https://go.dev/)
 - Мова програмування обрана для розробки клієнтської частини - [Typescript](https://www.typescriptlang.org/) ([React](https://react.dev/))
 - Артифакти вимог знаходяться [тут](/docs/requirements/)
