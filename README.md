@@ -33,8 +33,4 @@
 - **[Документ Системного Дизайну](./docs/requirements/system-design-document.md)** - Архітектура та дизайн системи
 - **[Requirements Traceability Matrix (RTM)](./docs/requirements/rtm.md)** - Матриця відстеження вимог
 - **[User Stories](./docs/requirements/user-stories.md)** - Історії користувачів та вимоги
-
-## Деталі розробки
-
-- Мова програмування обрана для розробки серверної частини - [Go](https://go.dev/)
-- Мова програмування обрана для розробки клієнтської частини - [Typescript](https://www.typescriptlang.org/) ([React](https://react.dev/))
+- **[Architecture Decision Records (ADR)](./docs/adr/)** - Записи архітектурних рішень
