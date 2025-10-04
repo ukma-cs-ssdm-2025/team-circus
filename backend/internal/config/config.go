@@ -22,8 +22,13 @@ func (c DBConfig) DSN() string {
 	)
 }
 
+type SrvConfig struct {
+	Port string `envconfig:"API_PORT" required:"true"`
+}
+
 type Config struct {
-	DB DBConfig
+	DB  DBConfig
+	Srv SrvConfig
 }
 
 func Load() (*Config, error) {
