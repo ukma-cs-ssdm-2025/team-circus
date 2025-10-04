@@ -1,0 +1,35 @@
+name: "Setup"
+description: "Setup go, go-task"
+inputs:
+  go-version-file:
+    description: "Path to go.mod"
+    required: true
+  task-version:
+    description: "Version of go-task"
+    required: false
+    default: "3.x"
+  # install-lint:
+  #   description: "Install linters"
+  #   required: false
+  #   default: "false"
+  # token:
+  #   description: "GitHub token"
+  #   required: true
+runs:
+  using: "composite"
+  steps:
+    - name: "Setup Go"
+      uses: actions/setup-go@v4
+      with:
+        go-version-file: ${{ inputs.go-version-file }}
+      
+    - name: "Install go-task"
+      uses: arduino/setup-task@v2
+      with:
+        version: ${{ inputs.task-version }}
+        # repo-token: ${{ inputs.token }}
+        
+    # - name: "Install linters"
+    #   if: ${{ inputs.install-lint == 'true' }}
+    #   shell: bash
+    #   run: task install:lint
