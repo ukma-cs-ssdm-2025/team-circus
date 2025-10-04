@@ -50,3 +50,24 @@ tasks:
     desc: Download dependencies
     cmds:
       - go mod download
+
+  install:migrator:
+    desc: Install migrator
+    cmds:
+      - go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@v4.16.2
+
+  
+  db:migrate:up:
+    desc: Run migrations
+    cmds:
+      - migrate -database "${DB_DRIVER}://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=disable" -path db/migrations up
+
+  db:migrate:down:
+    desc: Run database migrations down
+    cmds:
+      - migrate -database "${DB_DRIVER}://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=disable" -path db/migrations down
+
+  db:migrate:create:
+    desc: Create new migration file
+    cmds:
+      - go run -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@v4.16.2 create -ext sql -dir ./db/migrations -seq {{.CLI_ARGS}}
