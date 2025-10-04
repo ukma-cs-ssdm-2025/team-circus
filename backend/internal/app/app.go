@@ -2,6 +2,9 @@ package app
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
+	"log"
 	"time"
 
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/config"
@@ -14,6 +17,7 @@ const (
 
 type App struct {
 	cfg *config.Config
+	db  *sql.DB
 	l   *zap.Logger
 }
 
@@ -26,6 +30,12 @@ func New(cfg *config.Config, l *zap.Logger) *App {
 
 func (a *App) Run(ctx context.Context) error {
 	var err error
+
+	a.db, err = sql.Open(a.cfg.DB.Driver, a.cfg.DB.DSN())
+	if err != nil {
+		return err
+	}
+	a.l.Info("DB connected")
 
 	// wait for shutdown signal
 	<-ctx.Done()
@@ -44,5 +54,18 @@ func (a *App) Run(ctx context.Context) error {
 
 func (a *App) shutdown(timeoutCtx context.Context) error {
 	var shutdownErr error
+
+	// db
+	if a.db != nil {
+		if err := a.db.Close(); err != nil {
+			wrapped := fmt.Errorf("shutdown db: %w", err)
+			log.Println(wrapped)
+			if shutdownErr == nil {
+				shutdownErr = wrapped
+			}
+		} else {
+			a.l.Info("DB closed")
+		}
+	}
 	return shutdownErr
 }

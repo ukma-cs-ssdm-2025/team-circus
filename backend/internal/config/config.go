@@ -1,6 +1,10 @@
 package config
 
-import "github.com/kelseyhightower/envconfig"
+import (
+	"fmt"
+
+	"github.com/kelseyhightower/envconfig"
+)
 
 type DBConfig struct {
 	Driver string `envconfig:"DB_DRIVER" required:"true"`
@@ -10,6 +14,14 @@ type DBConfig struct {
 	Pass   string `envconfig:"DB_PASSWORD" required:"true"`
 	Name   string `envconfig:"DB_NAME" required:"true"`
 }
+
+func (c DBConfig) DSN() string {
+	return fmt.Sprintf(
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		c.Host, c.Port, c.User, c.Pass, c.Name,
+	)
+}
+
 type Config struct {
 	DB DBConfig
 }
