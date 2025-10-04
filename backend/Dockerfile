@@ -5,6 +5,7 @@ RUN go install github.com/go-task/task/v3/cmd/task@latest
 COPY . .
 WORKDIR /app/backend
 RUN go mod download 
+RUN go mod vendor
 
 RUN go build -o ./bin/backend cmd/main.go
 RUN task install:migrator

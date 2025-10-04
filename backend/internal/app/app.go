@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	_ "github.com/lib/pq"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/config"
 	"go.uber.org/zap"
 )

@@ -25,6 +25,11 @@ tasks:
     cmds:
       - docker compose down postgres
 
+  up:
+    desc: Start backend and db
+    cmds:
+      - docker compose up -d backend
+
   copy:env:
     desc: Copy default env vars
     cmds:
