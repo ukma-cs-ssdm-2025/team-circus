@@ -1,0 +1,53 @@
+version: '3'
+
+tasks:
+  default:
+    desc: List available tasks
+    cmds:
+      - task --list-all
+
+  dev:
+    desc: Run development server
+    cmds:
+      - npm run dev
+
+  build:
+    desc: Build for production
+    cmds:
+      - npm run build
+
+  preview:
+    desc: Preview production build
+    cmds:
+      - npm run preview
+
+  lint:
+    desc: Run linter
+    cmds:
+      - npm run lint
+
+  install:
+    desc: Install dependencies
+    cmds:
+      - npm install
+
+  clean:
+    desc: Clean build artifacts
+    cmds:
+      - rm -rf dist/
+      - rm -rf node_modules/.vite
+
+  deps:update:
+    desc: Update dependencies
+    cmds:
+      - npm update
+
+  deps:audit:
+    desc: Audit dependencies for vulnerabilities
+    cmds:
+      - npm audit
+
+  deps:fix:
+    desc: Fix dependency vulnerabilities
+    cmds:
+      - npm audit fix
