@@ -94,11 +94,3 @@ tasks:
     cmds:
       - go run github.com/swaggo/swag/cmd/swag@v1.8.12 fmt -g cmd/main.go
       - go run github.com/swaggo/swag/cmd/swag@v1.8.12 init -g cmd/main.go -o ./docs --parseDependency --parseInternal
-
-  swagger:github-pages:
-    desc: Generate documentation for GitHub Pages
-    cmds:
-      - task: swagger:generate
-      - cp ../docs/index.html ./docs/
-      - echo "Documentation ready for GitHub Pages deployment"
-      - echo "Copy ./docs/ folder to your GitHub Pages branch"
