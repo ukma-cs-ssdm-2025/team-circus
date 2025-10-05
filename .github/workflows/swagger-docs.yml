@@ -2,10 +2,12 @@ name: Deploy Swagger Documentation
 
 on:
   push:
+    branches: [ main, feat/basic-api ]
     paths:
       - 'backend/internal/handler/**'
       - 'backend/cmd/main.go'
       - 'backend/docs/**'
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -15,6 +17,7 @@ permissions:
 jobs:
   deploy-docs:
     runs-on: ubuntu-latest
+    environment: github-pages
     
     steps:
     - name: Checkout
@@ -33,9 +36,41 @@ jobs:
       run: |
         swag init -g cmd/main.go -o ./docs
         
-    - name: Copy HTML template
+    - name: Create HTML index
       run: |
-        cp docs/index.html backend/docs/
+        cat > backend/docs/index.html << 'EOF'
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Team Circus API Documentation</title>
+            <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5.9.0/swagger-ui.css" />
+            <style>
+                html { box-sizing: border-box; overflow: -moz-scrollbars-vertical; overflow-y: scroll; }
+                *, *:before, *:after { box-sizing: inherit; }
+                body { margin:0; background: #fafafa; }
+            </style>
+        </head>
+        <body>
+            <div id="swagger-ui"></div>
+            <script src="https://unpkg.com/swagger-ui-dist@5.9.0/swagger-ui-bundle.js"></script>
+            <script src="https://unpkg.com/swagger-ui-dist@5.9.0/swagger-ui-standalone-preset.js"></script>
+            <script>
+                window.onload = function() {
+                    const ui = SwaggerUIBundle({
+                        url: './swagger.json',
+                        dom_id: '#swagger-ui',
+                        deepLinking: true,
+                        presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalone.presets.standalone],
+                        plugins: [SwaggerUIBundle.plugins.DownloadUrl],
+                        layout: "StandaloneLayout"
+                    });
+                };
+            </script>
+        </body>
+        </html>
+        EOF
         
     - name: Setup Pages
       uses: actions/configure-pages@v4
