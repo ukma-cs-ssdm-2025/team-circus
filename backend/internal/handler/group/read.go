@@ -21,6 +21,18 @@ type getAllGroupsService interface {
 	GetAll(ctx context.Context) ([]*domain.Group, error)
 }
 
+// NewGetGroupHandler retrieves a group by UUID
+// @Summary Get a group by UUID
+// @Description Retrieve a specific group by its UUID
+// @Tags groups
+// @Accept json
+// @Produce json
+// @Param uuid path string true "Group UUID"
+// @Success 200 {object} responses.GetGroupResponse "Group retrieved successfully"
+// @Failure 400 {object} map[string]interface{} "Invalid UUID format"
+// @Failure 404 {object} map[string]interface{} "Group not found"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/groups/{uuid} [get]
 func NewGetGroupHandler(service getGroupService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		uuidParam := c.Param("uuid")
@@ -53,6 +65,15 @@ func NewGetGroupHandler(service getGroupService) gin.HandlerFunc {
 	}
 }
 
+// NewGetAllGroupsHandler retrieves all groups
+// @Summary Get all groups
+// @Description Retrieve a list of all groups
+// @Tags groups
+// @Accept json
+// @Produce json
+// @Success 200 {object} responses.GetAllGroupsResponse "Groups retrieved successfully"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/groups [get]
 func NewGetAllGroupsHandler(service getAllGroupsService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		groups, err := service.GetAll(c)

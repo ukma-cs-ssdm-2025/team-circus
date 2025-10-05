@@ -2,6 +2,8 @@ package app
 
 import (
 	"github.com/gin-gonic/gin"
+	swaggerfiles "github.com/swaggo/files"
+	ginswagger "github.com/swaggo/gin-swagger"
 	grouphandler "github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/group"
 	grouprepo "github.com/ukma-cs-ssdm-2025/team-circus/internal/repo/group"
 	groupservice "github.com/ukma-cs-ssdm-2025/team-circus/internal/service/group"
@@ -9,6 +11,9 @@ import (
 
 func (a *App) setupRouter() *gin.Engine {
 	router := gin.Default()
+
+	// Swagger documentation
+	router.GET("/swagger/*any", ginswagger.WrapHandler(swaggerfiles.Handler))
 
 	groupRepo := grouprepo.NewGroupRepository(a.db)
 	groupService := groupservice.NewGroupService(groupRepo)

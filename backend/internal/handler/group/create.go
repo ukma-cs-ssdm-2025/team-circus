@@ -16,6 +16,17 @@ type createGroupService interface {
 	Create(ctx context.Context, name string) (*domain.Group, error)
 }
 
+// NewCreateGroupHandler creates a new group
+// @Summary Create a new group
+// @Description Create a new group with the provided name
+// @Tags groups
+// @Accept json
+// @Produce json
+// @Param request body requests.CreateGroupRequest true "Group creation request"
+// @Success 201 {object} responses.CreateGroupResponse "Group created successfully"
+// @Failure 400 {object} map[string]interface{} "Invalid request format or validation failed"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/groups [post]
 func NewCreateGroupHandler(service createGroupService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req requests.CreateGroupRequest

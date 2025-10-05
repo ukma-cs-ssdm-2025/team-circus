@@ -1,3 +1,11 @@
+// @title Team Circus API
+// @version 1.0
+// @description API for Team Circus project
+// @termsOfService http://swagger.io/terms/
+
+// @host localhost:8080
+// @BasePath /api/v1
+
 package main
 
 import (
@@ -5,6 +13,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	_ "github.com/swaggo/gin-swagger"
+	_ "github.com/ukma-cs-ssdm-2025/team-circus/docs"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/app"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/config"
 	"github.com/ukma-cs-ssdm-2025/team-circus/pkg/logging"

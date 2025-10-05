@@ -30,11 +30,17 @@ tasks:
     desc: Install dependencies
     cmds:
       - task: install:linter
+      - task: install:swagger
 
   install:linter:
     desc: Install linter
     cmds:
       - go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.1.6
+
+  install:swagger:
+    desc: Install Swagger tools
+    cmds:
+      - go install github.com/swaggo/swag/cmd/swag@v1.8.12
 
   tidy:
     desc: Tidy go modules
@@ -71,3 +77,28 @@ tasks:
     desc: Create new migration file
     cmds:
       - go run -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@v4.16.2 create -ext sql -dir ./db/migrations -seq {{.CLI_ARGS}}
+
+  swagger:generate:
+    desc: Generate Swagger documentation
+    cmds:
+      - go run github.com/swaggo/swag/cmd/swag@v1.8.12 init -g cmd/main.go -o ./docs
+
+  swagger:serve:
+    desc: Serve Swagger documentation locally
+    cmds:
+      - echo "Swagger documentation will be available at http://localhost:8080/swagger/index.html"
+      - echo "Make sure the server is running with 'task run'"
+
+  swagger:validate:
+    desc: Validate Swagger annotations
+    cmds:
+      - go run github.com/swaggo/swag/cmd/swag@v1.8.12 fmt -g cmd/main.go
+      - go run github.com/swaggo/swag/cmd/swag@v1.8.12 init -g cmd/main.go -o ./docs --parseDependency --parseInternal
+
+  swagger:github-pages:
+    desc: Generate documentation for GitHub Pages
+    cmds:
+      - task: swagger:generate
+      - cp ../docs/index.html ./docs/
+      - echo "Documentation ready for GitHub Pages deployment"
+      - echo "Copy ./docs/ folder to your GitHub Pages branch"

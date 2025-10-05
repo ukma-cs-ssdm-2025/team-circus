@@ -17,6 +17,19 @@ type updateGroupService interface {
 	Update(ctx context.Context, uuid uuid.UUID, name string) (*domain.Group, error)
 }
 
+// NewUpdateGroupHandler updates a group by UUID
+// @Summary Update a group by UUID
+// @Description Update a specific group's name by its UUID
+// @Tags groups
+// @Accept json
+// @Produce json
+// @Param uuid path string true "Group UUID"
+// @Param request body requests.UpdateGroupRequest true "Group update request"
+// @Success 200 {object} responses.UpdateGroupResponse "Group updated successfully"
+// @Failure 400 {object} map[string]interface{} "Invalid UUID format or validation failed"
+// @Failure 404 {object} map[string]interface{} "Group not found"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/groups/{uuid} [put]
 func NewUpdateGroupHandler(service updateGroupService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		uuidParam := c.Param("uuid")

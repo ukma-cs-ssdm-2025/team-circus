@@ -17,6 +17,18 @@ type deleteGroupService interface {
 	Delete(ctx context.Context, uuid uuid.UUID) error
 }
 
+// NewDeleteGroupHandler deletes a group by UUID
+// @Summary Delete a group by UUID
+// @Description Delete a specific group by its UUID
+// @Tags groups
+// @Accept json
+// @Produce json
+// @Param uuid path string true "Group UUID"
+// @Success 200 {object} responses.DeleteGroupResponse "Group deleted successfully"
+// @Failure 400 {object} map[string]interface{} "Invalid UUID format"
+// @Failure 404 {object} map[string]interface{} "Group not found"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/groups/{uuid} [delete]
 func NewDeleteGroupHandler(service deleteGroupService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		uuidParam := c.Param("uuid")

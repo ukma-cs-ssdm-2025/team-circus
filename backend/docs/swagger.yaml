@@ -1,0 +1,223 @@
+basePath: /api/v1
+definitions:
+  requests.CreateGroupRequest:
+    properties:
+      name:
+        type: string
+    type: object
+  requests.UpdateGroupRequest:
+    properties:
+      name:
+        type: string
+    type: object
+  responses.CreateGroupResponse:
+    properties:
+      created_at:
+        type: string
+      name:
+        type: string
+      uuid:
+        type: string
+    type: object
+  responses.DeleteGroupResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  responses.GetAllGroupsResponse:
+    properties:
+      groups:
+        items:
+          $ref: '#/definitions/responses.GetGroupResponse'
+        type: array
+    type: object
+  responses.GetGroupResponse:
+    properties:
+      created_at:
+        type: string
+      name:
+        type: string
+      uuid:
+        type: string
+    type: object
+  responses.UpdateGroupResponse:
+    properties:
+      created_at:
+        type: string
+      name:
+        type: string
+      uuid:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: API for Team Circus project
+  termsOfService: http://swagger.io/terms/
+  title: Team Circus API
+  version: "1.0"
+paths:
+  /api/v1/groups:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of all groups
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Groups retrieved successfully
+          schema:
+            $ref: '#/definitions/responses.GetAllGroupsResponse'
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get all groups
+      tags:
+      - groups
+    post:
+      consumes:
+      - application/json
+      description: Create a new group with the provided name
+      parameters:
+      - description: Group creation request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.CreateGroupRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Group created successfully
+          schema:
+            $ref: '#/definitions/responses.CreateGroupResponse'
+        "400":
+          description: Invalid request format or validation failed
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Create a new group
+      tags:
+      - groups
+  /api/v1/groups/{uuid}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a specific group by its UUID
+      parameters:
+      - description: Group UUID
+        in: path
+        name: uuid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Group deleted successfully
+          schema:
+            $ref: '#/definitions/responses.DeleteGroupResponse'
+        "400":
+          description: Invalid UUID format
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Group not found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Delete a group by UUID
+      tags:
+      - groups
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a specific group by its UUID
+      parameters:
+      - description: Group UUID
+        in: path
+        name: uuid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Group retrieved successfully
+          schema:
+            $ref: '#/definitions/responses.GetGroupResponse'
+        "400":
+          description: Invalid UUID format
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Group not found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get a group by UUID
+      tags:
+      - groups
+    put:
+      consumes:
+      - application/json
+      description: Update a specific group's name by its UUID
+      parameters:
+      - description: Group UUID
+        in: path
+        name: uuid
+        required: true
+        type: string
+      - description: Group update request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.UpdateGroupRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Group updated successfully
+          schema:
+            $ref: '#/definitions/responses.UpdateGroupResponse'
+        "400":
+          description: Invalid UUID format or validation failed
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Group not found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Update a group by UUID
+      tags:
+      - groups
+swagger: "2.0"
