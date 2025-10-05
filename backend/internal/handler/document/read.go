@@ -105,14 +105,14 @@ func NewGetAllDocumentsHandler(service getAllDocumentsService) gin.HandlerFunc {
 // @Tags documents
 // @Accept json
 // @Produce json
-// @Param group_uuid path string true "Group UUID"
+// @Param uuid path string true "Group UUID"
 // @Success 200 {object} responses.GetDocumentsByGroupResponse "Documents retrieved successfully"
 // @Failure 400 {object} map[string]interface{} "Invalid UUID format"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
-// @Router /api/v1/groups/{group_uuid}/documents [get]
+// @Router /api/v1/groups/{uuid}/documents [get]
 func NewGetDocumentsByGroupHandler(service getDocumentsByGroupService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		groupUUIDParam := c.Param("group_uuid")
+		groupUUIDParam := c.Param("uuid")
 		parsedGroupUUID, err := uuid.Parse(groupUUIDParam)
 		if err != nil {
 			err = fmt.Errorf("get documents by group handler: failed to parse group uuid: %v", err)

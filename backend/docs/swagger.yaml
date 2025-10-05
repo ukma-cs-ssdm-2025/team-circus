@@ -345,37 +345,6 @@ paths:
       summary: Create a new group
       tags:
       - groups
-  /api/v1/groups/{group_uuid}/documents:
-    get:
-      consumes:
-      - application/json
-      description: Retrieve all documents for a specific group
-      parameters:
-      - description: Group UUID
-        in: path
-        name: group_uuid
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Documents retrieved successfully
-          schema:
-            $ref: '#/definitions/responses.GetDocumentsByGroupResponse'
-        "400":
-          description: Invalid UUID format
-          schema:
-            additionalProperties: true
-            type: object
-        "500":
-          description: Internal server error
-          schema:
-            additionalProperties: true
-            type: object
-      summary: Get documents by group UUID
-      tags:
-      - documents
   /api/v1/groups/{uuid}:
     delete:
       consumes:
@@ -488,4 +457,35 @@ paths:
       summary: Update a group by UUID
       tags:
       - groups
+  /api/v1/groups/{uuid}/documents:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all documents for a specific group
+      parameters:
+      - description: Group UUID
+        in: path
+        name: uuid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Documents retrieved successfully
+          schema:
+            $ref: '#/definitions/responses.GetDocumentsByGroupResponse'
+        "400":
+          description: Invalid UUID format
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get documents by group UUID
+      tags:
+      - documents
 swagger: "2.0"

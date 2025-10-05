@@ -8,12 +8,13 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/document/requests"
 )
 
 type createDocumentService interface {
-	Create(ctx context.Context, groupUUID string, name, content string) (*domain.Document, error)
+	Create(ctx context.Context, groupUUID uuid.UUID, name, content string) (*domain.Document, error)
 }
 
 // NewCreateDocumentHandler creates a new document
@@ -44,7 +45,7 @@ func NewCreateDocumentHandler(service createDocumentService) gin.HandlerFunc {
 			return
 		}
 
-		document, err := service.Create(c, req.GroupUUID.String(), req.Name, req.Content)
+		document, err := service.Create(c, req.GroupUUID, req.Name, req.Content)
 		if errors.Is(err, domain.ErrInternal) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create document"})
 			return

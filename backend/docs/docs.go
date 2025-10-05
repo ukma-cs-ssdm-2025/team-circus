@@ -333,52 +333,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/groups/{group_uuid}/documents": {
-            "get": {
-                "description": "Retrieve all documents for a specific group",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "documents"
-                ],
-                "summary": "Get documents by group UUID",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Group UUID",
-                        "name": "group_uuid",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Documents retrieved successfully",
-                        "schema": {
-                            "$ref": "#/definitions/responses.GetDocumentsByGroupResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid UUID format",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    }
-                }
-            }
-        },
         "/api/v1/groups/{uuid}": {
             "get": {
                 "description": "Retrieve a specific group by its UUID",
@@ -528,6 +482,52 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Group not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/groups/{uuid}/documents": {
+            "get": {
+                "description": "Retrieve all documents for a specific group",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "documents"
+                ],
+                "summary": "Get documents by group UUID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Group UUID",
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Documents retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/responses.GetDocumentsByGroupResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid UUID format",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
