@@ -17,6 +17,246 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/api/v1/documents": {
+            "get": {
+                "description": "Retrieve a list of all documents",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "documents"
+                ],
+                "summary": "Get all documents",
+                "responses": {
+                    "200": {
+                        "description": "Documents retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/responses.GetAllDocumentsResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new document with the provided group UUID, name and content",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "documents"
+                ],
+                "summary": "Create a new document",
+                "parameters": [
+                    {
+                        "description": "Document creation request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/requests.CreateDocumentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Document created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/responses.CreateDocumentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request format or validation failed",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/documents/{uuid}": {
+            "get": {
+                "description": "Retrieve a specific document by its UUID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "documents"
+                ],
+                "summary": "Get a document by UUID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Document UUID",
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Document retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/responses.GetDocumentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid UUID format",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Document not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update a specific document's name and content by its UUID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "documents"
+                ],
+                "summary": "Update a document by UUID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Document UUID",
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Document update request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/requests.UpdateDocumentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Document updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/responses.UpdateDocumentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid UUID format or validation failed",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Document not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a specific document by its UUID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "documents"
+                ],
+                "summary": "Delete a document by UUID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Document UUID",
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Document deleted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/responses.DeleteDocumentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid UUID format",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Document not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/groups": {
             "get": {
                 "description": "Retrieve a list of all groups",
@@ -78,6 +318,52 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Invalid request format or validation failed",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/groups/{group_uuid}/documents": {
+            "get": {
+                "description": "Retrieve all documents for a specific group",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "documents"
+                ],
+                "summary": "Get documents by group UUID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Group UUID",
+                        "name": "group_uuid",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Documents retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/responses.GetDocumentsByGroupResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid UUID format",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
@@ -259,9 +545,34 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "requests.CreateDocumentRequest": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "group_uuid": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "requests.CreateGroupRequest": {
             "type": "object",
             "properties": {
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "requests.UpdateDocumentRequest": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
                 "name": {
                     "type": "string"
                 }
@@ -271,6 +582,26 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "responses.CreateDocumentResponse": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "group_uuid": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "uuid": {
                     "type": "string"
                 }
             }
@@ -289,11 +620,30 @@ const docTemplate = `{
                 }
             }
         },
+        "responses.DeleteDocumentResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
         "responses.DeleteGroupResponse": {
             "type": "object",
             "properties": {
                 "message": {
                     "type": "string"
+                }
+            }
+        },
+        "responses.GetAllDocumentsResponse": {
+            "type": "object",
+            "properties": {
+                "documents": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/responses.GetDocumentResponse"
+                    }
                 }
             }
         },
@@ -308,10 +658,61 @@ const docTemplate = `{
                 }
             }
         },
+        "responses.GetDocumentResponse": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "group_uuid": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "uuid": {
+                    "type": "string"
+                }
+            }
+        },
+        "responses.GetDocumentsByGroupResponse": {
+            "type": "object",
+            "properties": {
+                "documents": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/responses.GetDocumentResponse"
+                    }
+                }
+            }
+        },
         "responses.GetGroupResponse": {
             "type": "object",
             "properties": {
                 "created_at": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "uuid": {
+                    "type": "string"
+                }
+            }
+        },
+        "responses.UpdateDocumentResponse": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "group_uuid": {
                     "type": "string"
                 },
                 "name": {
