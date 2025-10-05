@@ -2,19 +2,27 @@ package app
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
+	"log"
+	"net/http"
 	"time"
 
+	_ "github.com/lib/pq"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/config"
 	"go.uber.org/zap"
 )
 
 const (
 	shutdownTimeout = 20 * time.Second
+	readTimeout     = 15 * time.Second
 )
 
 type App struct {
-	cfg *config.Config
-	l   *zap.Logger
+	cfg    *config.Config
+	db     *sql.DB
+	apiSrv *http.Server
+	l      *zap.Logger
 }
 
 func New(cfg *config.Config, l *zap.Logger) *App {
@@ -26,6 +34,27 @@ func New(cfg *config.Config, l *zap.Logger) *App {
 
 func (a *App) Run(ctx context.Context) error {
 	var err error
+
+	// db
+	a.db, err = sql.Open(a.cfg.DB.Driver, a.cfg.DB.DSN())
+	if err != nil {
+		return err
+	}
+	a.l.Info("DB connected")
+
+	// api
+	router := a.setupRouter()
+	a.apiSrv = &http.Server{
+		Addr:        ":" + a.cfg.Srv.Port,
+		Handler:     router,
+		ReadTimeout: readTimeout,
+	}
+	go func() {
+		if err := a.apiSrv.ListenAndServe(); err != nil {
+			log.Printf("api server: %v", err)
+		}
+	}()
+	log.Printf("APIServer started on port %s", a.cfg.Srv.Port)
 
 	// wait for shutdown signal
 	<-ctx.Done()
@@ -44,5 +73,29 @@ func (a *App) Run(ctx context.Context) error {
 
 func (a *App) shutdown(timeoutCtx context.Context) error {
 	var shutdownErr error
+
+	// api
+	if a.apiSrv != nil {
+		if err := a.apiSrv.Shutdown(timeoutCtx); err != nil {
+			wrapped := fmt.Errorf("shutdown api server: %w", err)
+			log.Println(wrapped)
+			shutdownErr = wrapped
+		} else {
+			log.Println("APIServer Shutdown successfully")
+		}
+	}
+
+	// db
+	if a.db != nil {
+		if err := a.db.Close(); err != nil {
+			wrapped := fmt.Errorf("shutdown db: %w", err)
+			log.Println(wrapped)
+			if shutdownErr == nil {
+				shutdownErr = wrapped
+			}
+		} else {
+			a.l.Info("DB closed")
+		}
+	}
 	return shutdownErr
 }

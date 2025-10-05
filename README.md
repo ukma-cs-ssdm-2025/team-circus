@@ -43,28 +43,10 @@
    cd team-circus
    ```
 
-2. **Перехід до backend директорії**
+2. **Запуск**
 
    ```bash
-   cd backend
-   ```
-
-3. **Встановлення залежностей**
-
-   ```bash
-   task install
-   ```
-
-4. **Завантаження Go модулів**
-
-   ```bash
-   task download
-   ```
-
-5. **Запуск backend**
-
-   ```bash
-   task run
+   task up
    ```
 
 ### Frontend
