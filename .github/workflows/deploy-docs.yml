@@ -5,6 +5,10 @@ on:
     branches: [main]
     paths:
       - "backend/docs/**"
+  pull_request:
+    branches: [main]
+    paths:
+      - "backend/docs/**"
 
 permissions:
   contents: read
