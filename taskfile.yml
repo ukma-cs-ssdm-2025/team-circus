@@ -1,48 +1,25 @@
 version: '3'
 
-includes:
-  back: 
-    taskfile: ./backend/taskfile.yml
-    dir: ./backend
-  front: 
-    taskfile: ./frontend/taskfile.yml
-    dir: ./frontend
-
 tasks:
   default:
-    desc: List available tasks
+    desc: "Show available tasks"
     cmds:
-      - task --list-all
+      - go-task --list-all
 
-  db:up:
-    desc: Start database and run migrations
+  lint:
+    desc: "Run golangci-lint"
+    deps: [install:lint]
     cmds:
-      - task copy:env:optional
-      - docker compose up -d migrator
-
-  db:down:
-    desc: Stop database and clean up
+      - echo "Running linters..."
+      - golangci-lint run
+  
+  test:unit:
+    desc: "Run unit tests"
     cmds:
-      - docker compose down postgres
+      - echo "Running unit tests..."
+      - go test ./... -v -tags=unit
 
-  up:
-    desc: Start backend and db
+  install:lint:
+    desc: "Install golangci-lint"
     cmds:
-      - docker compose up -d backend
-
-  copy:env:
-    desc: Copy default env vars
-    cmds:
-      - cp .env.sample .env
-    silent: false
-
-  copy:env:optional:
-     desc: Ensure .env exists
-     cmds:
-      - |
-        if [ ! -f .env ]; then
-          echo ".env not found, copying from .env.sample"
-          cp .env.sample .env
-        else
-          echo ".env already exists"
-        fi
+      - go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest

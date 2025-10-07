@@ -14,7 +14,7 @@ jobs:
       - name: Install go and go-task
         uses: ./.github/actions/setup
         with:
-          go-version-file: ./go.mod
+          go-version-file: ./backend/go.mod
           task-version: "3.x"
           # install-linter: true
 
@@ -31,7 +31,7 @@ jobs:
       - name: Install go and go-task
         uses: ./.github/actions/setup
         with:
-          go-version-file: ./go.mod
+          go-version-file: ./backend/go.mod
           task-version: "3.x"
 
       - name: Run unit tests
