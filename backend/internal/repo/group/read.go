@@ -40,7 +40,7 @@ func (r *GroupRepository) GetAll(ctx context.Context) ([]*domain.Group, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer rows.Close() //nolint:errcheck
 
 	var groups []*domain.Group
 	for rows.Next() {

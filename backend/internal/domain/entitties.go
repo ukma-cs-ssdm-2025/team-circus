@@ -22,10 +22,9 @@ type Document struct {
 }
 
 type User struct {
-	UUID  uuid.UUID
-	Login string
-	Email string
-	//HashedPassword string
+	UUID      uuid.UUID
+	Login     string
+	Email     string
 	CreatedAt time.Time
 }
 

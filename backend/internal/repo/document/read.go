@@ -43,7 +43,7 @@ func (r *DocumentRepository) GetByGroupUUID(ctx context.Context, groupUUID uuid.
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer rows.Close() //nolint:errcheck
 
 	var documents []*domain.Document
 	for rows.Next() {
@@ -78,7 +78,7 @@ func (r *DocumentRepository) GetAll(ctx context.Context) ([]*domain.Document, er
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer rows.Close() //nolint:errcheck
 
 	var documents []*domain.Document
 	for rows.Next() {

@@ -59,7 +59,6 @@ func (a *App) setupRouter() *gin.Engine {
 			users.PUT("/:uuid", userhandler.NewUpdateUserHandler(userService))
 			users.DELETE("/:uuid", userhandler.NewDeleteUserHandler(userService))
 		}
-
 	}
 	return router
 }

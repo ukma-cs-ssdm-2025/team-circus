@@ -41,7 +41,7 @@ func (r *UserRepository) GetAll(ctx context.Context) ([]*domain.User, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer rows.Close() //nolint:errcheck
 
 	var users []*domain.User
 	for rows.Next() {
