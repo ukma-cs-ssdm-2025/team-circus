@@ -19,7 +19,7 @@ jobs:
           # install-linter: true
 
       - name: Run linters
-        run: task lint
+        run: cd backend && task lint
 
   unit-tests:
     name: Unit Tests
@@ -35,4 +35,4 @@ jobs:
           task-version: "3.x"
 
       - name: Run unit tests
-        run: task test:unit
+        run: cd backend && task test
