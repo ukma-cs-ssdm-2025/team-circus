@@ -1,9 +1,38 @@
-name: CI Test
+name: CI
+
+# add pull_request?
 on: [push]
-jobs:
-  build:
+
+jobs: 
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - name: Run Hello World
-      run: echo "Hello, World!"
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install go and go-task
+        uses: ./.github/actions/setup
+        with:
+          go-version-file: ./backend/go.mod
+          task-version: "3.x"
+          install-linter: true
+
+      - name: Run linters
+        run: cd backend && task lint
+
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install go and go-task
+        uses: ./.github/actions/setup
+        with:
+          go-version-file: ./backend/go.mod
+          task-version: "3.x"
+
+      - name: Run unit tests
+        run: cd backend && task test
