@@ -6,10 +6,13 @@ import (
 	ginswagger "github.com/swaggo/gin-swagger"
 	documenthandler "github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/document"
 	grouphandler "github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/group"
+	userhandler "github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/user"
 	documentrepo "github.com/ukma-cs-ssdm-2025/team-circus/internal/repo/document"
 	grouprepo "github.com/ukma-cs-ssdm-2025/team-circus/internal/repo/group"
+	userrepo "github.com/ukma-cs-ssdm-2025/team-circus/internal/repo/user"
 	documentservice "github.com/ukma-cs-ssdm-2025/team-circus/internal/service/document"
 	groupservice "github.com/ukma-cs-ssdm-2025/team-circus/internal/service/group"
+	userservice "github.com/ukma-cs-ssdm-2025/team-circus/internal/service/user"
 )
 
 func (a *App) setupRouter() *gin.Engine {
@@ -23,6 +26,9 @@ func (a *App) setupRouter() *gin.Engine {
 
 	documentRepo := documentrepo.NewDocumentRepository(a.db)
 	documentService := documentservice.NewDocumentService(documentRepo)
+
+	userRepo := userrepo.NewUserRepository(a.db)
+	userService := userservice.NewUserService(userRepo)
 
 	apiV1 := router.Group("/api/v1")
 	{
@@ -43,6 +49,15 @@ func (a *App) setupRouter() *gin.Engine {
 			documents.GET("", documenthandler.NewGetAllDocumentsHandler(documentService))
 			documents.PUT("/:uuid", documenthandler.NewUpdateDocumentHandler(documentService))
 			documents.DELETE("/:uuid", documenthandler.NewDeleteDocumentHandler(documentService))
+		}
+
+		users := apiV1.Group("/users")
+		{
+			users.POST("", userhandler.NewCreateUserHandler(userService))
+			users.GET("/:uuid", userhandler.NewGetUserHandler(userService))
+			users.GET("", userhandler.NewGetAllUsersHandler(userService))
+			users.PUT("/:uuid", userhandler.NewUpdateUserHandler(userService))
+			users.DELETE("/:uuid", userhandler.NewDeleteUserHandler(userService))
 		}
 
 	}

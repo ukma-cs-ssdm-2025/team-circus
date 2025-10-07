@@ -21,8 +21,17 @@ type Document struct {
 	CreatedAt time.Time
 }
 
+type User struct {
+	UUID  uuid.UUID
+	Login string
+	Email string
+	//HashedPassword string
+	CreatedAt time.Time
+}
+
 var (
 	ErrGroupNotFound    = errors.New("group not found")
 	ErrDocumentNotFound = errors.New("document not found")
+	ErrUserNotFound     = errors.New("user not found")
 	ErrInternal         = errors.New("internal error")
 )
