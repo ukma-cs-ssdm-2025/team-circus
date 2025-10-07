@@ -30,6 +30,11 @@ tasks:
     cmds:
       - docker compose up -d backend
 
+  down:
+    desc: Stop backend and db
+    cmds:
+      - docker compose down
+
   copy:env:
     desc: Copy default env vars
     cmds:
