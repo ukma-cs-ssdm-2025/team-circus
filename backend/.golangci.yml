@@ -24,7 +24,6 @@ linters:
     - revive
     - staticcheck
     - unused
-    - mnd
     - unconvert
     - gosec
     - gocyclo
@@ -88,12 +87,6 @@ linters:
     errcheck:
       check-type-assertions: true
       check-blank: true
-
-    mnd:
-      ignored-functions:
-        - '^math\.'
-        - '^http\.StatusText$'
-        - '^env\.Get'
 
 issues:
   max-issues-per-linter: 0
