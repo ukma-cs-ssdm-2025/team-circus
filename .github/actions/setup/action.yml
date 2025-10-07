@@ -30,6 +30,6 @@ runs:
         # repo-token: ${{ inputs.token }}
         
     - name: "Install linters"
-      if: ${{ inputs.install-lint == 'true' }}
+      if: ${{ inputs.install-linter == 'true' }}
       shell: bash
       run: task back:install:linter
