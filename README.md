@@ -1,6 +1,6 @@
 # Markdown Circus Docs
 
-[![CI Test](https://github.com/ukma-cs-ssdm-2025/team-circus/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ukma-cs-ssdm-2025/team-circus/actions/workflows/ci.yml)
+[![CI](https://github.com/ukma-cs-ssdm-2025/team-circus/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ukma-cs-ssdm-2025/team-circus/actions/workflows/ci.yml)
 
 Наш проект MCD (Markdown Circus Docs) - це інструмент спільного редагування документів у форматі Markdown.
 
