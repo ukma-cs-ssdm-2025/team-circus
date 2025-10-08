@@ -4,10 +4,10 @@ on:
   push:
     branches: [main]
     paths:
-      - "backend/docs/**"
-  pull_request:
-    branches: [main]
-    paths:
+      - "backend/**/*.go"
+      - "backend/go.mod"
+      - "backend/go.sum"
+      - "backend/taskfile.yml"
       - "backend/docs/**"
   workflow_dispatch:
 
@@ -25,6 +25,26 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('backend/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Generate Swagger Docs
+        working-directory: backend
+        run: |
+          go mod download
+          go run github.com/swaggo/swag/cmd/swag@v1.8.12 init -g cmd/main.go -o ./docs
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
