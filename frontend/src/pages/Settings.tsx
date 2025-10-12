@@ -15,24 +15,29 @@ import {
   Stack,
   useTheme
 } from '@mui/material';
+import { useLanguage } from '../contexts/LanguageContext';
 import type { BaseComponentProps } from '../types';
 
 interface SettingsProps extends BaseComponentProps {}
 
 const Settings = ({ className = '' }: SettingsProps) => {
   const theme = useTheme();
+  const { language, setLanguage, t } = useLanguage();
   const [settings, setSettings] = useState({
     theme: 'light',
-    language: 'uk',
     notifications: true,
     autoSave: true,
   });
 
   const handleSettingChange = (key: string, value: any) => {
-    setSettings(prev => ({
-      ...prev,
-      [key]: value
-    }));
+    if (key === 'language') {
+      setLanguage(value);
+    } else {
+      setSettings(prev => ({
+        ...prev,
+        [key]: value
+      }));
+    }
   };
 
   return (
@@ -58,43 +63,42 @@ const Settings = ({ className = '' }: SettingsProps) => {
                 mb: 1,
               }}
             >
-              Налаштування акаунту
+              {t('settings.title')}
             </Typography>
             
             <Typography variant="h6" color="text.secondary" sx={{ mb: 4 }}>
-              Керуйте своїми налаштуваннями та преференціями
+              {t('settings.subtitle')}
             </Typography>
 
             <Stack spacing={4}>
               <Card variant="outlined" sx={{ p: 3 }}>
                 <Typography variant="h5" gutterBottom>
-                  Загальні налаштування
+                  {t('settings.general')}
                 </Typography>
                 
                 <Stack spacing={3}>
                   <FormControl fullWidth>
-                    <InputLabel>Тема</InputLabel>
+                    <InputLabel>{t('settings.theme')}</InputLabel>
                     <Select
                       value={settings.theme}
-                      label="Тема"
+                      label={t('settings.theme')}
                       onChange={(e) => handleSettingChange('theme', e.target.value)}
                     >
-                      <MenuItem value="light">Світла</MenuItem>
-                      <MenuItem value="dark">Темна</MenuItem>
-                      <MenuItem value="auto">Автоматично</MenuItem>
+                      <MenuItem value="light">{t('settings.theme.light')}</MenuItem>
+                      <MenuItem value="dark">{t('settings.theme.dark')}</MenuItem>
+                      <MenuItem value="auto">{t('settings.theme.auto')}</MenuItem>
                     </Select>
                   </FormControl>
 
                   <FormControl fullWidth>
-                    <InputLabel>Мова</InputLabel>
+                    <InputLabel>{t('settings.language')}</InputLabel>
                     <Select
-                      value={settings.language}
-                      label="Мова"
+                      value={language}
+                      label={t('settings.language')}
                       onChange={(e) => handleSettingChange('language', e.target.value)}
                     >
                       <MenuItem value="uk">Українська</MenuItem>
                       <MenuItem value="en">English</MenuItem>
-                      <MenuItem value="ru">Русский</MenuItem>
                     </Select>
                   </FormControl>
                 </Stack>
@@ -102,7 +106,7 @@ const Settings = ({ className = '' }: SettingsProps) => {
 
               <Card variant="outlined" sx={{ p: 3 }}>
                 <Typography variant="h5" gutterBottom>
-                  Сповіщення
+                  {t('settings.notifications')}
                 </Typography>
                 
                 <FormControlLabel
@@ -112,13 +116,13 @@ const Settings = ({ className = '' }: SettingsProps) => {
                       onChange={(e) => handleSettingChange('notifications', e.target.checked)}
                     />
                   }
-                  label="Отримувати сповіщення"
+                  label={t('settings.notificationsLabel')}
                 />
               </Card>
 
               <Card variant="outlined" sx={{ p: 3 }}>
                 <Typography variant="h5" gutterBottom>
-                  Робота з документами
+                  {t('settings.documents')}
                 </Typography>
                 
                 <FormControlLabel
@@ -128,7 +132,7 @@ const Settings = ({ className = '' }: SettingsProps) => {
                       onChange={(e) => handleSettingChange('autoSave', e.target.checked)}
                     />
                   }
-                  label="Автоматичне збереження"
+                  label={t('settings.autoSaveLabel')}
                 />
               </Card>
             </Stack>
@@ -144,14 +148,14 @@ const Settings = ({ className = '' }: SettingsProps) => {
                 size="large"
                 sx={{ minWidth: 200 }}
               >
-                Зберегти зміни
+                {t('settings.save')}
               </Button>
               <Button
                 variant="outlined"
                 size="large"
                 sx={{ minWidth: 200 }}
               >
-                Скинути до стандартних
+                {t('settings.reset')}
               </Button>
             </Stack>
           </CardContent>

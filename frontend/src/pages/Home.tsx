@@ -4,12 +4,14 @@ import {
   Stack,
   useTheme
 } from '@mui/material';
+import { useLanguage } from '../contexts/LanguageContext';
 import type { BaseComponentProps } from '../types';
 
 interface HomeProps extends BaseComponentProps {}
 
 const Home = ({ className = '' }: HomeProps) => {
   const theme = useTheme();
+  const { t } = useLanguage();
 
   return (
     <Box 
@@ -40,9 +42,9 @@ const Home = ({ className = '' }: HomeProps) => {
               backgroundColor: theme.palette.primary.dark,
             }
           }}
-          onClick={() => alert('Створити документ - функція в розробці')}
+          onClick={() => alert(t('home.createDocumentAlert'))}
         >
-          Створити документ
+          {t('home.createDocument')}
         </Button>
         <Button
           variant="contained"
@@ -56,9 +58,9 @@ const Home = ({ className = '' }: HomeProps) => {
               backgroundColor: theme.palette.primary.dark,
             }
           }}
-          onClick={() => alert('Створити групу - функція в розробці')}
+          onClick={() => alert(t('home.createGroupAlert'))}
         >
-          Створити групу
+          {t('home.createGroup')}
         </Button>
       </Stack>
     </Box>

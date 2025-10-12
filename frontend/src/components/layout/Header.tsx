@@ -8,11 +8,13 @@ import {
   useTheme
 } from '@mui/material';
 import { Settings as SettingsIcon } from '@mui/icons-material';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { ROUTES } from '../../constants';
 
 const Header = () => {
   const navigate = useNavigate();
   const theme = useTheme();
+  const { t } = useLanguage();
 
   const handleAccountSettings = () => {
     navigate(ROUTES.SETTINGS);
@@ -48,7 +50,7 @@ const Header = () => {
         </Typography>
         <IconButton
           onClick={handleAccountSettings}
-          title="Налаштування акаунту"
+          title={t('header.settings')}
           sx={{
             backgroundColor: '#f8fafc',
             border: '1px solid #cbd5e1',
