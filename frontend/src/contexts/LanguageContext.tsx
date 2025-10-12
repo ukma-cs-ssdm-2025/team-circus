@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
+import type { ReactNode } from 'react';
 
 export type Language = 'uk' | 'en';
 
@@ -9,6 +10,24 @@ interface LanguageContextType {
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+
+// Функції для роботи з localStorage
+const getStoredLanguage = (): Language => {
+  try {
+    const stored = localStorage.getItem('mcd_language');
+    return (stored as Language) || 'uk';
+  } catch {
+    return 'uk';
+  }
+};
+
+const setStoredLanguage = (language: Language): void => {
+  try {
+    localStorage.setItem('mcd_language', language);
+  } catch {
+    // Ігноруємо помилки localStorage
+  }
+};
 
 // Тексти для перекладів
 const translations = {
@@ -107,14 +126,23 @@ interface LanguageProviderProps {
 }
 
 export const LanguageProvider = ({ children }: LanguageProviderProps) => {
-  const [language, setLanguage] = useState<Language>('uk');
+  const [language, setLanguage] = useState<Language>(getStoredLanguage);
+
+  // Зберігаємо мову в localStorage при зміні
+  useEffect(() => {
+    setStoredLanguage(language);
+  }, [language]);
+
+  const handleSetLanguage = (lang: Language) => {
+    setLanguage(lang);
+  };
 
   const t = (key: string): string => {
     return translations[language][key as keyof typeof translations[typeof language]] || key;
   };
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t }}>
+    <LanguageContext.Provider value={{ language, setLanguage: handleSetLanguage, t }}>
       {children}
     </LanguageContext.Provider>
   );
