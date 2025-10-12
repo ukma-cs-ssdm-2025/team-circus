@@ -13,18 +13,19 @@ import {
   Switch,
   Button,
   Stack,
-  useTheme
+  useTheme as useMuiTheme
 } from '@mui/material';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useTheme } from '../contexts/ThemeContext';
 import type { BaseComponentProps } from '../types';
 
 interface SettingsProps extends BaseComponentProps {}
 
 const Settings = ({ className = '' }: SettingsProps) => {
-  const theme = useTheme();
+  const muiTheme = useMuiTheme();
+  const { theme, setTheme } = useTheme();
   const { language, setLanguage, t } = useLanguage();
   const [settings, setSettings] = useState({
-    theme: 'light',
     notifications: true,
     autoSave: true,
   });
@@ -32,6 +33,8 @@ const Settings = ({ className = '' }: SettingsProps) => {
   const handleSettingChange = (key: string, value: any) => {
     if (key === 'language') {
       setLanguage(value);
+    } else if (key === 'theme') {
+      setTheme(value);
     } else {
       setSettings(prev => ({
         ...prev,
@@ -45,27 +48,29 @@ const Settings = ({ className = '' }: SettingsProps) => {
       <Container maxWidth="md" sx={{ py: 8 }}>
         <Card
           sx={{
-            background: 'rgba(255, 255, 255, 0.8)',
+            background: muiTheme.palette.mode === 'light' 
+              ? 'rgba(255, 255, 255, 0.8)' 
+              : 'rgba(30, 30, 30, 0.8)',
             backdropFilter: 'blur(10px)',
             borderRadius: 4,
             boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)',
           }}
         >
           <CardContent sx={{ p: 6 }}>
-            <Typography
-              variant="h3"
-              sx={{
-                fontWeight: 700,
-                color: theme.palette.primary.main,
-                mb: 1,
-              }}
-            >
-              {t('settings.title')}
-            </Typography>
-            
-            <Typography variant="h6" color="text.secondary" sx={{ mb: 4 }}>
-              {t('settings.subtitle')}
-            </Typography>
+                   <Typography
+                     variant="h3"
+                     sx={{
+                       fontWeight: 700,
+                       color: muiTheme.palette.primary.main,
+                       mb: 1,
+                     }}
+                   >
+                     {t('settings.title')}
+                   </Typography>
+                   
+                   <Typography variant="h6" color="text.secondary" sx={{ mb: 4 }}>
+                     {t('settings.subtitle')}
+                   </Typography>
 
             <Stack spacing={4}>
               <Card variant="outlined" sx={{ p: 3 }}>
@@ -74,18 +79,17 @@ const Settings = ({ className = '' }: SettingsProps) => {
                 </Typography>
                 
                 <Stack spacing={3}>
-                  <FormControl fullWidth>
-                    <InputLabel>{t('settings.theme')}</InputLabel>
-                    <Select
-                      value={settings.theme}
-                      label={t('settings.theme')}
-                      onChange={(e) => handleSettingChange('theme', e.target.value)}
-                    >
-                      <MenuItem value="light">{t('settings.theme.light')}</MenuItem>
-                      <MenuItem value="dark">{t('settings.theme.dark')}</MenuItem>
-                      <MenuItem value="auto">{t('settings.theme.auto')}</MenuItem>
-                    </Select>
-                  </FormControl>
+                         <FormControl fullWidth>
+                           <InputLabel>{t('settings.theme')}</InputLabel>
+                           <Select
+                             value={theme}
+                             label={t('settings.theme')}
+                             onChange={(e) => handleSettingChange('theme', e.target.value)}
+                           >
+                             <MenuItem value="light">{t('settings.theme.light')}</MenuItem>
+                             <MenuItem value="dark">{t('settings.theme.dark')}</MenuItem>
+                           </Select>
+                         </FormControl>
 
                   <FormControl fullWidth>
                     <InputLabel>{t('settings.language')}</InputLabel>

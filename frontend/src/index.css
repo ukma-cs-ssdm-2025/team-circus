@@ -7,7 +7,6 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   font-family: 'Inter', 'Roboto', 'Helvetica', 'Arial', sans-serif;
 }
 
@@ -31,4 +30,17 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(102, 126, 234, 0.5);
+}
+
+/* Dark mode scrollbar */
+[data-mui-color-scheme="dark"] ::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+[data-mui-color-scheme="dark"] ::-webkit-scrollbar-thumb {
+  background: rgba(102, 126, 234, 0.5);
+}
+
+[data-mui-color-scheme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(102, 126, 234, 0.7);
 }

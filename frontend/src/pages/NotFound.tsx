@@ -22,7 +22,9 @@ const NotFound = ({ className = '' }: NotFoundProps) => {
         <Box
           sx={{
             textAlign: 'center',
-            background: 'rgba(255, 255, 255, 0.8)',
+            background: theme.palette.mode === 'light' 
+              ? 'rgba(255, 255, 255, 0.8)' 
+              : 'rgba(30, 30, 30, 0.8)',
             backdropFilter: 'blur(10px)',
             borderRadius: 4,
             p: 6,

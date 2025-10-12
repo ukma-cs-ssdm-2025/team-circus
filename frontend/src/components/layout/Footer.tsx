@@ -19,7 +19,9 @@ const Footer = ({ className = '' }: FooterProps) => {
     <Box
       component="footer"
       sx={{
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        backgroundColor: theme.palette.mode === 'light' 
+          ? 'rgba(255, 255, 255, 0.9)' 
+          : 'rgba(30, 30, 30, 0.9)',
         backdropFilter: 'blur(10px)',
         borderTop: `1px solid ${theme.palette.divider}`,
         mt: 'auto',

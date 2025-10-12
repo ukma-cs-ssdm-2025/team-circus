@@ -34,6 +34,7 @@ const translations = {
   uk: {
     // Header
     'header.settings': 'Налаштування акаунту',
+    'header.toggleTheme': 'Перемкнути тему',
     
     // Home page
     'home.createDocument': 'Створити документ',
@@ -53,9 +54,8 @@ const translations = {
     'settings.autoSaveLabel': 'Автоматичне збереження',
     'settings.save': 'Зберегти зміни',
     'settings.reset': 'Скинути до стандартних',
-    'settings.theme.light': 'Світла',
-    'settings.theme.dark': 'Темна',
-    'settings.theme.auto': 'Автоматично',
+  'settings.theme.light': 'Світла',
+  'settings.theme.dark': 'Темна',
     
     // Footer
     'footer.navigation': 'Навігація',
@@ -78,6 +78,7 @@ const translations = {
   en: {
     // Header
     'header.settings': 'Account Settings',
+    'header.toggleTheme': 'Toggle Theme',
     
     // Home page
     'home.createDocument': 'Create Document',
@@ -97,9 +98,8 @@ const translations = {
     'settings.autoSaveLabel': 'Auto-save',
     'settings.save': 'Save Changes',
     'settings.reset': 'Reset to Default',
-    'settings.theme.light': 'Light',
-    'settings.theme.dark': 'Dark',
-    'settings.theme.auto': 'Auto',
+  'settings.theme.light': 'Light',
+  'settings.theme.dark': 'Dark',
     
     // Footer
     'footer.navigation': 'Navigation',

@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { ThemeProvider } from './theme/ThemeProvider';
+import { ThemeProvider } from './contexts/ThemeContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { Layout } from './components/layout';
 import { Home, Settings, NotFound } from './pages';
@@ -7,8 +7,8 @@ import { ROUTES } from './constants';
 
 function App() {
   return (
-    <LanguageProvider>
-      <ThemeProvider>
+    <ThemeProvider>
+      <LanguageProvider>
         <Router>
           <Layout>
             <Routes>
@@ -18,8 +18,8 @@ function App() {
             </Routes>
           </Layout>
         </Router>
-      </ThemeProvider>
-    </LanguageProvider>
+      </LanguageProvider>
+    </ThemeProvider>
   );
 }
 
