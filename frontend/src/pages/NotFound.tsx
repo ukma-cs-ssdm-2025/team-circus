@@ -1,13 +1,8 @@
 import { Link } from 'react-router-dom';
-import {
-  Box,
-  Container,
-  Typography,
-  Button,
-  Stack,
-  useTheme
-} from '@mui/material';
+import { Box, Typography, Stack, useTheme } from '@mui/material';
 import { Home as HomeIcon, ArrowBack as ArrowBackIcon } from '@mui/icons-material';
+import { PageCard, CenteredContent } from '../components/common';
+import { ActionButton } from '../components/forms';
 import { useLanguage } from '../contexts/LanguageContext';
 import { ROUTES } from '../constants';
 import type { BaseComponentProps } from '../types';
@@ -19,20 +14,9 @@ const NotFound = ({ className = '' }: NotFoundProps) => {
   const { t } = useLanguage();
 
   return (
-    <Box className={className}>
-      <Container maxWidth="sm" sx={{ py: 8 }}>
-        <Box
-          sx={{
-            textAlign: 'center',
-            background: theme.palette.mode === 'light' 
-              ? 'rgba(255, 255, 255, 0.8)' 
-              : 'rgba(30, 30, 30, 0.8)',
-            backdropFilter: 'blur(10px)',
-            borderRadius: 4,
-            p: 6,
-            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)',
-          }}
-        >
+    <CenteredContent className={className} maxWidth="sm">
+      <PageCard>
+        <Box sx={{ textAlign: 'center' }}>
           <Typography
             variant="h1"
             sx={{
@@ -59,29 +43,24 @@ const NotFound = ({ className = '' }: NotFoundProps) => {
             spacing={2}
             justifyContent="center"
           >
-            <Button
+            <ActionButton
               component={Link}
               to={ROUTES.HOME}
-              variant="contained"
-              size="large"
               startIcon={<HomeIcon />}
-              sx={{ minWidth: 200 }}
             >
               {t('notFound.home')}
-            </Button>
-            <Button
+            </ActionButton>
+            <ActionButton
               variant="outlined"
-              size="large"
               startIcon={<ArrowBackIcon />}
               onClick={() => window.history.back()}
-              sx={{ minWidth: 200 }}
             >
               {t('notFound.back')}
-            </Button>
+            </ActionButton>
           </Stack>
         </Box>
-      </Container>
-    </Box>
+      </PageCard>
+    </CenteredContent>
   );
 };
 

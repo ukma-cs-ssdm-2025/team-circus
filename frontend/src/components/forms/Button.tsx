@@ -1,9 +1,17 @@
-import { Button as MuiButton, ButtonProps as MuiButtonProps } from '@mui/material';
+import { Button as MuiButton } from '@mui/material';
 import type { BaseComponentProps } from '../../types';
 
-interface ButtonProps extends BaseComponentProps, Omit<MuiButtonProps, 'variant' | 'size'> {
+interface ButtonProps extends BaseComponentProps {
+  children: React.ReactNode;
   variant?: 'primary' | 'secondary' | 'danger';
   size?: 'small' | 'medium' | 'large';
+  onClick?: () => void;
+  disabled?: boolean;
+  fullWidth?: boolean;
+  startIcon?: React.ReactNode;
+  endIcon?: React.ReactNode;
+  type?: 'button' | 'submit' | 'reset';
+  className?: string;
 }
 
 const Button = ({ 
@@ -11,7 +19,12 @@ const Button = ({
   className = '', 
   variant = 'primary', 
   size = 'medium',
-  ...muiProps
+  onClick,
+  disabled = false,
+  fullWidth = false,
+  startIcon,
+  endIcon,
+  type = 'button'
 }: ButtonProps) => {
   const getMuiVariant = () => {
     switch (variant) {
@@ -45,7 +58,12 @@ const Button = ({
       size={getMuiSize()}
       className={className}
       color={variant === 'danger' ? 'error' : 'primary'}
-      {...muiProps}
+      onClick={onClick}
+      disabled={disabled}
+      fullWidth={fullWidth}
+      startIcon={startIcon}
+      endIcon={endIcon}
+      type={type}
     >
       {children}
     </MuiButton>

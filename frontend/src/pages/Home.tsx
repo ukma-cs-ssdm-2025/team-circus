@@ -1,16 +1,11 @@
-import { 
-  Box, 
-  Button, 
-  Stack,
-  useTheme
-} from '@mui/material';
+import { Box, Stack } from '@mui/material';
+import { ActionButton } from '../components/forms';
 import { useLanguage } from '../contexts/LanguageContext';
 import type { BaseComponentProps } from '../types';
 
 interface HomeProps extends BaseComponentProps {}
 
 const Home = ({ className = '' }: HomeProps) => {
-  const theme = useTheme();
   const { t } = useLanguage();
 
   return (
@@ -30,38 +25,16 @@ const Home = ({ className = '' }: HomeProps) => {
         justifyContent="center"
         alignItems="center"
       >
-        <Button
-          variant="contained"
-          size="large"
-          sx={{ 
-            minWidth: 200,
-            height: 60,
-            fontSize: '1.1rem',
-            backgroundColor: theme.palette.primary.main,
-            '&:hover': {
-              backgroundColor: theme.palette.primary.dark,
-            }
-          }}
+        <ActionButton
           onClick={() => alert(t('home.createDocumentAlert'))}
         >
           {t('home.createDocument')}
-        </Button>
-        <Button
-          variant="contained"
-          size="large"
-          sx={{ 
-            minWidth: 200,
-            height: 60,
-            fontSize: '1.1rem',
-            backgroundColor: theme.palette.primary.main,
-            '&:hover': {
-              backgroundColor: theme.palette.primary.dark,
-            }
-          }}
+        </ActionButton>
+        <ActionButton
           onClick={() => alert(t('home.createGroupAlert'))}
         >
           {t('home.createGroup')}
-        </Button>
+        </ActionButton>
       </Stack>
     </Box>
   );
