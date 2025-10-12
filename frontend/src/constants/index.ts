@@ -1,0 +1,68 @@
+// API endpoints
+export const API_ENDPOINTS = {
+  BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:8080/api',
+  AUTH: {
+    LOGIN: '/auth/login',
+    REGISTER: '/auth/register',
+    LOGOUT: '/auth/logout',
+    PROFILE: '/auth/profile',
+  },
+  USERS: {
+    BASE: '/users',
+    PROFILE: '/users/profile',
+  },
+  DOCUMENTS: {
+    BASE: '/documents',
+    SEARCH: '/documents/search',
+  },
+  GROUPS: {
+    BASE: '/groups',
+    MEMBERS: '/groups/members',
+  },
+} as const;
+
+// Routes
+export const ROUTES = {
+  HOME: '/',
+  LOGIN: '/login',
+  REGISTER: '/register',
+  PROFILE: '/profile',
+  SETTINGS: '/settings',
+  DOCUMENTS: '/documents',
+  GROUPS: '/groups',
+  NOT_FOUND: '/404',
+} as const;
+
+// Local storage keys
+export const STORAGE_KEYS = {
+  TOKEN: 'mcd_token',
+  USER: 'mcd_user',
+  THEME: 'mcd_theme',
+  LANGUAGE: 'mcd_language',
+} as const;
+
+// Theme
+export const THEME = {
+  LIGHT: 'light',
+  DARK: 'dark',
+} as const;
+
+// User roles
+export const USER_ROLES = {
+  ADMIN: 'admin',
+  USER: 'user',
+} as const;
+
+// Document permissions
+export const DOCUMENT_PERMISSIONS = {
+  READ: 'read',
+  WRITE: 'write',
+  DELETE: 'delete',
+  SHARE: 'share',
+} as const;
+
+// Pagination
+export const PAGINATION = {
+  DEFAULT_PAGE_SIZE: 10,
+  MAX_PAGE_SIZE: 100,
+} as const;
