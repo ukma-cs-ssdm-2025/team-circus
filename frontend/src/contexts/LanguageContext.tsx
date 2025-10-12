@@ -58,15 +58,12 @@ const translations = {
   'settings.theme.dark': 'Темна',
     
     // Footer
+    'footer.description': 'Ваш надійний помічник для управління документами',
     'footer.navigation': 'Навігація',
-    'footer.support': 'Підтримка',
     'footer.home': 'Головна',
     'footer.documents': 'Документи',
     'footer.groups': 'Групи',
     'footer.settings': 'Налаштування',
-    'footer.help': 'Допомога',
-    'footer.contact': 'Контакти',
-    'footer.privacy': 'Конфіденційність',
     'footer.copyright': 'Всі права захищені.',
     
     // 404 page
@@ -102,15 +99,12 @@ const translations = {
   'settings.theme.dark': 'Dark',
     
     // Footer
+    'footer.description': 'Your reliable assistant for document management',
     'footer.navigation': 'Navigation',
-    'footer.support': 'Support',
     'footer.home': 'Home',
     'footer.documents': 'Documents',
     'footer.groups': 'Groups',
     'footer.settings': 'Settings',
-    'footer.help': 'Help',
-    'footer.contact': 'Contact',
-    'footer.privacy': 'Privacy',
     'footer.copyright': 'All rights reserved.',
     
     // 404 page

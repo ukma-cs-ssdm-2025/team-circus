@@ -7,12 +7,14 @@ import {
   Divider,
   useTheme
 } from '@mui/material';
+import { useLanguage } from '../../contexts/LanguageContext';
 import type { BaseComponentProps } from '../../types';
 
 interface FooterProps extends BaseComponentProps {}
 
 const Footer = ({ className = '' }: FooterProps) => {
   const theme = useTheme();
+  const { t } = useLanguage();
   const currentYear = new Date().getFullYear();
 
   return (
@@ -28,11 +30,11 @@ const Footer = ({ className = '' }: FooterProps) => {
       }}
       className={className}
     >
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Grid container spacing={4}>
-          <Grid item xs={12} sm={6} md={4}>
+      <Container maxWidth="lg" sx={{ py: 6 }}>
+        <Grid container spacing={6} justifyContent="center">
+          <Grid item xs={12} md={4} sx={{ textAlign: { xs: 'center', md: 'left' } }}>
             <Typography
-              variant="h6"
+              variant="h5"
               sx={{
                 fontWeight: 700,
                 color: theme.palette.primary.main,
@@ -41,55 +43,115 @@ const Footer = ({ className = '' }: FooterProps) => {
             >
               MCD
             </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Ваш надійний помічник для управління документами
+            <Typography 
+              variant="body1" 
+              color="text.secondary"
+              sx={{ 
+                maxWidth: 300,
+                mx: { xs: 'auto', md: 0 },
+                lineHeight: 1.6
+              }}
+            >
+              {t('footer.description')}
             </Typography>
           </Grid>
           
-          <Grid item xs={12} sm={6} md={4}>
-            <Typography variant="h6" gutterBottom>
-              Навігація
+          <Grid item xs={12} md={4} sx={{ textAlign: { xs: 'center', md: 'left' } }}>
+            <Typography 
+              variant="h6" 
+              sx={{ 
+                fontWeight: 600,
+                mb: 3,
+                color: theme.palette.text.primary
+              }}
+            >
+              {t('footer.navigation')}
             </Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <Link href="/" color="text.secondary" underline="hover">
-                Головна
+            <Box sx={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: 2,
+              alignItems: { xs: 'center', md: 'flex-start' }
+            }}>
+              <Link 
+                href="/" 
+                color="text.secondary" 
+                underline="hover"
+                sx={{ 
+                  fontSize: '0.95rem',
+                  fontWeight: 500,
+                  transition: 'color 0.2s ease',
+                  '&:hover': {
+                    color: theme.palette.primary.main
+                  }
+                }}
+              >
+                {t('footer.home')}
               </Link>
-              <Link href="/documents" color="text.secondary" underline="hover">
-                Документи
+              <Link 
+                href="/documents" 
+                color="text.secondary" 
+                underline="hover"
+                sx={{ 
+                  fontSize: '0.95rem',
+                  fontWeight: 500,
+                  transition: 'color 0.2s ease',
+                  '&:hover': {
+                    color: theme.palette.primary.main
+                  }
+                }}
+              >
+                {t('footer.documents')}
               </Link>
-              <Link href="/groups" color="text.secondary" underline="hover">
-                Групи
+              <Link 
+                href="/groups" 
+                color="text.secondary" 
+                underline="hover"
+                sx={{ 
+                  fontSize: '0.95rem',
+                  fontWeight: 500,
+                  transition: 'color 0.2s ease',
+                  '&:hover': {
+                    color: theme.palette.primary.main
+                  }
+                }}
+              >
+                {t('footer.groups')}
               </Link>
-              <Link href="/settings" color="text.secondary" underline="hover">
-                Налаштування
-              </Link>
-            </Box>
-          </Grid>
-          
-          <Grid item xs={12} sm={6} md={4}>
-            <Typography variant="h6" gutterBottom>
-              Підтримка
-            </Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <Link href="/help" color="text.secondary" underline="hover">
-                Допомога
-              </Link>
-              <Link href="/contact" color="text.secondary" underline="hover">
-                Контакти
-              </Link>
-              <Link href="/privacy" color="text.secondary" underline="hover">
-                Конфіденційність
+              <Link 
+                href="/settings" 
+                color="text.secondary" 
+                underline="hover"
+                sx={{ 
+                  fontSize: '0.95rem',
+                  fontWeight: 500,
+                  transition: 'color 0.2s ease',
+                  '&:hover': {
+                    color: theme.palette.primary.main
+                  }
+                }}
+              >
+                {t('footer.settings')}
               </Link>
             </Box>
           </Grid>
         </Grid>
       </Container>
       
-      <Divider />
+      <Divider sx={{ my: 2 }} />
       
-      <Container maxWidth="lg" sx={{ py: 2 }}>
-        <Typography variant="body2" color="text.secondary" align="center">
-          &copy; {currentYear} MCD. Всі права захищені.
+      <Container maxWidth="lg" sx={{ py: 3 }}>
+        <Typography 
+          variant="body2" 
+          color="text.secondary" 
+          align="center"
+          sx={{ 
+            fontSize: '0.9rem',
+            fontWeight: 400,
+            opacity: 0.8
+          }}
+        >
+          &copy; {currentYear} MCD. {t('footer.copyright')}
         </Typography>
       </Container>
     </Box>

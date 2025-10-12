@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import {
   Box,
   Container,
@@ -9,9 +8,6 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  FormControlLabel,
-  Switch,
-  Button,
   Stack,
   useTheme as useMuiTheme
 } from '@mui/material';
@@ -25,21 +21,12 @@ const Settings = ({ className = '' }: SettingsProps) => {
   const muiTheme = useMuiTheme();
   const { theme, setTheme } = useTheme();
   const { language, setLanguage, t } = useLanguage();
-  const [settings, setSettings] = useState({
-    notifications: true,
-    autoSave: true,
-  });
 
   const handleSettingChange = (key: string, value: any) => {
     if (key === 'language') {
       setLanguage(value);
     } else if (key === 'theme') {
       setTheme(value);
-    } else {
-      setSettings(prev => ({
-        ...prev,
-        [key]: value
-      }));
     }
   };
 
@@ -104,60 +91,6 @@ const Settings = ({ className = '' }: SettingsProps) => {
                   </FormControl>
                 </Stack>
               </Card>
-
-              <Card variant="outlined" sx={{ p: 3 }}>
-                <Typography variant="h5" gutterBottom>
-                  {t('settings.notifications')}
-                </Typography>
-                
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={settings.notifications}
-                      onChange={(e) => handleSettingChange('notifications', e.target.checked)}
-                    />
-                  }
-                  label={t('settings.notificationsLabel')}
-                />
-              </Card>
-
-              <Card variant="outlined" sx={{ p: 3 }}>
-                <Typography variant="h5" gutterBottom>
-                  {t('settings.documents')}
-                </Typography>
-                
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={settings.autoSave}
-                      onChange={(e) => handleSettingChange('autoSave', e.target.checked)}
-                    />
-                  }
-                  label={t('settings.autoSaveLabel')}
-                />
-              </Card>
-            </Stack>
-
-            <Stack
-              direction={{ xs: 'column', sm: 'row' }}
-              spacing={2}
-              justifyContent="center"
-              sx={{ mt: 4 }}
-            >
-              <Button
-                variant="contained"
-                size="large"
-                sx={{ minWidth: 200 }}
-              >
-                {t('settings.save')}
-              </Button>
-              <Button
-                variant="outlined"
-                size="large"
-                sx={{ minWidth: 200 }}
-              >
-                {t('settings.reset')}
-              </Button>
             </Stack>
           </CardContent>
         </Card>

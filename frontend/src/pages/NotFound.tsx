@@ -8,6 +8,7 @@ import {
   useTheme
 } from '@mui/material';
 import { Home as HomeIcon, ArrowBack as ArrowBackIcon } from '@mui/icons-material';
+import { useLanguage } from '../contexts/LanguageContext';
 import { ROUTES } from '../constants';
 import type { BaseComponentProps } from '../types';
 
@@ -15,6 +16,7 @@ interface NotFoundProps extends BaseComponentProps {}
 
 const NotFound = ({ className = '' }: NotFoundProps) => {
   const theme = useTheme();
+  const { t } = useLanguage();
 
   return (
     <Box className={className}>
@@ -45,11 +47,11 @@ const NotFound = ({ className = '' }: NotFoundProps) => {
           </Typography>
           
           <Typography variant="h3" gutterBottom>
-            Сторінку не знайдено
+            {t('notFound.title')}
           </Typography>
           
           <Typography variant="h6" color="text.secondary" sx={{ mb: 4 }}>
-            Вибачте, але сторінка, яку ви шукаєте, не існує або була переміщена.
+            {t('notFound.message')}
           </Typography>
 
           <Stack
@@ -65,7 +67,7 @@ const NotFound = ({ className = '' }: NotFoundProps) => {
               startIcon={<HomeIcon />}
               sx={{ minWidth: 200 }}
             >
-              Повернутися на головну
+              {t('notFound.home')}
             </Button>
             <Button
               variant="outlined"
@@ -74,7 +76,7 @@ const NotFound = ({ className = '' }: NotFoundProps) => {
               onClick={() => window.history.back()}
               sx={{ minWidth: 200 }}
             >
-              Назад
+              {t('notFound.back')}
             </Button>
           </Stack>
         </Box>
