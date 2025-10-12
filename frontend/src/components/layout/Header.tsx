@@ -39,10 +39,7 @@ const Header = () => {
             flexGrow: 1,
             fontWeight: 700,
             textDecoration: 'none',
-            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
-            backgroundClip: 'text',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
+            color: theme.palette.primary.main,
             cursor: 'pointer',
           }}
         >

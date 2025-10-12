@@ -33,10 +33,7 @@ const Footer = ({ className = '' }: FooterProps) => {
               variant="h6"
               sx={{
                 fontWeight: 700,
-                background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
-                backgroundClip: 'text',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
+                color: theme.palette.primary.main,
                 mb: 2,
               }}
             >
