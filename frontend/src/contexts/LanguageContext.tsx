@@ -11,7 +11,6 @@ interface LanguageContextType {
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
-// Функції для роботи з localStorage
 const getStoredLanguage = (): Language => {
   try {
     const stored = localStorage.getItem('mcd_language');
@@ -25,11 +24,9 @@ const setStoredLanguage = (language: Language): void => {
   try {
     localStorage.setItem('mcd_language', language);
   } catch {
-    // Ігноруємо помилки localStorage
   }
 };
 
-// Тексти для перекладів
 const translations = {
   uk: {
     // Header
@@ -122,7 +119,6 @@ interface LanguageProviderProps {
 export const LanguageProvider = ({ children }: LanguageProviderProps) => {
   const [language, setLanguage] = useState<Language>(getStoredLanguage);
 
-  // Зберігаємо мову в localStorage при зміні
   useEffect(() => {
     setStoredLanguage(language);
   }, [language]);

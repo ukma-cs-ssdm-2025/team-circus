@@ -13,14 +13,12 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-// Функції для роботи з localStorage
 const getStoredTheme = (): Theme => {
   try {
     const stored = localStorage.getItem('mcd_theme');
     if (stored) {
       return stored as Theme;
     }
-    // Автоматичне визначення теми системи
     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
       return 'dark';
     }
@@ -34,11 +32,9 @@ const setStoredTheme = (theme: Theme): void => {
   try {
     localStorage.setItem('mcd_theme', theme);
   } catch {
-    // Ігноруємо помилки localStorage
   }
 };
 
-// Створення теми
 const createAppTheme = (mode: Theme) => createTheme({
   palette: {
     mode,
