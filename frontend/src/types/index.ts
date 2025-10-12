@@ -41,10 +41,16 @@ export interface NavItem {
 }
 
 // API Response types
-export interface ApiResponse<T> {
+export interface ApiResponse<T = any> {
   data: T;
-  message: string;
+  message?: string;
   success: boolean;
+}
+
+export interface ApiError {
+  message: string;
+  status: number;
+  code?: string;
 }
 
 export interface PaginatedResponse<T> {

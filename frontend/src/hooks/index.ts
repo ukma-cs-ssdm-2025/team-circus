@@ -1,2 +1,1 @@
-export { useLocalStorage } from './useLocalStorage';
-export { useTheme } from './useTheme';
+export * from './useApi';
