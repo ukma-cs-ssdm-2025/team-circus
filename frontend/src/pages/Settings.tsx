@@ -2,22 +2,15 @@ import { FormControl, InputLabel, Select, MenuItem, Stack } from '@mui/material'
 import { PageCard, PageHeader, CenteredContent } from '../components/common';
 import { SettingsSection } from '../components/forms';
 import { useLanguage } from '../contexts/LanguageContext';
-import { useTheme } from '../contexts/ThemeContext';
+import { useTheme, type Theme } from '../contexts/ThemeContext';
 import type { BaseComponentProps } from '../types';
+import type { Language } from '../contexts/LanguageContext';
 
-interface SettingsProps extends BaseComponentProps {}
+type SettingsProps = BaseComponentProps;
 
 const Settings = ({ className = '' }: SettingsProps) => {
   const { theme, setTheme } = useTheme();
   const { language, setLanguage, t } = useLanguage();
-
-  const handleSettingChange = (key: string, value: any) => {
-    if (key === 'language') {
-      setLanguage(value);
-    } else if (key === 'theme') {
-      setTheme(value);
-    }
-  };
 
   return (
     <CenteredContent className={className}>
@@ -34,7 +27,7 @@ const Settings = ({ className = '' }: SettingsProps) => {
               <Select
                 value={theme}
                 label={t('settings.theme')}
-                onChange={(e) => handleSettingChange('theme', e.target.value)}
+                onChange={(event) => setTheme(event.target.value as Theme)}
               >
                 <MenuItem value="light">{t('settings.theme.light')}</MenuItem>
                 <MenuItem value="dark">{t('settings.theme.dark')}</MenuItem>
@@ -46,7 +39,7 @@ const Settings = ({ className = '' }: SettingsProps) => {
               <Select
                 value={language}
                 label={t('settings.language')}
-                onChange={(e) => handleSettingChange('language', e.target.value)}
+                onChange={(event) => setLanguage(event.target.value as Language)}
               >
                 <MenuItem value="uk">Українська</MenuItem>
                 <MenuItem value="en">English</MenuItem>

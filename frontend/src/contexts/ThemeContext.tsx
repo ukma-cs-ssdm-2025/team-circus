@@ -23,7 +23,8 @@ const getStoredTheme = (): Theme => {
       return 'dark';
     }
     return 'light';
-  } catch {
+  } catch (error) {
+    console.warn('Не вдалося визначити тему із localStorage', error);
     return 'light';
   }
 };
@@ -31,7 +32,8 @@ const getStoredTheme = (): Theme => {
 const setStoredTheme = (theme: Theme): void => {
   try {
     localStorage.setItem('mcd_theme', theme);
-  } catch {
+  } catch (error) {
+    console.warn('Не вдалося зберегти тему до localStorage', error);
   }
 };
 
@@ -176,10 +178,11 @@ export const ThemeProvider = ({ children }: ThemeProviderProps) => {
   );
 };
 
-export const useTheme = () => {
+// eslint-disable-next-line react-refresh/only-export-components
+export function useTheme() {
   const context = useContext(ThemeContext);
   if (context === undefined) {
     throw new Error('useTheme must be used within a ThemeProvider');
   }
   return context;
-};
+}

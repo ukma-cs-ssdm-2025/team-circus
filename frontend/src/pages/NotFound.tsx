@@ -7,7 +7,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { ROUTES } from '../constants';
 import type { BaseComponentProps } from '../types';
 
-interface NotFoundProps extends BaseComponentProps {}
+type NotFoundProps = BaseComponentProps;
 
 const NotFound = ({ className = '' }: NotFoundProps) => {
   const theme = useTheme();

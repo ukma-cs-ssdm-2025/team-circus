@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { storage } from '../utils';
 
 export function useLocalStorage<T>(key: string, initialValue: T) {

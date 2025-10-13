@@ -10,7 +10,7 @@ import {
 import { useLanguage } from '../../contexts/LanguageContext';
 import type { BaseComponentProps } from '../../types';
 
-interface FooterProps extends BaseComponentProps {}
+type FooterProps = BaseComponentProps;
 
 const Footer = ({ className = '' }: FooterProps) => {
   const theme = useTheme();

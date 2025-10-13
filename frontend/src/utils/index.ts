@@ -69,12 +69,19 @@ export const buildApiUrl = (endpoint: string): string => {
 };
 
 // Error handling
-export const handleApiError = (error: any): string => {
-  if (error.response?.data?.message) {
-    return error.response.data.message;
+export const handleApiError = (error: unknown): string => {
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'response' in error &&
+    typeof (error as { response?: { data?: { message?: string } } }).response?.data?.message === 'string'
+  ) {
+    return (error as { response: { data: { message: string } } }).response.data.message;
   }
-  if (error.message) {
+
+  if (error instanceof Error) {
     return error.message;
   }
+
   return 'Сталася невідома помилка';
 };
