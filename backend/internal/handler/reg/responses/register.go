@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type CreateUserResponse struct {
+type RegResponse struct {
 	UUID      uuid.UUID `json:"uuid"`
 	Login     string    `json:"login"`
 	Email     string    `json:"email"`
