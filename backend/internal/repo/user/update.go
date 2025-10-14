@@ -13,13 +13,14 @@ func (r *UserRepository) Update(ctx context.Context, uuid uuid.UUID, login strin
 		UPDATE users 
 		SET login = $1, email = $2, hashed_password = $3
 		WHERE uuid = $4
-		RETURNING uuid, login, email, created_at`
+		RETURNING uuid, login, email, hashed_password, created_at`
 
 	var user domain.User
 	err := r.db.QueryRowContext(ctx, query, login, email, password, uuid).Scan(
 		&user.UUID,
 		&user.Login,
 		&user.Email,
+		&user.Password,
 		&user.CreatedAt,
 	)
 	if err != nil {

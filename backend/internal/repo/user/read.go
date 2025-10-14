@@ -10,7 +10,7 @@ import (
 
 func (r *UserRepository) GetByUUID(ctx context.Context, uuid uuid.UUID) (*domain.User, error) {
 	query := `
-		SELECT uuid, login, email, created_at 
+		SELECT uuid, login, email, hashed_password, created_at 
 		FROM users 
 		WHERE uuid = $1`
 
@@ -19,6 +19,31 @@ func (r *UserRepository) GetByUUID(ctx context.Context, uuid uuid.UUID) (*domain
 		&user.UUID,
 		&user.Login,
 		&user.Email,
+		&user.Password,
+		&user.CreatedAt,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &user, nil
+}
+
+func (r *UserRepository) GetByLogin(ctx context.Context, login string) (*domain.User, error) {
+	query := `
+    SELECT uuid, login, email, hashed_password, created_at 
+    FROM users 
+    WHERE login = $1`
+
+	var user domain.User
+	err := r.db.QueryRowContext(ctx, query, login).Scan(
+		&user.UUID,
+		&user.Login,
+		&user.Email,
+		&user.Password,
 		&user.CreatedAt,
 	)
 	if err != nil {
@@ -33,7 +58,7 @@ func (r *UserRepository) GetByUUID(ctx context.Context, uuid uuid.UUID) (*domain
 
 func (r *UserRepository) GetAll(ctx context.Context) ([]*domain.User, error) {
 	query := `
-		SELECT uuid, login, email, created_at 
+		SELECT uuid, login, email, hashed_password, created_at 
 		FROM users 
 		ORDER BY created_at DESC`
 
@@ -50,6 +75,7 @@ func (r *UserRepository) GetAll(ctx context.Context) ([]*domain.User, error) {
 			&user.UUID,
 			&user.Login,
 			&user.Email,
+			&user.Password,
 			&user.CreatedAt,
 		)
 		if err != nil {

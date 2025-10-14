@@ -25,6 +25,7 @@ type User struct {
 	UUID      uuid.UUID
 	Login     string
 	Email     string
+	Password  string
 	CreatedAt time.Time
 }
 
