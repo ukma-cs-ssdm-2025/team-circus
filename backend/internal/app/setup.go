@@ -23,12 +23,12 @@ func (a *App) setupRouter() *gin.Engine {
 
 	// CORS middleware
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173", "http://localhost:3000"},
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With"},
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
-		MaxAge:           12 * time.Hour,
+		AllowOrigins:     a.cfg.CORS.AllowOrigins,
+		AllowMethods:     a.cfg.CORS.AllowMethods,
+		AllowHeaders:     a.cfg.CORS.AllowHeaders,
+		ExposeHeaders:    a.cfg.CORS.ExposeHeaders,
+		AllowCredentials: a.cfg.CORS.AllowCredentials,
+		MaxAge:           time.Duration(a.cfg.CORS.MaxAge) * time.Second,
 	}))
 
 	// Swagger documentation

@@ -26,9 +26,19 @@ type SrvConfig struct {
 	Port string `envconfig:"API_PORT" required:"true"`
 }
 
+type CORSConfig struct {
+	AllowOrigins     []string `envconfig:"CORS_ALLOW_ORIGINS" required:"true"`
+	AllowMethods     []string `envconfig:"CORS_ALLOW_METHODS" required:"true"`
+	AllowHeaders     []string `envconfig:"CORS_ALLOW_HEADERS" required:"true"`
+	ExposeHeaders    []string `envconfig:"CORS_EXPOSE_HEADERS" required:"true"`
+	AllowCredentials bool     `envconfig:"CORS_ALLOW_CREDENTIALS" required:"true"`
+	MaxAge           int      `envconfig:"CORS_MAX_AGE" required:"true"`
+}
+
 type Config struct {
-	DB  DBConfig
-	Srv SrvConfig
+	DB   DBConfig
+	Srv  SrvConfig
+	CORS CORSConfig
 }
 
 func Load() (*Config, error) {
