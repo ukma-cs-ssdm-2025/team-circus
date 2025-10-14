@@ -134,27 +134,27 @@ const translations = {
     'notFound.home': 'Return to Home',
     'notFound.back': 'Back',
 
-    // Groups page (Ukrainian-only copy)
-    'groups.title': 'Групи документів',
-    'groups.subtitle': 'Переглядайте створені групи та переходьте до їх документів',
-    'groups.error': 'Не вдалося завантажити групи.',
-    'groups.refresh': 'Спробувати знову',
-    'groups.empty': 'Поки немає жодної групи.',
-    'groups.createdAt': 'Створено',
-    'groups.totalLabel': 'Всього груп:',
+    // Groups page
+    'groups.title': 'Document Groups',
+    'groups.subtitle': 'Browse created groups and navigate to their documents',
+    'groups.error': 'Failed to load groups.',
+    'groups.refresh': 'Try again',
+    'groups.empty': 'No groups yet.',
+    'groups.createdAt': 'Created',
+    'groups.totalLabel': 'Total groups:',
 
-    // Documents page (Ukrainian-only copy)
-    'documents.title': 'Документи',
-    'documents.subtitle': 'Ознайомтеся з документами та знаходьте потрібні за кілька секунд',
-    'documents.filterGroup': 'Група',
-    'documents.filterAll': 'Усі групи',
-    'documents.searchPlaceholder': 'Пошук документів',
-    'documents.error': 'Не вдалося завантажити документи.',
-    'documents.refresh': 'Спробувати знову',
-    'documents.empty': 'Документів не знайдено.',
-    'documents.groupUnknown': 'Без групи',
-    'documents.noContent': 'Без вмісту',
-    'documents.createdAt': 'Створено',
+    // Documents page
+    'documents.title': 'Documents',
+    'documents.subtitle': 'Browse documents and find what you need in seconds',
+    'documents.filterGroup': 'Group',
+    'documents.filterAll': 'All groups',
+    'documents.searchPlaceholder': 'Search documents',
+    'documents.error': 'Failed to load documents.',
+    'documents.refresh': 'Try again',
+    'documents.empty': 'No documents found.',
+    'documents.groupUnknown': 'No group',
+    'documents.noContent': 'No content',
+    'documents.createdAt': 'Created',
   }
 };
 
