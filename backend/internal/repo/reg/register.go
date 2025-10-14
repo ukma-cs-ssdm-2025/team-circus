@@ -1,4 +1,4 @@
-package user
+package reg
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 )
 
-func (r *UserRepository) Create(ctx context.Context, login string, email string, password string) (*domain.User, error) {
+func (r *RegRepository) Register(ctx context.Context, login string, email string, password string) (*domain.User, error) {
 	query := `
 		INSERT INTO users (login, email, hashed_password) 
 		VALUES ($1, $2, $3) 

@@ -4,13 +4,13 @@ import (
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
-type CreateUserRequest struct {
+type RegRequest struct {
 	Login    string `json:"login"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
-func (r CreateUserRequest) Validate() error {
+func (r RegRequest) Validate() error {
 	return validation.ValidateStruct(&r,
 		validation.Field(&r.Login, validation.Required, validation.Length(1, 255)),
 		validation.Field(&r.Email, validation.Required, validation.Length(1, 255)),
