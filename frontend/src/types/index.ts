@@ -84,3 +84,6 @@ export interface ThemeContextType {
   theme: Theme;
   toggleTheme: () => void;
 }
+
+// Export entity types
+export * from './entities';

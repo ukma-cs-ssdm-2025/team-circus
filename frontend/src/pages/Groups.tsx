@@ -1,33 +1,10 @@
-import {
-  Alert,
-  Box,
-  Button,
-  CircularProgress,
-  Divider,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemText,
-  Stack,
-  Typography,
-} from '@mui/material';
+import { Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { CenteredContent, PageCard, PageHeader } from '../components/common';
+import { CenteredContent, PageCard, PageHeader, ErrorAlert, LoadingSpinner, GroupsList } from '../components';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useApi } from '../hooks';
 import { API_ENDPOINTS, ROUTES } from '../constants';
-import { formatDate } from '../utils';
-import type { BaseComponentProps } from '../types';
-
-interface GroupsResponse {
-  groups: GroupItem[];
-}
-
-interface GroupItem {
-  uuid: string;
-  name: string;
-  created_at: string;
-}
+import type { BaseComponentProps, GroupsResponse } from '../types';
 
 type GroupsProps = BaseComponentProps;
 
@@ -52,22 +29,14 @@ const Groups = ({ className = '' }: GroupsProps) => {
           subtitle={t('groups.subtitle')}
         />
 
-        {loading && (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-            <CircularProgress />
-          </Box>
-        )}
+        {loading && <LoadingSpinner />}
 
         {error && (
-          <Alert
-            severity="error"
-            sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 2 }}
-          >
-            <Box component="span">{t('groups.error')}</Box>
-            <Button variant="outlined" size="small" onClick={refetch}>
-              {t('groups.refresh')}
-            </Button>
-          </Alert>
+          <ErrorAlert
+            message={t('groups.error')}
+            onRetry={refetch}
+            retryText={t('groups.refresh')}
+          />
         )}
 
         {!loading && !error && groups.length === 0 && (
@@ -77,38 +46,12 @@ const Groups = ({ className = '' }: GroupsProps) => {
         )}
 
         {groups.length > 0 && (
-          <Stack spacing={2}>
-            <Typography variant="body2" color="text.secondary">
-              {`${t('groups.totalLabel')} ${groups.length}`}
-            </Typography>
-
-            <List disablePadding>
-              {groups.map((group, index) => (
-                <Box key={group.uuid}>
-                  <ListItem disablePadding alignItems="flex-start">
-                    <ListItemButton
-                      sx={{ borderRadius: 2 }}
-                      onClick={() => handleOpenGroupDocuments(group.uuid)}
-                    >
-                      <ListItemText
-                        primary={
-                          <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                            {group.name}
-                          </Typography>
-                        }
-                        secondary={
-                          <Typography variant="body2" color="text.secondary">
-                            {`${t('groups.createdAt')}: ${formatDate(group.created_at)}`}
-                          </Typography>
-                        }
-                      />
-                    </ListItemButton>
-                  </ListItem>
-                  {index < groups.length - 1 && <Divider sx={{ my: 1 }} />}
-                </Box>
-              ))}
-            </List>
-          </Stack>
+          <GroupsList
+            groups={groups}
+            onGroupClick={handleOpenGroupDocuments}
+            totalLabel={t('groups.totalLabel')}
+            createdAtLabel={t('groups.createdAt')}
+          />
         )}
       </PageCard>
     </CenteredContent>
