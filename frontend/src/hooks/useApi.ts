@@ -85,7 +85,7 @@ export function useApi<T>(
 }
 
 // Hook for mutations (POST, PUT, DELETE)
-export function useMutation<T, P = any>(
+export function useMutation<T, P = unknown>(
   endpoint: string,
   method: 'POST' | 'PUT' | 'DELETE' = 'POST'
 ) {

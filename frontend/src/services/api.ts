@@ -27,13 +27,38 @@ class ApiClient {
 
     try {
       const response = await fetch(url, config);
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const data = await response.json();
-      return data;
+      let parsed: unknown;
+
+      try {
+        parsed = await response.json();
+      } catch {
+        parsed = null;
+      }
+
+      const isObject = (value: unknown): value is Record<string, unknown> => {
+        return typeof value === 'object' && value !== null;
+      };
+
+      const parsedObject = isObject(parsed) ? parsed : null;
+      const hasData = parsedObject !== null && 'data' in parsedObject;
+      const data = hasData ? (parsedObject.data as T) : (parsed as T);
+      const success = parsedObject !== null && 'success' in parsedObject
+        ? Boolean(parsedObject.success)
+        : response.ok;
+      const message = parsedObject !== null && typeof parsedObject.message === 'string'
+        ? parsedObject.message
+        : undefined;
+
+      return {
+        data,
+        success,
+        message,
+      } satisfies ApiResponse<T>;
     } catch (error) {
       console.error('API request failed:', error);
       throw error;
@@ -49,27 +74,27 @@ class ApiClient {
   }
 
   // POST request
-  async post<T>(
-    endpoint: string, 
-    data?: any, 
+  async post<T, P = unknown>(
+    endpoint: string,
+    data?: P,
     options?: RequestInit
   ): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
       method: 'POST',
-      body: data ? JSON.stringify(data) : undefined,
+      body: data !== undefined ? JSON.stringify(data) : undefined,
       ...options,
     });
   }
 
   // PUT request
-  async put<T>(
-    endpoint: string, 
-    data?: any, 
+  async put<T, P = unknown>(
+    endpoint: string,
+    data?: P,
     options?: RequestInit
   ): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
       method: 'PUT',
-      body: data ? JSON.stringify(data) : undefined,
+      body: data !== undefined ? JSON.stringify(data) : undefined,
       ...options,
     });
   }

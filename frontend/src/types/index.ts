@@ -41,7 +41,7 @@ export interface NavItem {
 }
 
 // API Response types
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   data: T;
   message?: string;
   success: boolean;
@@ -84,3 +84,6 @@ export interface ThemeContextType {
   theme: Theme;
   toggleTheme: () => void;
 }
+
+// Export entity types
+export * from './entities';
