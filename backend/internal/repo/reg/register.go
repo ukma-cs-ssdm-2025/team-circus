@@ -10,13 +10,14 @@ func (r *RegRepository) Register(ctx context.Context, login string, email string
 	query := `
 		INSERT INTO users (login, email, hashed_password) 
 		VALUES ($1, $2, $3) 
-		RETURNING uuid, login, email, created_at`
+		RETURNING uuid, login, email, hashed_password, created_at`
 
 	var user domain.User
 	err := r.db.QueryRowContext(ctx, query, login, email, password).Scan(
 		&user.UUID,
 		&user.Login,
 		&user.Email,
+		&user.Password,
 		&user.CreatedAt,
 	)
 	if err != nil {

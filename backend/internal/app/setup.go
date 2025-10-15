@@ -7,10 +7,12 @@ import (
 	"github.com/gin-gonic/gin"
 	swaggerfiles "github.com/swaggo/files"
 	ginswagger "github.com/swaggo/gin-swagger"
+	authhandler "github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/auth"
 	documenthandler "github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/document"
 	grouphandler "github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/group"
 	reghandler "github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/reg"
 	userhandler "github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/user"
+	"github.com/ukma-cs-ssdm-2025/team-circus/internal/middleware"
 	documentrepo "github.com/ukma-cs-ssdm-2025/team-circus/internal/repo/document"
 	grouprepo "github.com/ukma-cs-ssdm-2025/team-circus/internal/repo/group"
 	regrepo "github.com/ukma-cs-ssdm-2025/team-circus/internal/repo/reg"
@@ -78,9 +80,20 @@ func (a *App) setupRouter() *gin.Engine {
 			users.DELETE("/:uuid", userhandler.NewDeleteUserHandler(userService))
 		}
 
-		reg := apiV1.Group("/users")
+		reg := apiV1.Group("/signup")
 		{
 			reg.POST("", reghandler.NewRegHandler(regService))
+		}
+
+		auth := apiV1.Group("/auth")
+		{
+			auth.POST("/login", authhandler.NewLogInHandler(userRepo))
+			auth.POST("/refresh", authhandler.NewRefreshTokenHandler(userRepo))
+		}
+
+		test := apiV1.Group("/validate")
+		{
+			test.GET("", middleware.AuthMiddleware(userRepo), authhandler.Validate)
 		}
 	}
 	return router

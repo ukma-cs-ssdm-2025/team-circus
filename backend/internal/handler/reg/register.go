@@ -22,11 +22,11 @@ type regService interface {
 // @Tags registration
 // @Accept json
 // @Produce json
-// @Param request body requests.ReqRequest true "User registration request"
+// @Param request body requests.RegRequest true "User registration request"
 // @Success 201 {object} responses.RegResponse "User registered successfully"
 // @Failure 400 {object} map[string]interface{} "Invalid request format or validation failed"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
-// @Router /api/v1/users [post]
+// @Router /api/v1/signup [post]
 func NewRegHandler(service regService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req requests.RegRequest
