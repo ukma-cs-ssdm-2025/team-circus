@@ -25,7 +25,7 @@ const Footer = ({ className = '' }: FooterProps) => {
           ? 'rgba(255, 255, 255, 0.9)' 
           : 'rgba(30, 30, 30, 0.9)',
         backdropFilter: 'blur(10px)',
-        borderTop: `1px solid ${theme.palette.divider}`,
+        borderTop: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.15)' : theme.palette.divider}`,
         mt: 'auto',
       }}
       className={className}

@@ -62,6 +62,15 @@ const translations = {
     'footer.groups': 'Групи',
     'footer.settings': 'Налаштування',
     'footer.copyright': 'Всі права захищені.',
+
+    // Sidebar
+    'sidebar.navigation': 'Навігація',
+    'sidebar.home': 'Головна',
+    'sidebar.documents': 'Документи',
+    'sidebar.settings': 'Налаштування',
+    'sidebar.groups': 'Групи',
+    'sidebar.viewGroups': 'Переглянути групи',
+    'sidebar.createGroup': 'Створити групу',
     
     // 404 page
     'notFound.title': 'Сторінку не знайдено',
@@ -103,6 +112,15 @@ const translations = {
     'footer.groups': 'Groups',
     'footer.settings': 'Settings',
     'footer.copyright': 'All rights reserved.',
+
+    // Sidebar
+    'sidebar.navigation': 'Navigation',
+    'sidebar.home': 'Home',
+    'sidebar.documents': 'Documents',
+    'sidebar.settings': 'Settings',
+    'sidebar.groups': 'Groups',
+    'sidebar.viewGroups': 'View Groups',
+    'sidebar.createGroup': 'Create Group',
     
     // 404 page
     'notFound.title': 'Page Not Found',

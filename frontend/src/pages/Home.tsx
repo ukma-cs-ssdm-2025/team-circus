@@ -1,4 +1,5 @@
 import { Box, Stack } from '@mui/material';
+import { Sidebar } from '../components/layout';
 import { ActionButton } from '../components/forms';
 import { useLanguage } from '../contexts/LanguageContext';
 import type { BaseComponentProps } from '../types';
@@ -13,29 +14,42 @@ const Home = ({ className = '' }: HomeProps) => {
       className={className}
       sx={{
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        gap: 2,
         minHeight: '100vh',
-        padding: 2,
+        px: 2,
+        py: 3,
       }}
     >
-      <Stack
-        direction={{ xs: 'column', sm: 'row' }}
-        spacing={3}
-        justifyContent="center"
-        alignItems="center"
+      <Box sx={{ display: { xs: 'none', md: 'block' } }}>
+        <Sidebar />
+      </Box>
+
+      <Box
+        sx={{
+          flex: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
       >
-        <ActionButton
-          onClick={() => alert(t('home.createDocumentAlert'))}
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={3}
+          justifyContent="center"
+          alignItems="center"
         >
-          {t('home.createDocument')}
-        </ActionButton>
-        <ActionButton
-          onClick={() => alert(t('home.createGroupAlert'))}
-        >
-          {t('home.createGroup')}
-        </ActionButton>
-      </Stack>
+          <ActionButton
+            onClick={() => alert(t('home.createDocumentAlert'))}
+          >
+            {t('home.createDocument')}
+          </ActionButton>
+          <ActionButton
+            onClick={() => alert(t('home.createGroupAlert'))}
+          >
+            {t('home.createGroup')}
+          </ActionButton>
+        </Stack>
+      </Box>
     </Box>
   );
 };
