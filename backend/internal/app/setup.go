@@ -1,6 +1,9 @@
 package app
 
 import (
+	"time"
+
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	swaggerfiles "github.com/swaggo/files"
 	ginswagger "github.com/swaggo/gin-swagger"
@@ -22,6 +25,16 @@ import (
 
 func (a *App) setupRouter() *gin.Engine {
 	router := gin.Default()
+
+	// CORS middleware
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     a.cfg.CORS.AllowOrigins,
+		AllowMethods:     a.cfg.CORS.AllowMethods,
+		AllowHeaders:     a.cfg.CORS.AllowHeaders,
+		ExposeHeaders:    a.cfg.CORS.ExposeHeaders,
+		AllowCredentials: a.cfg.CORS.AllowCredentials,
+		MaxAge:           time.Duration(a.cfg.CORS.MaxAge) * time.Second,
+	}))
 
 	// Swagger documentation
 	router.GET("/swagger/*any", ginswagger.WrapHandler(swaggerfiles.Handler))

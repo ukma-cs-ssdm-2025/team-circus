@@ -15,7 +15,8 @@ const getStoredLanguage = (): Language => {
   try {
     const stored = localStorage.getItem('mcd_language');
     return (stored as Language) || 'uk';
-  } catch {
+  } catch (error) {
+    console.warn('Не вдалося завантажити мову з localStorage', error);
     return 'uk';
   }
 };
@@ -23,7 +24,8 @@ const getStoredLanguage = (): Language => {
 const setStoredLanguage = (language: Language): void => {
   try {
     localStorage.setItem('mcd_language', language);
-  } catch {
+  } catch (error) {
+    console.warn('Не вдалося зберегти мову до localStorage', error);
   }
 };
 
@@ -62,12 +64,43 @@ const translations = {
     'footer.groups': 'Групи',
     'footer.settings': 'Налаштування',
     'footer.copyright': 'Всі права захищені.',
+
+    // Sidebar
+    'sidebar.navigation': 'Навігація',
+    'sidebar.home': 'Головна',
+    'sidebar.documents': 'Документи',
+    'sidebar.settings': 'Налаштування',
+    'sidebar.groups': 'Групи',
+    'sidebar.viewGroups': 'Переглянути групи',
+    'sidebar.createGroup': 'Створити групу',
     
     // 404 page
     'notFound.title': 'Сторінку не знайдено',
     'notFound.message': 'Вибачте, але сторінка, яку ви шукаєте, не існує або була переміщена.',
     'notFound.home': 'Повернутися на головну',
     'notFound.back': 'Назад',
+
+    // Groups page
+    'groups.title': 'Групи документів',
+    'groups.subtitle': 'Переглядайте створені групи та переходьте до їх документів',
+    'groups.error': 'Не вдалося завантажити групи.',
+    'groups.refresh': 'Спробувати знову',
+    'groups.empty': 'Поки немає жодної групи.',
+    'groups.createdAt': 'Створено',
+    'groups.totalLabel': 'Всього груп:',
+
+    // Documents page
+    'documents.title': 'Документи',
+    'documents.subtitle': 'Ознайомтеся з документами та знаходьте потрібні за кілька секунд',
+    'documents.filterGroup': 'Група',
+    'documents.filterAll': 'Усі групи',
+    'documents.searchPlaceholder': 'Пошук документів',
+    'documents.error': 'Не вдалося завантажити документи.',
+    'documents.refresh': 'Спробувати знову',
+    'documents.empty': 'Документів не знайдено.',
+    'documents.groupUnknown': 'Без групи',
+    'documents.noContent': 'Без вмісту',
+    'documents.createdAt': 'Створено',
   },
   en: {
     // Header
@@ -103,12 +136,43 @@ const translations = {
     'footer.groups': 'Groups',
     'footer.settings': 'Settings',
     'footer.copyright': 'All rights reserved.',
+
+    // Sidebar
+    'sidebar.navigation': 'Navigation',
+    'sidebar.home': 'Home',
+    'sidebar.documents': 'Documents',
+    'sidebar.settings': 'Settings',
+    'sidebar.groups': 'Groups',
+    'sidebar.viewGroups': 'View Groups',
+    'sidebar.createGroup': 'Create Group',
     
     // 404 page
     'notFound.title': 'Page Not Found',
     'notFound.message': 'Sorry, but the page you are looking for does not exist or has been moved.',
     'notFound.home': 'Return to Home',
     'notFound.back': 'Back',
+
+    // Groups page
+    'groups.title': 'Document Groups',
+    'groups.subtitle': 'Browse created groups and navigate to their documents',
+    'groups.error': 'Failed to load groups.',
+    'groups.refresh': 'Try again',
+    'groups.empty': 'No groups yet.',
+    'groups.createdAt': 'Created',
+    'groups.totalLabel': 'Total groups:',
+
+    // Documents page
+    'documents.title': 'Documents',
+    'documents.subtitle': 'Browse documents and find what you need in seconds',
+    'documents.filterGroup': 'Group',
+    'documents.filterAll': 'All groups',
+    'documents.searchPlaceholder': 'Search documents',
+    'documents.error': 'Failed to load documents.',
+    'documents.refresh': 'Try again',
+    'documents.empty': 'No documents found.',
+    'documents.groupUnknown': 'No group',
+    'documents.noContent': 'No content',
+    'documents.createdAt': 'Created',
   }
 };
 
@@ -138,10 +202,11 @@ export const LanguageProvider = ({ children }: LanguageProviderProps) => {
   );
 };
 
-export const useLanguage = () => {
+// eslint-disable-next-line react-refresh/only-export-components
+export function useLanguage() {
   const context = useContext(LanguageContext);
   if (context === undefined) {
     throw new Error('useLanguage must be used within a LanguageProvider');
   }
   return context;
-};
+}
