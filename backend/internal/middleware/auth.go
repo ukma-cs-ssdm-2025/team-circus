@@ -21,7 +21,7 @@ type userRepository interface {
 
 func AuthMiddleware(userRepo userRepository) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		tokenString, err := c.Cookie("Authorization")
+		tokenString, err := c.Cookie("accessToken")
 		if err != nil || tokenString == "" {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "authorization token required"})
 			return
@@ -52,11 +52,6 @@ func AuthMiddleware(userRepo userRepository) gin.HandlerFunc {
 
 		if claims.ExpiresAt != nil && time.Now().After(claims.ExpiresAt.Time) {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "token expired"})
-			return
-		}
-
-		if claims.Subject == "" {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "token missing subject"})
 			return
 		}
 

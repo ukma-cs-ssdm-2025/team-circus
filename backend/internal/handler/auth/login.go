@@ -19,17 +19,18 @@ type userRepository interface {
 	GetByLogin(ctx context.Context, login string) (*domain.User, error)
 }
 
-// NewLogInHandler handles user login and saves JWT token
+// NewLogInHandler handles user login and saves JWT tokens in cookies.
 // @Summary User login
-// @Description Authenticate user, create and save JWT token
-// @Tags login
+// @Description Authenticates user credentials, creates and saves JWT access/refresh tokens in cookies.
+// @Tags auth
 // @Accept json
 // @Produce json
 // @Param request body requests.LogInRequest true "User login request"
-// @Success 200 {object} {} "Login successful"
-// @Failure 400 {object} map[string]interface{} "Invalid request format or validation failed"
-// @Failure 500 {object} map[string]interface{} "Internal server error"
-// @Router /api/v1/login [post]
+// @Success 200 {object} map[string]string "Login successful"
+// @Failure 400 {object} map[string]string "Invalid request format"
+// @Failure 401 {object} map[string]string "Invalid credentials"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /api/v1/auth/login [post]
 func NewLogInHandler(userRepo userRepository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req requests.LogInRequest
@@ -67,20 +68,33 @@ func NewLogInHandler(userRepo userRepository) gin.HandlerFunc {
 			return
 		}
 
-		expirationTime := time.Now().Add(15 * time.Minute)
-		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-			"sub": user.UUID,
-			"exp": expirationTime.Unix(),
+		accessExpirationTime := time.Now().Add(10 * time.Minute)
+		accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
+			Subject:   user.UUID.String(),
+			ExpiresAt: jwt.NewNumericDate(accessExpirationTime),
 		})
 
-		tokenString, err := token.SignedString([]byte(secretToken))
+		accessTokenString, err := accessToken.SignedString([]byte(secretToken))
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to generate token"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to generate access token"})
+			return
+		}
+
+		refreshExpirationTime := time.Now().Add(30 * 24 * time.Hour)
+		refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
+			Subject:   user.UUID.String(),
+			ExpiresAt: jwt.NewNumericDate(refreshExpirationTime),
+		})
+
+		refreshTokenString, err := refreshToken.SignedString([]byte(secretToken))
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to generate refresh token"})
 			return
 		}
 
 		c.SetSameSite(http.SameSiteLaxMode)
-		c.SetCookie("Authorization", tokenString, 60*15, "", "", true, true)
+		c.SetCookie("accessToken", accessTokenString, 60*10, "", "", true, true)
+		c.SetCookie("refreshToken", refreshTokenString, 60*60*24*30, "", "", true, true)
 
 		c.JSON(http.StatusOK, gin.H{})
 	}

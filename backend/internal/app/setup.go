@@ -72,9 +72,10 @@ func (a *App) setupRouter() *gin.Engine {
 			reg.POST("", reghandler.NewRegHandler(regService))
 		}
 
-		auth := apiV1.Group("/login")
+		auth := apiV1.Group("/auth")
 		{
-			auth.POST("", authhandler.NewLogInHandler(userRepo))
+			auth.POST("/login", authhandler.NewLogInHandler(userRepo))
+			auth.POST("/refresh", authhandler.NewRefreshTokenHandler(userRepo))
 		}
 
 		test := apiV1.Group("/validate")
