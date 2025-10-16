@@ -29,7 +29,7 @@ type updateGroupService interface {
 // @Failure 400 {object} map[string]interface{} "Invalid UUID format or validation failed"
 // @Failure 404 {object} map[string]interface{} "Group not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
-// @Router /api/v1/groups/{uuid} [put]
+// @Router /groups/{uuid} [put]
 func NewUpdateGroupHandler(service updateGroupService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		uuidParam := c.Param("uuid")

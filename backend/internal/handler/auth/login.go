@@ -30,7 +30,7 @@ type userRepository interface {
 // @Failure 400 {object} map[string]string "Invalid request format"
 // @Failure 401 {object} map[string]string "Invalid credentials"
 // @Failure 500 {object} map[string]string "Internal server error"
-// @Router /api/v1/auth/login [post]
+// @Router /auth/login [post]
 func NewLogInHandler(userRepo userRepository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req requests.LogInRequest

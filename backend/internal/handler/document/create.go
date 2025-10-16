@@ -27,7 +27,7 @@ type createDocumentService interface {
 // @Success 201 {object} responses.CreateDocumentResponse "Document created successfully"
 // @Failure 400 {object} map[string]interface{} "Invalid request format or validation failed"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
-// @Router /api/v1/documents [post]
+// @Router /documents [post]
 func NewCreateDocumentHandler(service createDocumentService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req requests.CreateDocumentRequest

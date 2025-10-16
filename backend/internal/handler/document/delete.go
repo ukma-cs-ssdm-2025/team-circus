@@ -28,7 +28,7 @@ type deleteDocumentService interface {
 // @Failure 400 {object} map[string]interface{} "Invalid UUID format"
 // @Failure 404 {object} map[string]interface{} "Document not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
-// @Router /api/v1/documents/{uuid} [delete]
+// @Router /documents/{uuid} [delete]
 func NewDeleteDocumentHandler(service deleteDocumentService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		uuidParam := c.Param("uuid")

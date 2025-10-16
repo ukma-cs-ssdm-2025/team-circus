@@ -26,7 +26,7 @@ type createGroupService interface {
 // @Success 201 {object} responses.CreateGroupResponse "Group created successfully"
 // @Failure 400 {object} map[string]interface{} "Invalid request format or validation failed"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
-// @Router /api/v1/groups [post]
+// @Router /groups [post]
 func NewCreateGroupHandler(service createGroupService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req requests.CreateGroupRequest

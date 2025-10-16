@@ -24,7 +24,7 @@ import (
 // @Failure 400 {object} map[string]string "Invalid request format"
 // @Failure 401 {object} map[string]string "Invalid or expired refresh token"
 // @Failure 500 {object} map[string]string "Internal server error"
-// @Router /api/v1/auth/refresh [post]
+// @Router /auth/refresh [post]
 func NewRefreshTokenHandler(userRepo userRepository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req requests.RefreshTokenRequest

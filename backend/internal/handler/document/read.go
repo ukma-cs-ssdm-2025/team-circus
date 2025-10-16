@@ -36,7 +36,7 @@ type getDocumentsByGroupService interface {
 // @Failure 400 {object} map[string]interface{} "Invalid UUID format"
 // @Failure 404 {object} map[string]interface{} "Document not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
-// @Router /api/v1/documents/{uuid} [get]
+// @Router /documents/{uuid} [get]
 func NewGetDocumentHandler(service getDocumentService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		uuidParam := c.Param("uuid")
@@ -77,7 +77,7 @@ func NewGetDocumentHandler(service getDocumentService) gin.HandlerFunc {
 // @Produce json
 // @Success 200 {object} responses.GetAllDocumentsResponse "Documents retrieved successfully"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
-// @Router /api/v1/documents [get]
+// @Router /documents [get]
 func NewGetAllDocumentsHandler(service getAllDocumentsService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		documents, err := service.GetAll(c)
@@ -109,7 +109,7 @@ func NewGetAllDocumentsHandler(service getAllDocumentsService) gin.HandlerFunc {
 // @Success 200 {object} responses.GetDocumentsByGroupResponse "Documents retrieved successfully"
 // @Failure 400 {object} map[string]interface{} "Invalid UUID format"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
-// @Router /api/v1/groups/{uuid}/documents [get]
+// @Router /groups/{uuid}/documents [get]
 func NewGetDocumentsByGroupHandler(service getDocumentsByGroupService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		groupUUIDParam := c.Param("uuid")

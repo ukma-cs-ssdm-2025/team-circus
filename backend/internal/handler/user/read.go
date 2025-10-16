@@ -32,7 +32,7 @@ type getAllUsersService interface {
 // @Failure 400 {object} map[string]interface{} "Invalid UUID format"
 // @Failure 404 {object} map[string]interface{} "User not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
-// @Router /api/v1/users/{uuid} [get]
+// @Router /users/{uuid} [get]
 func NewGetUserHandler(service getUserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		uuidParam := c.Param("uuid")
@@ -73,7 +73,7 @@ func NewGetUserHandler(service getUserService) gin.HandlerFunc {
 // @Produce json
 // @Success 200 {object} responses.GetAllUsersResponse "Users retrieved successfully"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
-// @Router /api/v1/users [get]
+// @Router /users [get]
 func NewGetAllUsersHandler(service getAllUsersService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		users, err := service.GetAll(c)
