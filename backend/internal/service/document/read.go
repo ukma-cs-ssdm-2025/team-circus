@@ -15,7 +15,7 @@ func (s *DocumentService) GetByUUID(ctx context.Context, uuid uuid.UUID) (*domai
 	}
 
 	if document == nil {
-		return nil, ErrDocumentNotFound
+		return nil, domain.ErrDocumentNotFound
 	}
 
 	return document, nil

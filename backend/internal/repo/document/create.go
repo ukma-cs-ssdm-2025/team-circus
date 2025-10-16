@@ -2,6 +2,8 @@ package document
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
@@ -22,7 +24,7 @@ func (r *DocumentRepository) Create(ctx context.Context, groupUUID uuid.UUID, na
 		&document.CreatedAt,
 	)
 	if err != nil {
-		return nil, err
+		return nil, errors.Join(domain.ErrInternal, fmt.Errorf("document repository: create: %w", err))
 	}
 
 	return &document, nil

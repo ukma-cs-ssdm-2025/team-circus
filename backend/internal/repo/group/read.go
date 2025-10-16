@@ -3,6 +3,8 @@ package group
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
@@ -24,7 +26,7 @@ func (r *GroupRepository) GetByUUID(ctx context.Context, uuid uuid.UUID) (*domai
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
-		return nil, err
+		return nil, errors.Join(domain.ErrInternal, fmt.Errorf("group repository: getByUUID: %w", err))
 	}
 
 	return &group, nil
@@ -38,7 +40,7 @@ func (r *GroupRepository) GetAll(ctx context.Context) ([]*domain.Group, error) {
 
 	rows, err := r.db.QueryContext(ctx, query)
 	if err != nil {
-		return nil, err
+		return nil, errors.Join(domain.ErrInternal, fmt.Errorf("group repository: getAll query: %w", err))
 	}
 	defer rows.Close() //nolint:errcheck
 
@@ -51,13 +53,13 @@ func (r *GroupRepository) GetAll(ctx context.Context) ([]*domain.Group, error) {
 			&group.CreatedAt,
 		)
 		if err != nil {
-			return nil, err
+			return nil, errors.Join(domain.ErrInternal, fmt.Errorf("group repository: getAll scan: %w", err))
 		}
 		groups = append(groups, &group)
 	}
 
 	if err = rows.Err(); err != nil {
-		return nil, err
+		return nil, errors.Join(domain.ErrInternal, fmt.Errorf("group repository: getAll rows err: %w", err))
 	}
 
 	return groups, nil

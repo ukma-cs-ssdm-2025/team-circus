@@ -3,6 +3,8 @@ package user
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
@@ -26,7 +28,7 @@ func (r *UserRepository) GetByUUID(ctx context.Context, uuid uuid.UUID) (*domain
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
-		return nil, err
+		return nil, errors.Join(domain.ErrInternal, fmt.Errorf("user repository: getByUUID: %w", err))
 	}
 
 	return &user, nil
@@ -50,7 +52,7 @@ func (r *UserRepository) GetByLogin(ctx context.Context, login string) (*domain.
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
-		return nil, err
+		return nil, errors.Join(domain.ErrInternal, fmt.Errorf("user repository: getByLogin: %w", err))
 	}
 
 	return &user, nil
@@ -64,7 +66,7 @@ func (r *UserRepository) GetAll(ctx context.Context) ([]*domain.User, error) {
 
 	rows, err := r.db.QueryContext(ctx, query)
 	if err != nil {
-		return nil, err
+		return nil, errors.Join(domain.ErrInternal, fmt.Errorf("user repository: getAll query: %w", err))
 	}
 	defer rows.Close() //nolint:errcheck
 
@@ -79,13 +81,13 @@ func (r *UserRepository) GetAll(ctx context.Context) ([]*domain.User, error) {
 			&user.CreatedAt,
 		)
 		if err != nil {
-			return nil, err
+			return nil, errors.Join(domain.ErrInternal, fmt.Errorf("user repository: getAll scan: %w", err))
 		}
 		users = append(users, &user)
 	}
 
 	if err = rows.Err(); err != nil {
-		return nil, err
+		return nil, errors.Join(domain.ErrInternal, fmt.Errorf("user repository: getAll rows err: %w", err))
 	}
 
 	return users, nil

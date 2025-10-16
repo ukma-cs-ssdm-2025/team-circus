@@ -2,6 +2,8 @@ package group
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 )
@@ -19,7 +21,7 @@ func (r *GroupRepository) Create(ctx context.Context, name string) (*domain.Grou
 		&group.CreatedAt,
 	)
 	if err != nil {
-		return nil, err
+		return nil, errors.Join(domain.ErrInternal, fmt.Errorf("group repository: create: %w", err))
 	}
 
 	return &group, nil

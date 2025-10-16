@@ -3,6 +3,8 @@ package group
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
@@ -25,7 +27,7 @@ func (r *GroupRepository) Update(ctx context.Context, uuid uuid.UUID, name strin
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
-		return nil, err
+		return nil, errors.Join(domain.ErrInternal, fmt.Errorf("group repository: update: %w", err))
 	}
 
 	return &group, nil

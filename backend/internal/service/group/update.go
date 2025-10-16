@@ -15,7 +15,7 @@ func (s *GroupService) Update(ctx context.Context, uuid uuid.UUID, name string) 
 	}
 
 	if group == nil {
-		return nil, ErrGroupNotFound
+		return nil, domain.ErrGroupNotFound
 	}
 
 	return group, nil

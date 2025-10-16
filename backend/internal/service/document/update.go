@@ -15,7 +15,7 @@ func (s *DocumentService) Update(ctx context.Context, uuid uuid.UUID, name, cont
 	}
 
 	if document == nil {
-		return nil, ErrDocumentNotFound
+		return nil, domain.ErrDocumentNotFound
 	}
 
 	return document, nil

@@ -15,7 +15,7 @@ func (s *UserService) GetByUUID(ctx context.Context, uuid uuid.UUID) (*domain.Us
 	}
 
 	if user == nil {
-		return nil, ErrUserNotFound
+		return nil, domain.ErrUserNotFound
 	}
 
 	return user, nil
