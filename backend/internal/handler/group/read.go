@@ -32,7 +32,7 @@ type getAllGroupsService interface {
 // @Failure 400 {object} map[string]interface{} "Invalid UUID format"
 // @Failure 404 {object} map[string]interface{} "Group not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
-// @Router /api/v1/groups/{uuid} [get]
+// @Router /groups/{uuid} [get]
 func NewGetGroupHandler(service getGroupService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		uuidParam := c.Param("uuid")
@@ -73,7 +73,7 @@ func NewGetGroupHandler(service getGroupService) gin.HandlerFunc {
 // @Produce json
 // @Success 200 {object} responses.GetAllGroupsResponse "Groups retrieved successfully"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
-// @Router /api/v1/groups [get]
+// @Router /groups [get]
 func NewGetAllGroupsHandler(service getAllGroupsService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		groups, err := service.GetAll(c)

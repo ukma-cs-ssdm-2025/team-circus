@@ -29,7 +29,7 @@ type updateUserService interface {
 // @Failure 400 {object} map[string]interface{} "Invalid UUID format or validation failed"
 // @Failure 404 {object} map[string]interface{} "User not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
-// @Router /api/v1/users/{uuid} [put]
+// @Router /users/{uuid} [put]
 func NewUpdateUserHandler(service updateUserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		uuidParam := c.Param("uuid")

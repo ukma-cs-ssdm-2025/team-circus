@@ -14,6 +14,27 @@ definitions:
       name:
         type: string
     type: object
+  requests.LogInRequest:
+    properties:
+      login:
+        type: string
+      password:
+        type: string
+    type: object
+  requests.RefreshTokenRequest:
+    properties:
+      refresh_token:
+        type: string
+    type: object
+  requests.RegRequest:
+    properties:
+      email:
+        type: string
+      login:
+        type: string
+      password:
+        type: string
+    type: object
   requests.UpdateDocumentRequest:
     properties:
       content:
@@ -24,6 +45,15 @@ definitions:
   requests.UpdateGroupRequest:
     properties:
       name:
+        type: string
+    type: object
+  requests.UpdateUserRequest:
+    properties:
+      email:
+        type: string
+      login:
+        type: string
+      password:
         type: string
     type: object
   responses.CreateDocumentResponse:
@@ -58,6 +88,11 @@ definitions:
       message:
         type: string
     type: object
+  responses.DeleteUserResponse:
+    properties:
+      message:
+        type: string
+    type: object
   responses.GetAllDocumentsResponse:
     properties:
       documents:
@@ -70,6 +105,13 @@ definitions:
       groups:
         items:
           $ref: '#/definitions/responses.GetGroupResponse'
+        type: array
+    type: object
+  responses.GetAllUsersResponse:
+    properties:
+      users:
+        items:
+          $ref: '#/definitions/responses.GetUserResponse'
         type: array
     type: object
   responses.GetDocumentResponse:
@@ -101,6 +143,28 @@ definitions:
       uuid:
         type: string
     type: object
+  responses.GetUserResponse:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      login:
+        type: string
+      uuid:
+        type: string
+    type: object
+  responses.RegResponse:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      login:
+        type: string
+      uuid:
+        type: string
+    type: object
   responses.UpdateDocumentResponse:
     properties:
       content:
@@ -123,6 +187,17 @@ definitions:
       uuid:
         type: string
     type: object
+  responses.UpdateUserResponse:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      login:
+        type: string
+      uuid:
+        type: string
+    type: object
 host: localhost:8080
 info:
   contact: {}
@@ -131,7 +206,93 @@ info:
   title: Team Circus API
   version: "1.0"
 paths:
-  /api/v1/documents:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticates user credentials, creates and saves JWT access/refresh
+        tokens in cookies.
+      parameters:
+      - description: User login request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.LogInRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Login successful
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid request format
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Invalid credentials
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: User login
+      tags:
+      - auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Validates a refresh token and issues a new access and refresh token
+        pair
+      parameters:
+      - description: Refresh token request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.RefreshTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Tokens refreshed successfully
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid request format
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Invalid or expired refresh token
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Refresh access token
+      tags:
+      - auth
+  /documents:
     get:
       consumes:
       - application/json
@@ -182,7 +343,7 @@ paths:
       summary: Create a new document
       tags:
       - documents
-  /api/v1/documents/{uuid}:
+  /documents/{uuid}:
     delete:
       consumes:
       - application/json
@@ -294,7 +455,7 @@ paths:
       summary: Update a document by UUID
       tags:
       - documents
-  /api/v1/groups:
+  /groups:
     get:
       consumes:
       - application/json
@@ -345,7 +506,7 @@ paths:
       summary: Create a new group
       tags:
       - groups
-  /api/v1/groups/{uuid}:
+  /groups/{uuid}:
     delete:
       consumes:
       - application/json
@@ -457,7 +618,7 @@ paths:
       summary: Update a group by UUID
       tags:
       - groups
-  /api/v1/groups/{uuid}/documents:
+  /groups/{uuid}/documents:
     get:
       consumes:
       - application/json
@@ -488,4 +649,168 @@ paths:
       summary: Get documents by group UUID
       tags:
       - documents
+  /signup:
+    post:
+      consumes:
+      - application/json
+      description: Register a new user with the provided login, email and password
+      parameters:
+      - description: User registration request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.RegRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: User registered successfully
+          schema:
+            $ref: '#/definitions/responses.RegResponse'
+        "400":
+          description: Invalid request format or validation failed
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Register a new user
+      tags:
+      - registration
+  /users:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of all users
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Users retrieved successfully
+          schema:
+            $ref: '#/definitions/responses.GetAllUsersResponse'
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get all users
+      tags:
+      - users
+  /users/{uuid}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a specific user by their UUID
+      parameters:
+      - description: User UUID
+        in: path
+        name: uuid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User deleted successfully
+          schema:
+            $ref: '#/definitions/responses.DeleteUserResponse'
+        "400":
+          description: Invalid UUID format
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: User not found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Delete a user by UUID
+      tags:
+      - users
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a specific user by their UUID
+      parameters:
+      - description: User UUID
+        in: path
+        name: uuid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User retrieved successfully
+          schema:
+            $ref: '#/definitions/responses.GetUserResponse'
+        "400":
+          description: Invalid UUID format
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: User not found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get a user by UUID
+      tags:
+      - users
+    put:
+      consumes:
+      - application/json
+      description: Update a specific user's login, email and password by their UUID
+      parameters:
+      - description: User UUID
+        in: path
+        name: uuid
+        required: true
+        type: string
+      - description: User update request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.UpdateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User updated successfully
+          schema:
+            $ref: '#/definitions/responses.UpdateUserResponse'
+        "400":
+          description: Invalid UUID format or validation failed
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: User not found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Update a user by UUID
+      tags:
+      - users
 swagger: "2.0"

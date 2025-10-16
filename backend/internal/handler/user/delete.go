@@ -28,7 +28,7 @@ type deleteUserService interface {
 // @Failure 400 {object} map[string]interface{} "Invalid UUID format"
 // @Failure 404 {object} map[string]interface{} "User not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
-// @Router /api/v1/users/{uuid} [delete]
+// @Router /users/{uuid} [delete]
 func NewDeleteUserHandler(service deleteUserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		uuidParam := c.Param("uuid")
