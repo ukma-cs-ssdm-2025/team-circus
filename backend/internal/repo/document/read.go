@@ -3,6 +3,8 @@ package document
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
@@ -26,7 +28,7 @@ func (r *DocumentRepository) GetByUUID(ctx context.Context, uuid uuid.UUID) (*do
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
-		return nil, err
+		return nil, errors.Join(domain.ErrInternal, fmt.Errorf("document repository: getByUUID: %w", err))
 	}
 
 	return &document, nil
@@ -41,7 +43,7 @@ func (r *DocumentRepository) GetByGroupUUID(ctx context.Context, groupUUID uuid.
 
 	rows, err := r.db.QueryContext(ctx, query, groupUUID)
 	if err != nil {
-		return nil, err
+		return nil, errors.Join(domain.ErrInternal, fmt.Errorf("document repository: getByGroupUUID query: %w", err))
 	}
 	defer rows.Close() //nolint:errcheck
 
@@ -56,13 +58,13 @@ func (r *DocumentRepository) GetByGroupUUID(ctx context.Context, groupUUID uuid.
 			&document.CreatedAt,
 		)
 		if err != nil {
-			return nil, err
+			return nil, errors.Join(domain.ErrInternal, fmt.Errorf("document repository: getByGroupUUID scan: %w", err))
 		}
 		documents = append(documents, &document)
 	}
 
 	if err = rows.Err(); err != nil {
-		return nil, err
+		return nil, errors.Join(domain.ErrInternal, fmt.Errorf("document repository: getByGroupUUID rows err: %w", err))
 	}
 
 	return documents, nil
@@ -76,7 +78,7 @@ func (r *DocumentRepository) GetAll(ctx context.Context) ([]*domain.Document, er
 
 	rows, err := r.db.QueryContext(ctx, query)
 	if err != nil {
-		return nil, err
+		return nil, errors.Join(domain.ErrInternal, fmt.Errorf("document repository: getAll query: %w", err))
 	}
 	defer rows.Close() //nolint:errcheck
 
@@ -91,13 +93,13 @@ func (r *DocumentRepository) GetAll(ctx context.Context) ([]*domain.Document, er
 			&document.CreatedAt,
 		)
 		if err != nil {
-			return nil, err
+			return nil, errors.Join(domain.ErrInternal, fmt.Errorf("document repository: getAll scan: %w", err))
 		}
 		documents = append(documents, &document)
 	}
 
 	if err = rows.Err(); err != nil {
-		return nil, err
+		return nil, errors.Join(domain.ErrInternal, fmt.Errorf("document repository: getAll rows err: %w", err))
 	}
 
 	return documents, nil

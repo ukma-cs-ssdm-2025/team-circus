@@ -15,7 +15,7 @@ func (s *GroupService) GetByUUID(ctx context.Context, uuid uuid.UUID) (*domain.G
 	}
 
 	if group == nil {
-		return nil, ErrGroupNotFound
+		return nil, domain.ErrGroupNotFound
 	}
 
 	return group, nil

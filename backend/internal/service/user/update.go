@@ -15,7 +15,7 @@ func (s *UserService) Update(ctx context.Context, uuid uuid.UUID, login string, 
 	}
 
 	if user == nil {
-		return nil, ErrUserNotFound
+		return nil, domain.ErrUserNotFound
 	}
 
 	return user, nil

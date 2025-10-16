@@ -2,6 +2,8 @@ package reg
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 )
@@ -21,7 +23,7 @@ func (r *RegRepository) Register(ctx context.Context, login string, email string
 		&user.CreatedAt,
 	)
 	if err != nil {
-		return nil, err
+		return nil, errors.Join(domain.ErrInternal, fmt.Errorf("reg repository: register: %w", err))
 	}
 
 	return &user, nil

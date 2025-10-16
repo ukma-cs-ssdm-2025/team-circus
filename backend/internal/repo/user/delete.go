@@ -3,8 +3,11 @@ package user
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 )
 
 func (r *UserRepository) Delete(ctx context.Context, uuid uuid.UUID) error {
@@ -12,12 +15,12 @@ func (r *UserRepository) Delete(ctx context.Context, uuid uuid.UUID) error {
 
 	result, err := r.db.ExecContext(ctx, query, uuid)
 	if err != nil {
-		return err
+		return errors.Join(domain.ErrInternal, fmt.Errorf("user repository: delete exec: %w", err))
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		return err
+		return errors.Join(domain.ErrInternal, fmt.Errorf("user repository: delete rows affected: %w", err))
 	}
 
 	if rowsAffected == 0 {
