@@ -43,30 +43,30 @@
    cd team-circus
    ```
 
-2. **Запуск**
+2. **Скопіювати змінні середовища**
 
    ```bash
-   task up
+   task copy:env
+   ```
+
+3. **Запуск**
+
+   ```bash
+   task docker:up
    ```
 
 ### Frontend
 
-1. **Перехід до frontend директорії**
+1. **Встановлення залежностей**
 
    ```bash
-   cd frontend
+   task front:install
    ```
 
-2. **Встановлення залежностей**
+2. **Запуск frontend**
 
    ```bash
-   task install
-   ```
-
-3. **Запуск frontend**
-
-   ```bash
-   task dev
+   task front:dev
    ```
 
 ### Доступні команди

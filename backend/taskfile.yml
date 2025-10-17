@@ -16,6 +16,11 @@ tasks:
     cmds:
       - go run cmd/main.go
 
+  build:
+    desc: Build the binary
+    cmds:
+      - go build -o ./bin/backend cmd/main.go
+
   test:
     desc: Run all tests
     cmds:

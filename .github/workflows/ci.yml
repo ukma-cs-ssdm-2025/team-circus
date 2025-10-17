@@ -18,7 +18,7 @@ jobs:
           install-linter: true
 
       - name: Run linters
-        run: cd backend && task lint
+        run: task back:lint
 
   unit-tests:
     name: Unit Tests
@@ -34,10 +34,10 @@ jobs:
           task-version: "3.x"
 
       - name: Run unit tests
-        run: cd backend && task test
+        run: task back:test
 
-  build:
-    name: Build
+  build-images:
+    name: Build Images
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -50,4 +50,20 @@ jobs:
           task-version: "3.x"
 
       - name: Run build
-        run: task copy:env:optional && task build
+        run: task copy:env:optional && task docker:build
+  
+  build-go-binary:
+    name: Build Go Binary
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install go and go-task
+        uses: ./.github/actions/setup
+        with:
+          go-version-file: ./backend/go.mod
+          task-version: "3.x"
+
+      - name: Run build
+        run: task back:build
