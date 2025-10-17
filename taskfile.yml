@@ -28,13 +28,28 @@ tasks:
   up:
     desc: Start backend and db
     cmds:
-      - docker compose up -d backend
+      - docker compose up -d
 
   down:
     desc: Stop backend and db
     cmds:
       - docker compose down
 
+  back:up:
+    desc: Start backend
+    cmds:
+      - docker compose up -d backend
+
+  back:down:
+    desc: Stop backend
+    cmds:
+      - docker compose down backend
+
+  build:
+    desc: Build docker images
+    cmds:
+      - docker compose build
+      
   copy:env:
     desc: Copy default env vars
     cmds:
