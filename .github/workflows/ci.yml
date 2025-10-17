@@ -9,6 +9,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}  
 
       - name: Install go and go-task
         uses: ./.github/actions/setup
@@ -16,6 +18,7 @@ jobs:
           go-version-file: ./backend/go.mod
           task-version: "3.x"
           install-linter: true
+          token: ${{ secrets.GITHUB_TOKEN }}  
 
       - name: Run linters
         run: task back:lint
@@ -26,12 +29,15 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}  
 
       - name: Install go and go-task
         uses: ./.github/actions/setup
         with:
           go-version-file: ./backend/go.mod
           task-version: "3.x"
+          token: ${{ secrets.GITHUB_TOKEN }}  
 
       - name: Run unit tests
         run: task back:test
@@ -42,15 +48,18 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}  
 
       - name: Install go and go-task
         uses: ./.github/actions/setup
         with:
           go-version-file: ./backend/go.mod
           task-version: "3.x"
+          token: ${{ secrets.GITHUB_TOKEN }}  
 
       - name: Run build
-        run: task copy:env:optional && task docker:build
+        run: task copy:env && task docker:build
   
   build-go-binary:
     name: Build Go Binary
@@ -58,12 +67,15 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}  
 
       - name: Install go and go-task
         uses: ./.github/actions/setup
         with:
           go-version-file: ./backend/go.mod
           task-version: "3.x"
+          token: ${{ secrets.GITHUB_TOKEN }}   
 
       - name: Run build
         run: task back:build
