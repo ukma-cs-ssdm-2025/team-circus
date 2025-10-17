@@ -7,34 +7,15 @@ includes:
   front: 
     taskfile: ./frontend/taskfile.yml
     dir: ./frontend
+  docker:
+    taskfile: ./taskfile.docker.yml
 
 tasks:
   default:
     desc: List available tasks
     cmds:
       - task --list-all
-
-  db:up:
-    desc: Start database and run migrations
-    cmds:
-      - task copy:env:optional
-      - docker compose up -d migrator
-
-  db:down:
-    desc: Stop database and clean up
-    cmds:
-      - docker compose down postgres
-
-  up:
-    desc: Start backend and db
-    cmds:
-      - docker compose up -d backend
-
-  down:
-    desc: Stop backend and db
-    cmds:
-      - docker compose down
-
+      
   copy:env:
     desc: Copy default env vars
     cmds:

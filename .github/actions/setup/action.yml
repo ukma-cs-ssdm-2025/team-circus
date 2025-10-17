@@ -12,9 +12,9 @@ inputs:
     description: "Install linters"
     required: false
     default: "false"
-  # token:
-  #   description: "GitHub token"
-  #   required: true
+  token:
+    description: "GitHub token"
+    required: true
 runs:
   using: "composite"
   steps:
@@ -27,7 +27,7 @@ runs:
       uses: arduino/setup-task@v2
       with:
         version: ${{ inputs.task-version }}
-        # repo-token: ${{ inputs.token }}
+        repo-token: ${{ inputs.token }}
         
     - name: "Install linters"
       if: ${{ inputs.install-linter == 'true' }}

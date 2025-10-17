@@ -1,0 +1,67 @@
+version: '3'
+
+tasks:
+  default:
+    desc: List available tasks
+    cmds:
+      - task --list-all
+
+  up:
+    desc: Start all services
+    cmds:
+      - docker compose up -d
+  
+  postgres:up:
+    desc: Start postgres database
+    cmds:
+      - docker compose up -d postgres
+
+  migrator:up:
+    desc: Start migrator
+    cmds:
+      - docker compose up -d migrator
+
+  backend:up:
+    desc: Start backend
+    cmds:
+      - docker compose up -d backend
+  
+  down:
+    desc: Stop all services
+    cmds:
+      - docker compose down
+
+  postgres:down:
+    desc: Stop postgres database
+    cmds:
+      - docker compose down postgres
+
+  migrator:down:
+    desc: Stop migrator
+    cmds:
+      - docker compose down migrator
+
+  backend:down:
+    desc: Stop backend
+    cmds:
+      - docker compose down backend
+  
+  build:
+    desc: Build all services
+    cmds:
+      - docker compose build
+  
+  postgres:build:
+    desc: Build postgres database
+    cmds:
+      - docker compose build postgres
+
+  migrator:build:
+    desc: Build migrator
+    cmds:
+      - docker compose build migrator
+
+  backend:build:
+    desc: Build backend
+    cmds:
+      - docker compose build backend
