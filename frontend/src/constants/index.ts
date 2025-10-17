@@ -3,9 +3,7 @@ export const API_ENDPOINTS = {
   BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1',
   AUTH: {
     LOGIN: '/auth/login',
-    REFRESH: '/auth/refresh',
-    LOGOUT: '/auth/logout',
-    PROFILE: '/auth/profile',
+    REGISTER: '/signup',
   },
   USERS: {
     BASE: '/users',
