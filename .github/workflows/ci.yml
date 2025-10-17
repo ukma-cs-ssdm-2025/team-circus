@@ -50,4 +50,4 @@ jobs:
           task-version: "3.x"
 
       - name: Run build
-        run: cd backend && task copy:env:optional && task build
+        run: task copy:env:optional && task build
