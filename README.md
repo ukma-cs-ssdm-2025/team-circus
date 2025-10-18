@@ -34,25 +34,72 @@
 - **Node.js** (версія 18+)
 - **Task** (taskfile.dev)
 
-### Backend
-
-1. **Клонування репозиторію**
+Клонування репозиторію
 
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/ukma-cs-ssdm-2025/team-circus
    cd team-circus
    ```
 
-2. **Скопіювати змінні середовища**
+Скопіювати .env
 
    ```bash
    task copy:env
    ```
 
-3. **Запуск**
+### Postgres
+
+1. **Підняти контейнер з бд**
 
    ```bash
-   task docker:up
+   task docker:postgres:up
+   ```
+
+2. **Заранити міграції бд**
+
+   ```bash
+   task docker:migrator:up
+   ```
+
+### Backend
+
+Достпуні дві опції:
+
+1. Запустити у контейнері
+2. Запустити локально
+
+#### У контейнері
+
+1. **Підняти контейнер з бекендом**
+
+   ```bash
+   task docker:backend:up
+   ```
+
+#### Локально
+
+1. **Встановити залежності**
+
+   ```bash
+   task back:download
+   ```
+
+2. **Додати залежнсоті у локальне оточення**
+
+   ```bash
+   task back:vendor
+   ```
+
+3. **Скопіювати модифікований .env**
+
+   ```bash
+   task back:copy:env
+   ```
+
+4. **Запустит бекенд локально**
+
+   ```bash
+   task back:run
    ```
 
 ### Frontend
@@ -74,11 +121,7 @@
 Для перегляду всіх доступних команд використовуйте:
 
 ```bash
-# В backend директорії
-task
-
-# В frontend директорії  
-task
+task --list-all
 ```
 
 ## Документація
