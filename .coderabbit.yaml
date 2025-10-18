@@ -1,0 +1,25 @@
+version: 1
+
+project:
+  language: go
+  description: Go backend service
+
+triggers:
+  pull_request:
+    enabled: true
+    events: [opened, synchronize, reopened]
+
+review:
+  ignore_paths:
+    - frontend/**
+
+  depth: standard
+
+  comment_mode: inline
+
+  max_comments: 15
+
+style:
+  tone: concise
+  language: en
+  detail_level: medium
