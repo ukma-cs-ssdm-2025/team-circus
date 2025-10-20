@@ -138,7 +138,7 @@ task --list-all
 Ці тести часто потреюуть зовнішніх залежностей, у нашому випадку - бд.  
 Залежності можна додати в [`backend/docker-compose.test.yml`](./backend/docker-compose.test.yml).  
 Там же ми хардкодимо значення змінних оточення.  
-У [`backend/tests/pkg/app.go`](./backend/tests/pkg/testapp/app.go) в конфігу ми вказуємо всі змінні для нашої тестової app.
+У [`backend/tests/pkg/testapp/app.go`](./backend/tests/pkg/testapp/app.go) в конфігу ми вказуємо всі змінні для нашої тестової app.
 
 *Присутні дві опції:*
 
