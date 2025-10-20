@@ -1,9 +1,9 @@
-import { 
-  Box, 
-  Container, 
-  Grid, 
-  Typography, 
-  Link, 
+import {
+  Box,
+  Container,
+  Grid,
+  Typography,
+  Link,
   Divider,
   useTheme
 } from '@mui/material';
@@ -21,8 +21,8 @@ const Footer = ({ className = '' }: FooterProps) => {
     <Box
       component="footer"
       sx={{
-        backgroundColor: theme.palette.mode === 'light' 
-          ? 'rgba(255, 255, 255, 0.9)' 
+        backgroundColor: theme.palette.mode === 'light'
+          ? 'rgba(255, 255, 255, 0.9)'
           : 'rgba(30, 30, 30, 0.9)',
         backdropFilter: 'blur(10px)',
         borderTop: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.15)' : theme.palette.divider}`,
@@ -43,10 +43,10 @@ const Footer = ({ className = '' }: FooterProps) => {
             >
               MCD
             </Typography>
-            <Typography 
-              variant="body1" 
+            <Typography
+              variant="body1"
               color="text.secondary"
-              sx={{ 
+              sx={{
                 maxWidth: 300,
                 mx: { xs: 'auto', md: 0 },
                 lineHeight: 1.6
@@ -55,11 +55,11 @@ const Footer = ({ className = '' }: FooterProps) => {
               {t('footer.description')}
             </Typography>
           </Grid>
-          
+
           <Grid item xs={12} md={4} sx={{ textAlign: { xs: 'center', md: 'left' } }}>
-            <Typography 
-              variant="h6" 
-              sx={{ 
+            <Typography
+              variant="h6"
+              sx={{
                 fontWeight: 600,
                 mb: 3,
                 color: theme.palette.text.primary
@@ -67,17 +67,17 @@ const Footer = ({ className = '' }: FooterProps) => {
             >
               {t('footer.navigation')}
             </Typography>
-            <Box sx={{ 
-              display: 'flex', 
-              flexDirection: 'column', 
+            <Box sx={{
+              display: 'flex',
+              flexDirection: 'column',
               gap: 2,
               alignItems: { xs: 'center', md: 'flex-start' }
             }}>
-              <Link 
-                href="/" 
-                color="text.secondary" 
+              <Link
+                href="/"
+                color="text.secondary"
                 underline="hover"
-                sx={{ 
+                sx={{
                   fontSize: '0.95rem',
                   fontWeight: 500,
                   transition: 'color 0.2s ease',
@@ -88,11 +88,11 @@ const Footer = ({ className = '' }: FooterProps) => {
               >
                 {t('footer.home')}
               </Link>
-              <Link 
-                href="/documents" 
-                color="text.secondary" 
+              <Link
+                href="/documents"
+                color="text.secondary"
                 underline="hover"
-                sx={{ 
+                sx={{
                   fontSize: '0.95rem',
                   fontWeight: 500,
                   transition: 'color 0.2s ease',
@@ -103,11 +103,11 @@ const Footer = ({ className = '' }: FooterProps) => {
               >
                 {t('footer.documents')}
               </Link>
-              <Link 
-                href="/groups" 
-                color="text.secondary" 
+              <Link
+                href="/groups"
+                color="text.secondary"
                 underline="hover"
-                sx={{ 
+                sx={{
                   fontSize: '0.95rem',
                   fontWeight: 500,
                   transition: 'color 0.2s ease',
@@ -118,11 +118,11 @@ const Footer = ({ className = '' }: FooterProps) => {
               >
                 {t('footer.groups')}
               </Link>
-              <Link 
-                href="/settings" 
-                color="text.secondary" 
+              <Link
+                href="/settings"
+                color="text.secondary"
                 underline="hover"
-                sx={{ 
+                sx={{
                   fontSize: '0.95rem',
                   fontWeight: 500,
                   transition: 'color 0.2s ease',
@@ -137,15 +137,15 @@ const Footer = ({ className = '' }: FooterProps) => {
           </Grid>
         </Grid>
       </Container>
-      
+
       <Divider sx={{ my: 2 }} />
-      
+
       <Container maxWidth="lg" sx={{ py: 3 }}>
-        <Typography 
-          variant="body2" 
-          color="text.secondary" 
+        <Typography
+          variant="body2"
+          color="text.secondary"
           align="center"
-          sx={{ 
+          sx={{
             fontSize: '0.9rem',
             fontWeight: 400,
             opacity: 0.8
