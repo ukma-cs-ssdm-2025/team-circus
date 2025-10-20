@@ -39,15 +39,38 @@ tasks:
     cmds:
       - go build -o ./bin/backend cmd/main.go
 
-  test:
-    desc: Run all tests
+  test:func:build:
+    desc: Build functional tests
     cmds:
-      - task: test:unit
+      - docker compose -f docker-compose.test.yml build
   
+  test:func:up:
+    desc: Start functional tests
+    cmds:
+      - docker compose -f docker-compose.test.yml up -d
+
+  test:func:down:
+    desc: Stop functional tests
+    cmds:
+      - docker compose -f docker-compose.test.yml down
+
+  test:func:run:
+    desc: Run functional tests
+    cmds:
+      - go test {{.CLI_ARGS | default "./..."}} -v -tags=func_test
+
+  test:func:
+    desc: Run functional tests
+    cmds:
+      - task: test:func:up
+      - sleep 2
+      - defer: task test:func:down
+      - task: test:func:run
+
   test:unit:
     desc: Run unit tests
     cmds:
-      - go test ./... -v -tags=unit
+      - go test {{.CLI_ARGS | default "./..."}} -v -tags=unit 
 
   install:
     desc: Install dependencies
