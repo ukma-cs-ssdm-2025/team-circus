@@ -1,18 +1,28 @@
 import { useNavigate } from 'react-router-dom';
-import { 
-  AppBar, 
-  Toolbar, 
-  Typography, 
-  IconButton, 
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  IconButton,
   Box,
-  useTheme
+  useTheme,
 } from '@mui/material';
-import { Settings as SettingsIcon, LightMode as LightModeIcon, DarkMode as DarkModeIcon } from '@mui/icons-material';
+import {
+  Settings as SettingsIcon,
+  LightMode as LightModeIcon,
+  DarkMode as DarkModeIcon,
+  Menu as MenuIcon,
+} from '@mui/icons-material';
+import type { BaseComponentProps } from '../../types';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme as useAppTheme } from '../../contexts/ThemeContext';
 import { ROUTES } from '../../constants';
 
-const Header = () => {
+interface HeaderProps extends BaseComponentProps {
+  onToggleSidebar?: () => void;
+}
+
+const Header = ({ className = '', onToggleSidebar }: HeaderProps) => {
   const navigate = useNavigate();
   const theme = useTheme();
   const { t } = useLanguage();
@@ -22,71 +32,74 @@ const Header = () => {
     navigate(ROUTES.SETTINGS);
   };
 
+  const commonIconStyles = {
+    backgroundColor: theme.palette.mode === 'light' ? '#f8fafc' : '#374151',
+    border: `1px solid ${theme.palette.mode === 'light' ? '#cbd5e1' : '#4b5563'}`,
+    color: theme.palette.mode === 'light' ? '#475569' : '#d1d5db',
+    '&:hover': {
+      backgroundColor: theme.palette.mode === 'light' ? '#e2e8f0' : '#4b5563',
+      borderColor: theme.palette.mode === 'light' ? '#94a3b8' : '#6b7280',
+      color: theme.palette.mode === 'light' ? '#334155' : '#f3f4f6',
+      transform: 'translateY(-2px)',
+      boxShadow: '0 2px 6px rgba(0, 0, 0, 0.15)',
+    },
+    transition: 'all 0.3s ease',
+  } as const;
+
   return (
-    <AppBar 
-      position="sticky" 
+    <AppBar
+      className={className}
+      position="sticky"
       elevation={0}
       sx={{
-        backgroundColor: theme.palette.mode === 'light' 
-          ? 'rgba(255, 255, 255, 0.95)' 
+        backgroundColor: theme.palette.mode === 'light'
+          ? 'rgba(255, 255, 255, 0.95)'
           : 'rgba(30, 30, 30, 0.95)',
         backdropFilter: 'blur(10px)',
         boxShadow: '0 2px 20px rgba(0, 0, 0, 0.1)',
       }}
     >
-      <Toolbar>
-        <Typography
-          variant="h5"
-          component="a"
-          href={ROUTES.HOME}
-          sx={{
-            flexGrow: 1,
-            fontWeight: 700,
-            textDecoration: 'none',
-            color: theme.palette.primary.main,
-            cursor: 'pointer',
-          }}
-        >
-          MCD
-        </Typography>
-        
+      <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          {onToggleSidebar && (
+            <IconButton
+              onClick={onToggleSidebar}
+              title={t('sidebar.navigation')}
+              aria-label={t('sidebar.navigation')}
+              sx={commonIconStyles}
+            >
+              <MenuIcon />
+            </IconButton>
+          )}
+
+          <Typography
+            variant="h5"
+            component="a"
+            href={ROUTES.HOME}
+            sx={{
+              fontWeight: 700,
+              textDecoration: 'none',
+              color: theme.palette.primary.main,
+              cursor: 'pointer',
+            }}
+          >
+            MCD
+          </Typography>
+        </Box>
+
         <Box sx={{ display: 'flex', gap: 1 }}>
           <IconButton
             onClick={toggleTheme}
             title={t('header.toggleTheme')}
-            sx={{
-              backgroundColor: theme.palette.mode === 'light' ? '#f8fafc' : '#374151',
-              border: `1px solid ${theme.palette.mode === 'light' ? '#cbd5e1' : '#4b5563'}`,
-              color: theme.palette.mode === 'light' ? '#475569' : '#d1d5db',
-              '&:hover': {
-                backgroundColor: theme.palette.mode === 'light' ? '#e2e8f0' : '#4b5563',
-                borderColor: theme.palette.mode === 'light' ? '#94a3b8' : '#6b7280',
-                color: theme.palette.mode === 'light' ? '#334155' : '#f3f4f6',
-                transform: 'translateY(-2px)',
-                boxShadow: '0 2px 6px rgba(0, 0, 0, 0.15)',
-              },
-              transition: 'all 0.3s ease',
-            }}
+            sx={commonIconStyles}
           >
             {appTheme === 'light' ? <DarkModeIcon /> : <LightModeIcon />}
           </IconButton>
-          
+
           <IconButton
             onClick={handleAccountSettings}
             title={t('header.settings')}
-            sx={{
-              backgroundColor: theme.palette.mode === 'light' ? '#f8fafc' : '#374151',
-              border: `1px solid ${theme.palette.mode === 'light' ? '#cbd5e1' : '#4b5563'}`,
-              color: theme.palette.mode === 'light' ? '#475569' : '#d1d5db',
-              '&:hover': {
-                backgroundColor: theme.palette.mode === 'light' ? '#e2e8f0' : '#4b5563',
-                borderColor: theme.palette.mode === 'light' ? '#94a3b8' : '#6b7280',
-                color: theme.palette.mode === 'light' ? '#334155' : '#f3f4f6',
-                transform: 'translateY(-2px)',
-                boxShadow: '0 2px 6px rgba(0, 0, 0, 0.15)',
-              },
-              transition: 'all 0.3s ease',
-            }}
+            sx={commonIconStyles}
           >
             <SettingsIcon />
           </IconButton>
