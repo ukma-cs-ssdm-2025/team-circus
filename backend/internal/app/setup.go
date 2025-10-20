@@ -39,16 +39,16 @@ func (a *App) setupRouter() *gin.Engine {
 	// Swagger documentation
 	router.GET("/swagger/*any", ginswagger.WrapHandler(swaggerfiles.Handler))
 
-	groupRepo := grouprepo.NewGroupRepository(a.db)
+	groupRepo := grouprepo.NewGroupRepository(a.DB)
 	groupService := groupservice.NewGroupService(groupRepo)
 
-	documentRepo := documentrepo.NewDocumentRepository(a.db)
+	documentRepo := documentrepo.NewDocumentRepository(a.DB)
 	documentService := documentservice.NewDocumentService(documentRepo)
 
-	userRepo := userrepo.NewUserRepository(a.db)
+	userRepo := userrepo.NewUserRepository(a.DB)
 	userService := userservice.NewUserService(userRepo)
 
-	regRepo := regrepo.NewRegRepository(a.db)
+	regRepo := regrepo.NewRegRepository(a.DB)
 	regService := regservice.NewRegService(regRepo)
 
 	apiV1 := router.Group("/api/v1")

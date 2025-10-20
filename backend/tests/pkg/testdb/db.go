@@ -1,4 +1,4 @@
-package pkg
+package testdb
 
 import (
 	"database/sql"

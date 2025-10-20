@@ -1,10 +1,12 @@
-package pkg
+package testapp
 
 import (
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/app"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/config"
 	"go.uber.org/zap"
 )
+
+const Addr = "http://localhost:8081"
 
 func NewApp() *app.App {
 	cfg := config.Config{

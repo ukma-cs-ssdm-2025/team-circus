@@ -19,10 +19,10 @@ const (
 )
 
 type App struct {
-	cfg    *config.Config
-	db     *sql.DB
-	apiSrv *http.Server
-	l      *zap.Logger
+	cfg *config.Config
+	DB  *sql.DB
+	API *http.Server
+	l   *zap.Logger
 }
 
 func New(cfg *config.Config, l *zap.Logger) *App {
@@ -36,7 +36,7 @@ func (a *App) Run(ctx context.Context) error {
 	var err error
 
 	// db
-	a.db, err = sql.Open(a.cfg.DB.Driver, a.cfg.DB.DSN())
+	a.DB, err = sql.Open(a.cfg.DB.Driver, a.cfg.DB.DSN())
 	if err != nil {
 		return err
 	}
@@ -44,13 +44,13 @@ func (a *App) Run(ctx context.Context) error {
 
 	// api
 	router := a.setupRouter()
-	a.apiSrv = &http.Server{
+	a.API = &http.Server{
 		Addr:        ":" + a.cfg.Srv.Port,
 		Handler:     router,
 		ReadTimeout: readTimeout,
 	}
 	go func() {
-		if err := a.apiSrv.ListenAndServe(); err != nil {
+		if err := a.API.ListenAndServe(); err != nil {
 			log.Printf("api server: %v", err)
 		}
 	}()
@@ -75,8 +75,8 @@ func (a *App) shutdown(timeoutCtx context.Context) error {
 	var shutdownErr error
 
 	// api
-	if a.apiSrv != nil {
-		if err := a.apiSrv.Shutdown(timeoutCtx); err != nil {
+	if a.API != nil {
+		if err := a.API.Shutdown(timeoutCtx); err != nil {
 			wrapped := fmt.Errorf("shutdown api server: %w", err)
 			log.Println(wrapped)
 			shutdownErr = wrapped
@@ -86,8 +86,8 @@ func (a *App) shutdown(timeoutCtx context.Context) error {
 	}
 
 	// db
-	if a.db != nil {
-		if err := a.db.Close(); err != nil {
+	if a.DB != nil {
+		if err := a.DB.Close(); err != nil {
 			wrapped := fmt.Errorf("shutdown db: %w", err)
 			log.Println(wrapped)
 			if shutdownErr == nil {
