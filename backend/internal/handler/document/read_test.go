@@ -1,5 +1,3 @@
-
-
 package document_test
 
 import (

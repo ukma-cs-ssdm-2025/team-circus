@@ -1,4 +1,3 @@
-
 package reg_test
 
 import (

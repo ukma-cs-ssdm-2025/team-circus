@@ -126,8 +126,6 @@ task --list-all
 
 ## Тестування
 
-Детальна інформація в /root/team-circus/backend/tests/README.md
-
 ### Юніт тести
 
    ```bash

@@ -1,5 +1,3 @@
-
-
 package auth_test
 
 import (
