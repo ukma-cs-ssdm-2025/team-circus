@@ -1,4 +1,3 @@
-//go:build unit_test
 
 package auth_test
 

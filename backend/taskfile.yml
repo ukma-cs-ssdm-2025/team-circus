@@ -57,7 +57,7 @@ tasks:
   test:func:run:
     desc: Run functional tests
     cmds:
-      - go test {{.CLI_ARGS | default "./tests/api/..."}} -v -tags=func_test
+      -  go test {{.CLI_ARGS | default "./..."}} -v -tags=func_test
 
   test:func:
     desc: Run functional tests
@@ -67,38 +67,12 @@ tasks:
       - defer: task test:func:down
       - task: test:func:run
 
-  back:test:func:
-    desc: Run functional tests
-    cmds:
-      - task: test:func:up
-      - sleep 2
-      - defer: task test:func:down
-      - task: test:func:run
-
-  back:test:func:up:
-    desc: Start functional test dependencies
-    cmds:
-      - docker compose -f docker-compose.test.yml up -d
-
-  back:test:func:run:
-    desc: Run functional tests
-    cmds:
-      - go test {{.CLI_ARGS | default "./tests/api/..."}} -v -tags=func_test
-
-  back:test:func:down:
-    desc: Stop functional test dependencies
-    cmds:
-      - docker compose -f docker-compose.test.yml down
 
   test:unit:
     desc: Run unit tests
     cmds:
-      - go test {{.CLI_ARGS | default "./tests/unit/..."}} -v -tags=unit_test
+      - go test {{.CLI_ARGS | default "./..."}} -v 
 
-  back:test:unit:
-    desc: Run unit tests
-    cmds:
-      - go test {{.CLI_ARGS | default "./tests/unit/..."}} -v -tags=unit_test 
 
   install:
     desc: Install dependencies

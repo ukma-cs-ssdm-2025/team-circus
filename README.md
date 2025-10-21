@@ -131,7 +131,7 @@ task --list-all
 ### Юніт тести
 
    ```bash
-   task test:unit
+   task back:test:unit
    ```
 
 ### Функціональні (інтеграційні) тести
@@ -150,7 +150,7 @@ task --list-all
 #### Все однією командою
 
    ```bash
-   task test:func
+   task back:test:func
    ```
 
 #### Окремо запускати тести
@@ -158,21 +158,21 @@ task --list-all
 1. Підянти залежності
 
    ```bash
-   task test:func:up
+   task back:test:func:up
    ```
 
 2. Запустти тести
 
    ```bash
-   task test:func:run
+   task back:test:func:run
    ```
 
    АБО
 
    ```bash
    # після `--` вказуєте шлях до тесту
-   task test:func:run -- ./tests/api/...
-   task test:func:run -- ./tests/api/signup_test.go
+   task back:test:func:run -- ./tests/api/...
+   task back:test:func:run -- ./tests/api/signup_test.go
    ```
 
    АБО
@@ -183,7 +183,7 @@ task --list-all
 3. Опустити залежності
 
    ```bash
-   task test:func:down
+   task back:test:func:down
    ```
 
 ## Документація
