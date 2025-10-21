@@ -82,7 +82,7 @@ func (a *App) setupRouter() *gin.Engine {
 
 		reg := apiV1.Group("/signup")
 		{
-			reg.POST("", reghandler.NewRegHandler(regService))
+			reg.POST("", reghandler.NewRegHandler(regService, a.l))
 		}
 
 		auth := apiV1.Group("/auth")
