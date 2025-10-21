@@ -101,6 +101,25 @@ const translations = {
     'documents.groupUnknown': 'Без групи',
     'documents.noContent': 'Без вмісту',
     'documents.createdAt': 'Створено',
+
+    // Document editor page
+    'documentEditor.subtitle': 'Редагуйте документ та переглядайте зміни в реальному часі',
+    'documentEditor.fallbackTitle': 'Документ',
+    'documentEditor.nameLabel': 'Назва документа',
+    'documentEditor.namePlaceholder': 'Введіть назву',
+    'documentEditor.nameRequired': 'Назва є обовʼязковою',
+    'documentEditor.contentLabel': 'Вміст документа',
+    'documentEditor.contentPlaceholder': 'Напишіть текст у форматі Markdown...',
+    'documentEditor.previewTitle': 'Попередній перегляд',
+    'documentEditor.previewEmpty': 'Почніть вводити текст, щоб побачити попередній перегляд.',
+    'documentEditor.createdAtLabel': 'Створено',
+    'documentEditor.saveButton': 'Зберегти зміни',
+    'documentEditor.savingButton': 'Збереження...',
+    'documentEditor.saveSuccess': 'Документ успішно збережено.',
+    'documentEditor.saveError': 'Не вдалося зберегти документ. Спробуйте ще раз.',
+    'documentEditor.backToList': 'Повернутися до документів',
+    'documentEditor.loadError': 'Не вдалося завантажити документ.',
+    'documentEditor.notFound': 'Документ не знайдено або він був видалений.',
   },
   en: {
     // Header
@@ -173,6 +192,25 @@ const translations = {
     'documents.groupUnknown': 'No group',
     'documents.noContent': 'No content',
     'documents.createdAt': 'Created',
+
+    // Document editor page
+    'documentEditor.subtitle': 'Edit the document and preview changes in real time',
+    'documentEditor.fallbackTitle': 'Document',
+    'documentEditor.nameLabel': 'Document name',
+    'documentEditor.namePlaceholder': 'Enter a name',
+    'documentEditor.nameRequired': 'Name is required',
+    'documentEditor.contentLabel': 'Document content',
+    'documentEditor.contentPlaceholder': 'Write your Markdown content here...',
+    'documentEditor.previewTitle': 'Live preview',
+    'documentEditor.previewEmpty': 'Start typing to see a formatted preview.',
+    'documentEditor.createdAtLabel': 'Created',
+    'documentEditor.saveButton': 'Save changes',
+    'documentEditor.savingButton': 'Saving...',
+    'documentEditor.saveSuccess': 'Document saved successfully.',
+    'documentEditor.saveError': 'We could not save the document. Please try again.',
+    'documentEditor.backToList': 'Back to documents',
+    'documentEditor.loadError': 'Failed to load the document.',
+    'documentEditor.notFound': 'The document was not found or has been removed.',
   }
 };
 
