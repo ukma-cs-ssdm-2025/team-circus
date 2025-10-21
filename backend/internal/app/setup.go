@@ -60,16 +60,16 @@ func (a *App) setupRouter() *gin.Engine {
 			groups.GET("", grouphandler.NewGetAllGroupsHandler(groupService, a.l))
 			groups.PUT("/:uuid", grouphandler.NewUpdateGroupHandler(groupService, a.l))
 			groups.DELETE("/:uuid", grouphandler.NewDeleteGroupHandler(groupService, a.l))
-			groups.GET("/:uuid/documents", documenthandler.NewGetDocumentsByGroupHandler(documentService))
+			groups.GET("/:uuid/documents", documenthandler.NewGetDocumentsByGroupHandler(documentService, a.l))
 		}
 
 		documents := apiV1.Group("/documents")
 		{
-			documents.POST("", documenthandler.NewCreateDocumentHandler(documentService))
-			documents.GET("/:uuid", documenthandler.NewGetDocumentHandler(documentService))
-			documents.GET("", documenthandler.NewGetAllDocumentsHandler(documentService))
-			documents.PUT("/:uuid", documenthandler.NewUpdateDocumentHandler(documentService))
-			documents.DELETE("/:uuid", documenthandler.NewDeleteDocumentHandler(documentService))
+			documents.POST("", documenthandler.NewCreateDocumentHandler(documentService, a.l))
+			documents.GET("/:uuid", documenthandler.NewGetDocumentHandler(documentService, a.l))
+			documents.GET("", documenthandler.NewGetAllDocumentsHandler(documentService, a.l))
+			documents.PUT("/:uuid", documenthandler.NewUpdateDocumentHandler(documentService, a.l))
+			documents.DELETE("/:uuid", documenthandler.NewDeleteDocumentHandler(documentService, a.l))
 		}
 
 		users := apiV1.Group("/users")
