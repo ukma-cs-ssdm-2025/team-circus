@@ -15,14 +15,14 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/document"
+	"go.uber.org/zap"
 )
 
-// MockGetDocumentService is a mock implementation of the get document service
-type MockGetDocumentService struct {
+type mockGetDocumentService struct {
 	mock.Mock
 }
 
-func (m *MockGetDocumentService) GetByUUID(ctx context.Context, uuid uuid.UUID) (*domain.Document, error) {
+func (m *mockGetDocumentService) GetByUUID(ctx context.Context, uuid uuid.UUID) (*domain.Document, error) {
 	args := m.Called(ctx, uuid)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -30,12 +30,11 @@ func (m *MockGetDocumentService) GetByUUID(ctx context.Context, uuid uuid.UUID) 
 	return args.Get(0).(*domain.Document), args.Error(1) //nolint:errcheck
 }
 
-// MockGetAllDocumentsService is a mock implementation of the get all documents service
-type MockGetAllDocumentsService struct {
+type mockGetAllDocumentsService struct {
 	mock.Mock
 }
 
-func (m *MockGetAllDocumentsService) GetAll(ctx context.Context) ([]*domain.Document, error) {
+func (m *mockGetAllDocumentsService) GetAll(ctx context.Context) ([]*domain.Document, error) {
 	args := m.Called(ctx)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -43,13 +42,21 @@ func (m *MockGetAllDocumentsService) GetAll(ctx context.Context) ([]*domain.Docu
 	return args.Get(0).([]*domain.Document), args.Error(1) //nolint:errcheck
 }
 
-func TestNewGetDocumentHandler(t *testing.T) {
+func TestNewGetDocumentHandler(main *testing.T) {
 	gin.SetMode(gin.TestMode)
 
-	t.Run("SuccessfulGetDocument", func(t *testing.T) {
+	setup := func(t *testing.T) (*mockGetDocumentService, gin.HandlerFunc) {
+		mockService := &mockGetDocumentService{}
+		handler := document.NewGetDocumentHandler(mockService, zap.NewNop())
+		t.Cleanup(func() {
+			mockService.AssertExpectations(t)
+		})
+		return mockService, handler
+	}
+
+	main.Run("SuccessfulGetDocument", func(t *testing.T) {
 		// Arrange
-		mockService := new(MockGetDocumentService)
-		handler := document.NewGetDocumentHandler(mockService)
+		mockService, handler := setup(t)
 
 		documentUUID := uuid.New()
 		expectedDocument := &domain.Document{
@@ -84,10 +91,9 @@ func TestNewGetDocumentHandler(t *testing.T) {
 		mockService.AssertExpectations(t)
 	})
 
-	t.Run("InvalidUUID", func(t *testing.T) {
+	main.Run("InvalidUUID", func(t *testing.T) {
 		// Arrange
-		mockService := new(MockGetDocumentService)
-		handler := document.NewGetDocumentHandler(mockService)
+		mockService, handler := setup(t)
 
 		req := httptest.NewRequest("GET", "/documents/invalid-uuid", nil)
 		w := httptest.NewRecorder()
@@ -110,10 +116,9 @@ func TestNewGetDocumentHandler(t *testing.T) {
 		mockService.AssertNotCalled(t, "GetByUUID")
 	})
 
-	t.Run("DocumentNotFound", func(t *testing.T) {
+	main.Run("DocumentNotFound", func(t *testing.T) {
 		// Arrange
-		mockService := new(MockGetDocumentService)
-		handler := document.NewGetDocumentHandler(mockService)
+		mockService, handler := setup(t)
 
 		documentUUID := uuid.New()
 		mockService.On("GetByUUID", mock.Anything, documentUUID).Return(nil, domain.ErrDocumentNotFound)
@@ -139,10 +144,9 @@ func TestNewGetDocumentHandler(t *testing.T) {
 		mockService.AssertExpectations(t)
 	})
 
-	t.Run("ServiceInternalError", func(t *testing.T) {
+	main.Run("ServiceInternalError", func(t *testing.T) {
 		// Arrange
-		mockService := new(MockGetDocumentService)
-		handler := document.NewGetDocumentHandler(mockService)
+		mockService, handler := setup(t)
 
 		documentUUID := uuid.New()
 		mockService.On("GetByUUID", mock.Anything, documentUUID).Return(nil, domain.ErrInternal)
@@ -168,10 +172,9 @@ func TestNewGetDocumentHandler(t *testing.T) {
 		mockService.AssertExpectations(t)
 	})
 
-	t.Run("ServiceGenericError", func(t *testing.T) {
+	main.Run("ServiceGenericError", func(t *testing.T) {
 		// Arrange
-		mockService := new(MockGetDocumentService)
-		handler := document.NewGetDocumentHandler(mockService)
+		mockService, handler := setup(t)
 
 		documentUUID := uuid.New()
 		mockService.On("GetByUUID", mock.Anything, documentUUID).Return(nil, errors.New("database connection failed"))
@@ -201,10 +204,18 @@ func TestNewGetDocumentHandler(t *testing.T) {
 func TestNewGetAllDocumentsHandler(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
+	setup := func(t *testing.T) (*mockGetAllDocumentsService, gin.HandlerFunc) {
+		mockService := &mockGetAllDocumentsService{}
+		handler := document.NewGetAllDocumentsHandler(mockService, zap.NewNop())
+		t.Cleanup(func() {
+			mockService.AssertExpectations(t)
+		})
+		return mockService, handler
+	}
+
 	t.Run("SuccessfulGetAllDocuments", func(t *testing.T) {
 		// Arrange
-		mockService := new(MockGetAllDocumentsService)
-		handler := document.NewGetAllDocumentsHandler(mockService)
+		mockService, handler := setup(t)
 
 		document1 := &domain.Document{
 			UUID:      uuid.New(),
@@ -251,8 +262,7 @@ func TestNewGetAllDocumentsHandler(t *testing.T) {
 
 	t.Run("EmptyDocumentsList", func(t *testing.T) {
 		// Arrange
-		mockService := new(MockGetAllDocumentsService)
-		handler := document.NewGetAllDocumentsHandler(mockService)
+		mockService, handler := setup(t)
 
 		expectedDocuments := []*domain.Document{}
 		mockService.On("GetAll", mock.Anything).Return(expectedDocuments, nil)
@@ -282,8 +292,7 @@ func TestNewGetAllDocumentsHandler(t *testing.T) {
 
 	t.Run("ServiceInternalError", func(t *testing.T) {
 		// Arrange
-		mockService := new(MockGetAllDocumentsService)
-		handler := document.NewGetAllDocumentsHandler(mockService)
+		mockService, handler := setup(t)
 
 		mockService.On("GetAll", mock.Anything).Return(nil, domain.ErrInternal)
 
@@ -309,8 +318,7 @@ func TestNewGetAllDocumentsHandler(t *testing.T) {
 
 	t.Run("ServiceGenericError", func(t *testing.T) {
 		// Arrange
-		mockService := new(MockGetAllDocumentsService)
-		handler := document.NewGetAllDocumentsHandler(mockService)
+		mockService, handler := setup(t)
 
 		mockService.On("GetAll", mock.Anything).Return(nil, errors.New("database connection failed"))
 
