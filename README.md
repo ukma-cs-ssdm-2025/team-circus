@@ -126,10 +126,12 @@ task --list-all
 
 ## Тестування
 
+Детальна інформація в /root/team-circus/backend/tests/README.md
+
 ### Юніт тести
 
    ```bash
-   task back:test:unit
+   task test:unit
    ```
 
 ### Функціональні (інтеграційні) тести
@@ -148,7 +150,7 @@ task --list-all
 #### Все однією командою
 
    ```bash
-   task back:test:func
+   task test:func
    ```
 
 #### Окремо запускати тести
@@ -156,21 +158,21 @@ task --list-all
 1. Підянти залежності
 
    ```bash
-   task back:test:func:up
+   task test:func:up
    ```
 
 2. Запустти тести
 
    ```bash
-   task back:test:func:run
+   task test:func:run
    ```
 
    АБО
 
    ```bash
    # після `--` вказуєте шлях до тесту
-   task back:test:func:run -- ./tests/api/...
-   task back:test:func:run -- ./tests/api/signup_test.go
+   task test:func:run -- ./tests/api/...
+   task test:func:run -- ./tests/api/signup_test.go
    ```
 
    АБО
@@ -181,7 +183,7 @@ task --list-all
 3. Опустити залежності
 
    ```bash
-   task back:test:func:down
+   task test:func:down
    ```
 
 ## Документація
