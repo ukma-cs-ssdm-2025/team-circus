@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/reg/requests"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type regService interface {
@@ -44,7 +45,13 @@ func NewRegHandler(service regService) gin.HandlerFunc {
 			return
 		}
 
-		user, err := service.Register(c, req.Login, req.Email, req.Password)
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), 10)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to hash password"})
+			return
+		}
+
+		user, err := service.Register(c, req.Login, req.Email, string(hashedPassword))
 		if errors.Is(err, domain.ErrInternal) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to register"})
 			return

@@ -13,6 +13,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/auth/requests"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type userRepository interface {
@@ -53,12 +54,13 @@ func NewLogInHandler(userRepo userRepository) gin.HandlerFunc {
 		}
 
 		if user == nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid login"})
 			return
 		}
 
-		if req.Password != user.Password {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
+		err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password))
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid password"})
 			return
 		}
 
