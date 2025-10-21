@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/auth"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/auth/requests"
+	"go.uber.org/zap"
 )
 
 func TestNewRefreshTokenHandler(t *testing.T) {
@@ -32,7 +33,7 @@ func TestNewRefreshTokenHandler(t *testing.T) {
 
 	t.Run("SuccessfulRefresh", func(t *testing.T) {
 		// Arrange
-		handler := auth.NewRefreshTokenHandler(nil) // No repo needed for refresh
+		handler := auth.NewRefreshTokenHandler(nil, zap.NewNop()) // No repo needed for refresh
 
 		// Create a valid refresh token
 		refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
@@ -72,7 +73,7 @@ func TestNewRefreshTokenHandler(t *testing.T) {
 
 	t.Run("InvalidJSON", func(t *testing.T) {
 		// Arrange
-		handler := auth.NewRefreshTokenHandler(nil)
+		handler := auth.NewRefreshTokenHandler(nil, zap.NewNop())
 
 		invalidJSON := `{"refresh_token": "some-token"` // Missing closing brace
 
@@ -97,7 +98,7 @@ func TestNewRefreshTokenHandler(t *testing.T) {
 
 	t.Run("InvalidToken", func(t *testing.T) {
 		// Arrange
-		handler := auth.NewRefreshTokenHandler(nil)
+		handler := auth.NewRefreshTokenHandler(nil, zap.NewNop())
 
 		requestBody := requests.RefreshTokenRequest{
 			RefreshToken: "invalid-token",
@@ -129,7 +130,7 @@ func TestNewRefreshTokenHandler(t *testing.T) {
 		// Arrange
 		// Make sure SECRET_TOKEN is set for this test
 		os.Setenv("SECRET_TOKEN", "test-secret-key") //nolint:errcheck,gosec
-		handler := auth.NewRefreshTokenHandler(nil)
+		handler := auth.NewRefreshTokenHandler(nil, zap.NewNop())
 
 		// Create an expired refresh token
 		refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
@@ -169,7 +170,7 @@ func TestNewRefreshTokenHandler(t *testing.T) {
 
 	t.Run("InvalidUUIDInToken", func(t *testing.T) {
 		// Arrange
-		handler := auth.NewRefreshTokenHandler(nil)
+		handler := auth.NewRefreshTokenHandler(nil, zap.NewNop())
 
 		// Create a token with invalid UUID
 		refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
@@ -209,7 +210,7 @@ func TestNewRefreshTokenHandler(t *testing.T) {
 	t.Run("MissingSecretToken", func(t *testing.T) {
 		// Arrange
 		os.Unsetenv("SECRET_TOKEN") //nolint:errcheck
-		handler := auth.NewRefreshTokenHandler(nil)
+		handler := auth.NewRefreshTokenHandler(nil, zap.NewNop())
 
 		requestBody := requests.RefreshTokenRequest{
 			RefreshToken: "some-token",
@@ -241,7 +242,7 @@ func TestNewRefreshTokenHandler(t *testing.T) {
 		// Arrange
 		// Make sure SECRET_TOKEN is set for this test
 		os.Setenv("SECRET_TOKEN", "test-secret-key") //nolint:errcheck,gosec
-		handler := auth.NewRefreshTokenHandler(nil)
+		handler := auth.NewRefreshTokenHandler(nil, zap.NewNop())
 
 		// Create a token with wrong signing method (RSA instead of HMAC)
 		// This will fail to sign with HMAC key, but let's test the parsing

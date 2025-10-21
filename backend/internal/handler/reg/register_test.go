@@ -17,6 +17,7 @@ import (
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/reg"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/reg/requests"
+	"go.uber.org/zap"
 )
 
 // MockRegService is a mock implementation of the registration service
@@ -35,10 +36,17 @@ func (m *MockRegService) Register(ctx context.Context, login string, email strin
 func TestNewRegHandler(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
+	setup := func(t *testing.T) (*MockRegService, gin.HandlerFunc) {
+		mockService := &MockRegService{}
+		handler := reg.NewRegHandler(mockService, zap.NewNop())
+		t.Cleanup(func() {
+			mockService.AssertExpectations(t)
+		})
+		return mockService, handler
+	}
 	t.Run("SuccessfulRegistration", func(t *testing.T) {
 		// Arrange
-		mockService := new(MockRegService)
-		handler := reg.NewRegHandler(mockService)
+		mockService, handler := setup(t)
 
 		expectedUser := &domain.User{
 			UUID:      uuid.MustParse("123e4567-e89b-12d3-a456-426614174000"),
@@ -84,8 +92,7 @@ func TestNewRegHandler(t *testing.T) {
 
 	t.Run("InvalidJSON", func(t *testing.T) {
 		// Arrange
-		mockService := new(MockRegService)
-		handler := reg.NewRegHandler(mockService)
+		mockService, handler := setup(t)
 
 		invalidJSON := `{"login": "testuser", "email": "test@example.com", "password": "testpassword123"` // Missing closing brace
 
@@ -112,8 +119,7 @@ func TestNewRegHandler(t *testing.T) {
 
 	t.Run("ValidationFailure", func(t *testing.T) {
 		// Arrange
-		mockService := new(MockRegService)
-		handler := reg.NewRegHandler(mockService)
+		mockService, handler := setup(t)
 
 		requestBody := requests.RegRequest{
 			Login:    "", // Empty login should fail validation
@@ -148,8 +154,7 @@ func TestNewRegHandler(t *testing.T) {
 
 	t.Run("ServiceInternalError", func(t *testing.T) {
 		// Arrange
-		mockService := new(MockRegService)
-		handler := reg.NewRegHandler(mockService)
+		mockService, handler := setup(t)
 
 		mockService.On("Register", mock.Anything, "testuser", "test@example.com", "testpassword123").
 			Return(nil, domain.ErrInternal)
@@ -186,8 +191,7 @@ func TestNewRegHandler(t *testing.T) {
 
 	t.Run("ServiceGenericError", func(t *testing.T) {
 		// Arrange
-		mockService := new(MockRegService)
-		handler := reg.NewRegHandler(mockService)
+		mockService, handler := setup(t)
 
 		mockService.On("Register", mock.Anything, "testuser", "test@example.com", "testpassword123").
 			Return(nil, errors.New("database connection failed"))
@@ -224,8 +228,7 @@ func TestNewRegHandler(t *testing.T) {
 
 	t.Run("MissingContentType", func(t *testing.T) {
 		// Arrange
-		mockService := new(MockRegService)
-		handler := reg.NewRegHandler(mockService)
+		mockService, handler := setup(t)
 
 		// Send invalid JSON without Content-Type
 		req := httptest.NewRequest("POST", "/signup", bytes.NewBufferString("invalid json"))

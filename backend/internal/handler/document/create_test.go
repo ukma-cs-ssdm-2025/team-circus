@@ -17,14 +17,14 @@ import (
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/document"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/document/requests"
+	"go.uber.org/zap"
 )
 
-// MockCreateDocumentService is a mock implementation of the create document service
-type MockCreateDocumentService struct {
+type mockCreateDocumentService struct {
 	mock.Mock
 }
 
-func (m *MockCreateDocumentService) Create(ctx context.Context, groupUUID uuid.UUID, name, content string) (*domain.Document, error) {
+func (m *mockCreateDocumentService) Create(ctx context.Context, groupUUID uuid.UUID, name, content string) (*domain.Document, error) {
 	args := m.Called(ctx, groupUUID, name, content)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -32,13 +32,21 @@ func (m *MockCreateDocumentService) Create(ctx context.Context, groupUUID uuid.U
 	return args.Get(0).(*domain.Document), args.Error(1) //nolint:errcheck
 }
 
-func TestNewCreateDocumentHandler(t *testing.T) {
+func TestNewCreateDocumentHandler(main *testing.T) {
 	gin.SetMode(gin.TestMode)
 
-	t.Run("SuccessfulCreateDocument", func(t *testing.T) {
+	setup := func(t *testing.T) (*mockCreateDocumentService, gin.HandlerFunc) {
+		mockService := &mockCreateDocumentService{}
+		handler := document.NewCreateDocumentHandler(mockService, zap.NewNop())
+		t.Cleanup(func() {
+			mockService.AssertExpectations(t)
+		})
+		return mockService, handler
+	}
+
+	main.Run("SuccessfulCreateDocument", func(t *testing.T) {
 		// Arrange
-		mockService := new(MockCreateDocumentService)
-		handler := document.NewCreateDocumentHandler(mockService)
+		mockService, handler := setup(t)
 
 		groupUUID := uuid.New()
 		expectedDocument := &domain.Document{
@@ -83,10 +91,9 @@ func TestNewCreateDocumentHandler(t *testing.T) {
 		mockService.AssertExpectations(t)
 	})
 
-	t.Run("InvalidJSON", func(t *testing.T) {
+	main.Run("InvalidJSON", func(t *testing.T) {
 		// Arrange
-		mockService := new(MockCreateDocumentService)
-		handler := document.NewCreateDocumentHandler(mockService)
+		mockService, handler := setup(t)
 
 		invalidJSON := `{"group_uuid": "123e4567-e89b-12d3-a456-426614174000", "name": "Test Document", "content": "This is test content"` //nolint:revive
 
@@ -111,10 +118,9 @@ func TestNewCreateDocumentHandler(t *testing.T) {
 		mockService.AssertNotCalled(t, "Create")
 	})
 
-	t.Run("ValidationFailure", func(t *testing.T) {
+	main.Run("ValidationFailure", func(t *testing.T) {
 		// Arrange
-		mockService := new(MockCreateDocumentService)
-		handler := document.NewCreateDocumentHandler(mockService)
+		mockService, handler := setup(t)
 
 		requestBody := requests.CreateDocumentRequest{
 			GroupUUID: uuid.New(),
@@ -147,10 +153,9 @@ func TestNewCreateDocumentHandler(t *testing.T) {
 		mockService.AssertNotCalled(t, "Create")
 	})
 
-	t.Run("ServiceInternalError", func(t *testing.T) {
+	main.Run("ServiceInternalError", func(t *testing.T) {
 		// Arrange
-		mockService := new(MockCreateDocumentService)
-		handler := document.NewCreateDocumentHandler(mockService)
+		mockService, handler := setup(t)
 
 		groupUUID := uuid.New()
 		mockService.On("Create", mock.Anything, groupUUID, "Test Document", "This is test content").
@@ -186,10 +191,9 @@ func TestNewCreateDocumentHandler(t *testing.T) {
 		mockService.AssertExpectations(t)
 	})
 
-	t.Run("ServiceGenericError", func(t *testing.T) {
+	main.Run("ServiceGenericError", func(t *testing.T) {
 		// Arrange
-		mockService := new(MockCreateDocumentService)
-		handler := document.NewCreateDocumentHandler(mockService)
+		mockService, handler := setup(t)
 
 		groupUUID := uuid.New()
 		mockService.On("Create", mock.Anything, groupUUID, "Test Document", "This is test content").
@@ -225,10 +229,9 @@ func TestNewCreateDocumentHandler(t *testing.T) {
 		mockService.AssertExpectations(t)
 	})
 
-	t.Run("MissingContentType", func(t *testing.T) {
+	main.Run("MissingContentType", func(t *testing.T) {
 		// Arrange
-		mockService := new(MockCreateDocumentService)
-		handler := document.NewCreateDocumentHandler(mockService)
+		mockService, handler := setup(t)
 
 		// Send invalid JSON without Content-Type
 		req := httptest.NewRequest("POST", "/documents", bytes.NewBufferString("invalid json"))

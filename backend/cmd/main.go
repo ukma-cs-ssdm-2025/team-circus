@@ -22,20 +22,20 @@ import (
 )
 
 func main() {
-	logger := logging.NewLogger()
+	l := logging.NewLogger()
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer cancel()
 	cfg, err := config.Load()
 	if err != nil {
-		logger.Panic("Failed to load config", zap.Error(err))
+		l.Panic("Failed to load config", zap.Error(err))
 	}
-	logger.Info("Creating app...")
-	app := app.New(cfg, logger)
-	logger.Info("App created")
+	l.Info("Creating app...")
+	app := app.New(cfg, l)
+	l.Info("App created")
 
-	logger.Info("Running app...")
+	l.Info("Running app...")
 	if err := app.Run(ctx); err != nil {
-		logger.Panic("Failed to run app", zap.Error(err))
+		l.Panic("Failed to run app", zap.Error(err))
 	}
-	logger.Info("App stopped successfully")
+	l.Info("App stopped successfully")
 }

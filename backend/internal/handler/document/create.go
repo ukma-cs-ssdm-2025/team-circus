@@ -4,13 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/document/requests"
+	"go.uber.org/zap"
 )
 
 type createDocumentService interface {
@@ -28,30 +28,39 @@ type createDocumentService interface {
 // @Failure 400 {object} map[string]interface{} "Invalid request format or validation failed"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /documents [post]
-func NewCreateDocumentHandler(service createDocumentService) gin.HandlerFunc {
+func NewCreateDocumentHandler(service createDocumentService, logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req requests.CreateDocumentRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
 			err = fmt.Errorf("create document handler: failed to bind request: %v", err)
-			log.Println(err)
+			logger.Error("failed to bind request", zap.Error(err))
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request format"})
 			return
 		}
 
 		if err := req.Validate(); err != nil {
 			err = fmt.Errorf("create document handler: validation failed: %v", err)
-			log.Println(err)
+			logger.Error("validation failed", zap.Error(err))
 			c.JSON(http.StatusBadRequest, gin.H{"error": "validation failed", "details": err.Error()})
 			return
 		}
 
 		document, err := service.Create(c, req.GroupUUID, req.Name, req.Content)
 		if errors.Is(err, domain.ErrInternal) {
+			logger.Error("failed to create document",
+				zap.Error(err),
+				zap.String("group_uuid", req.GroupUUID.String()),
+				zap.String("name", req.Name),
+			)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create document"})
 			return
 		}
 		if err != nil {
-			log.Println(err)
+			logger.Error("failed to create document",
+				zap.Error(err),
+				zap.String("group_uuid", req.GroupUUID.String()),
+				zap.String("name", req.Name),
+			)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create document"})
 			return
 		}

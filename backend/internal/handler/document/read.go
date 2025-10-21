@@ -4,13 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/document/responses"
+	"go.uber.org/zap"
 )
 
 type getDocumentService interface {
@@ -37,28 +37,30 @@ type getDocumentsByGroupService interface {
 // @Failure 404 {object} map[string]interface{} "Document not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /documents/{uuid} [get]
-func NewGetDocumentHandler(service getDocumentService) gin.HandlerFunc {
+func NewGetDocumentHandler(service getDocumentService, logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		uuidParam := c.Param("uuid")
 		parsedUUID, err := uuid.Parse(uuidParam)
 		if err != nil {
 			err = fmt.Errorf("get document handler: failed to parse uuid: %v", err)
-			log.Println(err)
+			logger.Error("failed to parse uuid", zap.Error(err))
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid uuid format"})
 			return
 		}
 
 		document, err := service.GetByUUID(c, parsedUUID)
 		if errors.Is(err, domain.ErrDocumentNotFound) {
+			logger.Warn("document not found", zap.String("uuid", uuidParam))
 			c.JSON(http.StatusNotFound, gin.H{"error": "document not found"})
 			return
 		}
 		if errors.Is(err, domain.ErrInternal) {
+			logger.Error("failed to get document", zap.Error(err), zap.String("uuid", uuidParam))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get document"})
 			return
 		}
 		if err != nil {
-			log.Println(err)
+			logger.Error("failed to get document", zap.Error(err), zap.String("uuid", uuidParam))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get document"})
 			return
 		}
@@ -78,15 +80,16 @@ func NewGetDocumentHandler(service getDocumentService) gin.HandlerFunc {
 // @Success 200 {object} responses.GetAllDocumentsResponse "Documents retrieved successfully"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /documents [get]
-func NewGetAllDocumentsHandler(service getAllDocumentsService) gin.HandlerFunc {
+func NewGetAllDocumentsHandler(service getAllDocumentsService, logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		documents, err := service.GetAll(c)
 		if errors.Is(err, domain.ErrInternal) {
+			logger.Error("failed to get documents", zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get documents"})
 			return
 		}
 		if err != nil {
-			log.Println(err)
+			logger.Error("failed to get documents", zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get documents"})
 			return
 		}
@@ -110,24 +113,25 @@ func NewGetAllDocumentsHandler(service getAllDocumentsService) gin.HandlerFunc {
 // @Failure 400 {object} map[string]interface{} "Invalid UUID format"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /groups/{uuid}/documents [get]
-func NewGetDocumentsByGroupHandler(service getDocumentsByGroupService) gin.HandlerFunc {
+func NewGetDocumentsByGroupHandler(service getDocumentsByGroupService, logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		groupUUIDParam := c.Param("uuid")
 		parsedGroupUUID, err := uuid.Parse(groupUUIDParam)
 		if err != nil {
 			err = fmt.Errorf("get documents by group handler: failed to parse group uuid: %v", err)
-			log.Println(err)
+			logger.Error("failed to parse group uuid", zap.Error(err))
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid group uuid format"})
 			return
 		}
 
 		documents, err := service.GetByGroupUUID(c, parsedGroupUUID)
 		if errors.Is(err, domain.ErrInternal) {
+			logger.Error("failed to get documents", zap.Error(err), zap.String("group_uuid", groupUUIDParam))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get documents"})
 			return
 		}
 		if err != nil {
-			log.Println(err)
+			logger.Error("failed to get documents", zap.Error(err), zap.String("group_uuid", groupUUIDParam))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get documents"})
 			return
 		}

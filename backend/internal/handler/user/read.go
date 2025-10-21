@@ -4,13 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/user/responses"
+	"go.uber.org/zap"
 )
 
 type getUserService interface {
@@ -33,28 +33,30 @@ type getAllUsersService interface {
 // @Failure 404 {object} map[string]interface{} "User not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /users/{uuid} [get]
-func NewGetUserHandler(service getUserService) gin.HandlerFunc {
+func NewGetUserHandler(service getUserService, logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		uuidParam := c.Param("uuid")
 		parsedUUID, err := uuid.Parse(uuidParam)
 		if err != nil {
 			err = fmt.Errorf("get user handler: failed to parse uuid: %v", err)
-			log.Println(err)
+			logger.Error("failed to parse uuid", zap.Error(err))
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid uuid format"})
 			return
 		}
 
 		user, err := service.GetByUUID(c, parsedUUID)
 		if errors.Is(err, domain.ErrUserNotFound) {
+			logger.Warn("user not found", zap.String("uuid", uuidParam))
 			c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
 			return
 		}
 		if errors.Is(err, domain.ErrInternal) {
+			logger.Error("failed to get user", zap.Error(err), zap.String("uuid", uuidParam))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get user"})
 			return
 		}
 		if err != nil {
-			log.Println(err)
+			logger.Error("failed to get user", zap.Error(err), zap.String("uuid", uuidParam))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get user"})
 			return
 		}
@@ -74,15 +76,16 @@ func NewGetUserHandler(service getUserService) gin.HandlerFunc {
 // @Success 200 {object} responses.GetAllUsersResponse "Users retrieved successfully"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /users [get]
-func NewGetAllUsersHandler(service getAllUsersService) gin.HandlerFunc {
+func NewGetAllUsersHandler(service getAllUsersService, logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		users, err := service.GetAll(c)
 		if errors.Is(err, domain.ErrInternal) {
+			logger.Error("failed to get users", zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get users"})
 			return
 		}
 		if err != nil {
-			log.Println(err)
+			logger.Error("failed to get users", zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get users"})
 			return
 		}

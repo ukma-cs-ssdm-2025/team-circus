@@ -4,13 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/document/requests"
+	"go.uber.org/zap"
 )
 
 type updateDocumentService interface {
@@ -30,13 +30,13 @@ type updateDocumentService interface {
 // @Failure 404 {object} map[string]interface{} "Document not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /documents/{uuid} [put]
-func NewUpdateDocumentHandler(service updateDocumentService) gin.HandlerFunc {
+func NewUpdateDocumentHandler(service updateDocumentService, logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		uuidParam := c.Param("uuid")
 		parsedUUID, err := uuid.Parse(uuidParam)
 		if err != nil {
 			err = fmt.Errorf("update document handler: failed to parse uuid: %v", err)
-			log.Println(err)
+			logger.Error("failed to parse uuid", zap.Error(err))
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid uuid format"})
 			return
 		}
@@ -44,29 +44,37 @@ func NewUpdateDocumentHandler(service updateDocumentService) gin.HandlerFunc {
 		var req requests.UpdateDocumentRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
 			err = fmt.Errorf("update document handler: failed to bind request: %v", err)
-			log.Println(err)
+			logger.Error("failed to bind request", zap.Error(err))
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request format"})
 			return
 		}
 
 		if err := req.Validate(); err != nil {
 			err = fmt.Errorf("update document handler: validation failed: %v", err)
-			log.Println(err)
+			logger.Error("validation failed", zap.Error(err))
 			c.JSON(http.StatusBadRequest, gin.H{"error": "validation failed", "details": err.Error()})
 			return
 		}
 
 		document, err := service.Update(c, parsedUUID, req.Name, req.Content)
 		if errors.Is(err, domain.ErrDocumentNotFound) {
+			logger.Warn("document not found", zap.String("uuid", uuidParam))
 			c.JSON(http.StatusNotFound, gin.H{"error": "document not found"})
 			return
 		}
 		if errors.Is(err, domain.ErrInternal) {
+			logger.Error("failed to update document",
+				zap.Error(err),
+				zap.String("uuid", uuidParam),
+			)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update document"})
 			return
 		}
 		if err != nil {
-			log.Println(err)
+			logger.Error("failed to update document",
+				zap.Error(err),
+				zap.String("uuid", uuidParam),
+			)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update document"})
 			return
 		}
