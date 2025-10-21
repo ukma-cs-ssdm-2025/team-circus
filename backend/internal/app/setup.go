@@ -55,11 +55,11 @@ func (a *App) setupRouter() *gin.Engine {
 	{
 		groups := apiV1.Group("/groups")
 		{
-			groups.POST("", grouphandler.NewCreateGroupHandler(groupService))
-			groups.GET("/:uuid", grouphandler.NewGetGroupHandler(groupService))
-			groups.GET("", grouphandler.NewGetAllGroupsHandler(groupService))
-			groups.PUT("/:uuid", grouphandler.NewUpdateGroupHandler(groupService))
-			groups.DELETE("/:uuid", grouphandler.NewDeleteGroupHandler(groupService))
+			groups.POST("", grouphandler.NewCreateGroupHandler(groupService, a.l))
+			groups.GET("/:uuid", grouphandler.NewGetGroupHandler(groupService, a.l))
+			groups.GET("", grouphandler.NewGetAllGroupsHandler(groupService, a.l))
+			groups.PUT("/:uuid", grouphandler.NewUpdateGroupHandler(groupService, a.l))
+			groups.DELETE("/:uuid", grouphandler.NewDeleteGroupHandler(groupService, a.l))
 			groups.GET("/:uuid/documents", documenthandler.NewGetDocumentsByGroupHandler(documentService))
 		}
 
