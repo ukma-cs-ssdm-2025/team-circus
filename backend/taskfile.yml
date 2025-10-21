@@ -57,7 +57,7 @@ tasks:
   test:func:run:
     desc: Run functional tests
     cmds:
-      - go test {{.CLI_ARGS | default "./..."}} -v -tags=func_test
+      - go test {{.CLI_ARGS | default "./tests/api/..."}} -v -tags=func_test
 
   test:func:
     desc: Run functional tests
@@ -70,7 +70,7 @@ tasks:
   test:unit:
     desc: Run unit tests
     cmds:
-      - go test {{.CLI_ARGS | default "./..."}} -v -tags=unit 
+      - go test {{.CLI_ARGS | default "./tests/unit/..."}} -v -tags=unit_test 
 
   install:
     desc: Install dependencies
