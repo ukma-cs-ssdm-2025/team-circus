@@ -2,7 +2,6 @@ package auth
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"time"
@@ -11,6 +10,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/auth/requests"
+	"go.uber.org/zap"
 )
 
 // NewUpdateRefreshTokenHandler handles refresh token requests
@@ -25,18 +25,19 @@ import (
 // @Failure 401 {object} map[string]string "Invalid or expired refresh token"
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /auth/refresh [post]
-func NewRefreshTokenHandler(userRepo userRepository) gin.HandlerFunc {
+func NewRefreshTokenHandler(userRepo userRepository, logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req requests.RefreshTokenRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
 			err = fmt.Errorf("refresh token handler: failed to bind request: %v", err)
-			log.Println(err)
+			logger.Error("failed to bind request", zap.Error(err))
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request format"})
 			return
 		}
 
 		secretToken := os.Getenv("SECRET_TOKEN")
 		if secretToken == "" {
+			logger.Error("server misconfiguration")
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "server misconfiguration"})
 			return
 		}
@@ -48,23 +49,27 @@ func NewRefreshTokenHandler(userRepo userRepository) gin.HandlerFunc {
 			return []byte(secretToken), nil
 		})
 		if err != nil {
+			logger.Error("invalid access token", zap.Error(err))
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid access token"})
 			return
 		}
 
 		claims, ok := token.Claims.(*jwt.RegisteredClaims)
 		if !ok || !token.Valid {
+			logger.Error("invalid access token claims")
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid access token claims"})
 			return
 		}
 
 		if claims.ExpiresAt != nil && time.Now().After(claims.ExpiresAt.Time) {
+			logger.Error("refresh token expired")
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "refresh token expired"})
 			return
 		}
 
 		uid, err := uuid.Parse(claims.Subject)
 		if err != nil {
+			logger.Error("invalid uuid format in access token", zap.Error(err))
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid uuid format in access token"})
 			return
 		}
@@ -77,6 +82,7 @@ func NewRefreshTokenHandler(userRepo userRepository) gin.HandlerFunc {
 
 		accessTokenString, err := accessToken.SignedString([]byte(secretToken))
 		if err != nil {
+			logger.Error("failed to generate access token", zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to generate access token"})
 			return
 		}
@@ -88,6 +94,7 @@ func NewRefreshTokenHandler(userRepo userRepository) gin.HandlerFunc {
 
 		refreshTokenString, err := refreshToken.SignedString([]byte(secretToken))
 		if err != nil {
+			logger.Error("failed to generate refresh token", zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to generate refresh token"})
 			return
 		}

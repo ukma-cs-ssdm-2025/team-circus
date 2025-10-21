@@ -18,6 +18,7 @@ import (
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/auth"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/auth/requests"
+	"go.uber.org/zap"
 )
 
 // MockUserRepository is a mock implementation of the user repository
@@ -36,6 +37,15 @@ func (m *MockUserRepository) GetByLogin(ctx context.Context, login string) (*dom
 func TestNewLogInHandler(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
+	setup := func(t *testing.T) (*MockUserRepository, gin.HandlerFunc) {
+		mockRepo := new(MockUserRepository)
+		handler := auth.NewLogInHandler(mockRepo, zap.NewNop())
+		t.Cleanup(func() {
+			mockRepo.AssertExpectations(t)
+		})
+		return mockRepo, handler
+	}
+
 	// Set up environment variable for testing
 	originalSecret := os.Getenv("SECRET_TOKEN")
 	defer func() {
@@ -49,8 +59,7 @@ func TestNewLogInHandler(t *testing.T) {
 
 	t.Run("SuccessfulLogin", func(t *testing.T) {
 		// Arrange
-		mockRepo := new(MockUserRepository)
-		handler := auth.NewLogInHandler(mockRepo)
+		mockRepo, handler := setup(t)
 
 		expectedUser := &domain.User{
 			UUID:      uuid.New(),
@@ -97,8 +106,7 @@ func TestNewLogInHandler(t *testing.T) {
 
 	t.Run("InvalidJSON", func(t *testing.T) {
 		// Arrange
-		mockRepo := new(MockUserRepository)
-		handler := auth.NewLogInHandler(mockRepo)
+		mockRepo, handler := setup(t)
 
 		invalidJSON := `{"login": "testuser", "password": "testpassword123"` // Missing closing brace
 
@@ -125,8 +133,7 @@ func TestNewLogInHandler(t *testing.T) {
 
 	t.Run("UserNotFound", func(t *testing.T) {
 		// Arrange
-		mockRepo := new(MockUserRepository)
-		handler := auth.NewLogInHandler(mockRepo)
+		mockRepo, handler := setup(t)
 
 		// Return nil user (not found) without error
 		mockRepo.On("GetByLogin", mock.Anything, "nonexistent").Return(nil, nil)
@@ -162,8 +169,7 @@ func TestNewLogInHandler(t *testing.T) {
 
 	t.Run("WrongPassword", func(t *testing.T) {
 		// Arrange
-		mockRepo := new(MockUserRepository)
-		handler := auth.NewLogInHandler(mockRepo)
+		mockRepo, handler := setup(t)
 
 		expectedUser := &domain.User{
 			UUID:      uuid.New(),
@@ -206,8 +212,7 @@ func TestNewLogInHandler(t *testing.T) {
 
 	t.Run("ServiceInternalError", func(t *testing.T) {
 		// Arrange
-		mockRepo := new(MockUserRepository)
-		handler := auth.NewLogInHandler(mockRepo)
+		mockRepo, handler := setup(t)
 
 		mockRepo.On("GetByLogin", mock.Anything, "testuser").Return(nil, domain.ErrInternal)
 
@@ -242,8 +247,7 @@ func TestNewLogInHandler(t *testing.T) {
 
 	t.Run("ServiceGenericError", func(t *testing.T) {
 		// Arrange
-		mockRepo := new(MockUserRepository)
-		handler := auth.NewLogInHandler(mockRepo)
+		mockRepo, handler := setup(t)
 
 		mockRepo.On("GetByLogin", mock.Anything, "testuser").Return(nil, errors.New("database connection failed"))
 
@@ -279,8 +283,7 @@ func TestNewLogInHandler(t *testing.T) {
 	t.Run("MissingSecretToken", func(t *testing.T) {
 		// Arrange
 		os.Unsetenv("SECRET_TOKEN") //nolint:errcheck
-		mockRepo := new(MockUserRepository)
-		handler := auth.NewLogInHandler(mockRepo)
+		mockRepo, handler := setup(t)
 
 		expectedUser := &domain.User{
 			UUID:      uuid.New(),
