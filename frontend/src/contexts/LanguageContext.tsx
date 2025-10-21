@@ -71,6 +71,7 @@ const translations = {
     'sidebar.documents': 'Документи',
     'sidebar.settings': 'Налаштування',
     'sidebar.groups': 'Групи',
+    'sidebar.close': 'Закрити меню',
     'sidebar.viewGroups': 'Переглянути групи',
     'sidebar.createGroup': 'Створити групу',
 
@@ -162,6 +163,7 @@ const translations = {
     'sidebar.documents': 'Documents',
     'sidebar.settings': 'Settings',
     'sidebar.groups': 'Groups',
+    'sidebar.close': 'Close menu',
     'sidebar.viewGroups': 'View Groups',
     'sidebar.createGroup': 'Create Group',
 
