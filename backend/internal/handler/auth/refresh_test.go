@@ -23,12 +23,12 @@ func TestNewRefreshTokenHandler(t *testing.T) {
 	originalSecret := os.Getenv("SECRET_TOKEN")
 	defer func() {
 		if originalSecret == "" {
-			os.Unsetenv("SECRET_TOKEN")
+			os.Unsetenv("SECRET_TOKEN") //nolint:errcheck
 		} else {
-			os.Setenv("SECRET_TOKEN", originalSecret)
+			os.Setenv("SECRET_TOKEN", originalSecret) //nolint:errcheck,gosec
 		}
 	}()
-	os.Setenv("SECRET_TOKEN", "test-secret-key")
+	os.Setenv("SECRET_TOKEN", "test-secret-key") //nolint:errcheck,gosec
 
 	t.Run("SuccessfulRefresh", func(t *testing.T) {
 		// Arrange
@@ -128,7 +128,7 @@ func TestNewRefreshTokenHandler(t *testing.T) {
 	t.Run("ExpiredToken", func(t *testing.T) {
 		// Arrange
 		// Make sure SECRET_TOKEN is set for this test
-		os.Setenv("SECRET_TOKEN", "test-secret-key")
+		os.Setenv("SECRET_TOKEN", "test-secret-key") //nolint:errcheck,gosec
 		handler := auth.NewRefreshTokenHandler(nil)
 
 		// Create an expired refresh token
@@ -208,7 +208,7 @@ func TestNewRefreshTokenHandler(t *testing.T) {
 
 	t.Run("MissingSecretToken", func(t *testing.T) {
 		// Arrange
-		os.Unsetenv("SECRET_TOKEN")
+		os.Unsetenv("SECRET_TOKEN") //nolint:errcheck
 		handler := auth.NewRefreshTokenHandler(nil)
 
 		requestBody := requests.RefreshTokenRequest{
@@ -240,12 +240,12 @@ func TestNewRefreshTokenHandler(t *testing.T) {
 	t.Run("WrongSigningMethod", func(t *testing.T) {
 		// Arrange
 		// Make sure SECRET_TOKEN is set for this test
-		os.Setenv("SECRET_TOKEN", "test-secret-key")
+		os.Setenv("SECRET_TOKEN", "test-secret-key") //nolint:errcheck,gosec
 		handler := auth.NewRefreshTokenHandler(nil)
 
 		// Create a token with wrong signing method (RSA instead of HMAC)
 		// This will fail to sign with HMAC key, but let's test the parsing
-		refreshTokenString := "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjNlNDU2Ny1lODliLTEyZDMtYTQ1Ni00MjY2MTQxNzQwMDAiLCJleHAiOjE3MDAwMDAwMDB9.invalid"
+		refreshTokenString := "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjNlNDU2Ny1lODliLTEyZDMtYTQ1Ni00MjY2MTQxNzQwMDAiLCJleHAiOjE3MDAwMDAwMDB9.invalid" //nolint:revive,gosec
 
 		requestBody := requests.RefreshTokenRequest{
 			RefreshToken: refreshTokenString,

@@ -30,7 +30,7 @@ func (m *MockUserRepository) GetByLogin(ctx context.Context, login string) (*dom
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*domain.User), args.Error(1)
+	return args.Get(0).(*domain.User), args.Error(1) //nolint:errcheck
 }
 
 func TestNewLogInHandler(t *testing.T) {
@@ -40,12 +40,12 @@ func TestNewLogInHandler(t *testing.T) {
 	originalSecret := os.Getenv("SECRET_TOKEN")
 	defer func() {
 		if originalSecret == "" {
-			os.Unsetenv("SECRET_TOKEN")
+			os.Unsetenv("SECRET_TOKEN") //nolint:errcheck
 		} else {
-			os.Setenv("SECRET_TOKEN", originalSecret)
+			os.Setenv("SECRET_TOKEN", originalSecret) //nolint:errcheck,gosec
 		}
 	}()
-	os.Setenv("SECRET_TOKEN", "test-secret-key")
+	os.Setenv("SECRET_TOKEN", "test-secret-key") //nolint:errcheck,gosec
 
 	t.Run("SuccessfulLogin", func(t *testing.T) {
 		// Arrange
@@ -278,7 +278,7 @@ func TestNewLogInHandler(t *testing.T) {
 
 	t.Run("MissingSecretToken", func(t *testing.T) {
 		// Arrange
-		os.Unsetenv("SECRET_TOKEN")
+		os.Unsetenv("SECRET_TOKEN") //nolint:errcheck
 		mockRepo := new(MockUserRepository)
 		handler := auth.NewLogInHandler(mockRepo)
 

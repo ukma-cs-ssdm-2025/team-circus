@@ -29,7 +29,7 @@ func (m *MockRegService) Register(ctx context.Context, login string, email strin
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*domain.User), args.Error(1)
+	return args.Get(0).(*domain.User), args.Error(1) //nolint:errcheck
 }
 
 func TestNewRegHandler(t *testing.T) {

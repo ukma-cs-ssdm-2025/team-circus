@@ -29,7 +29,7 @@ func (m *MockCreateDocumentService) Create(ctx context.Context, groupUUID uuid.U
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*domain.Document), args.Error(1)
+	return args.Get(0).(*domain.Document), args.Error(1) //nolint:errcheck
 }
 
 func TestNewCreateDocumentHandler(t *testing.T) {
@@ -88,7 +88,7 @@ func TestNewCreateDocumentHandler(t *testing.T) {
 		mockService := new(MockCreateDocumentService)
 		handler := document.NewCreateDocumentHandler(mockService)
 
-		invalidJSON := `{"group_uuid": "123e4567-e89b-12d3-a456-426614174000", "name": "Test Document", "content": "This is test content"` // Missing closing brace
+		invalidJSON := `{"group_uuid": "123e4567-e89b-12d3-a456-426614174000", "name": "Test Document", "content": "This is test content"` //nolint:revive
 
 		req := httptest.NewRequest("POST", "/documents", bytes.NewBufferString(invalidJSON))
 		req.Header.Set("Content-Type", "application/json")

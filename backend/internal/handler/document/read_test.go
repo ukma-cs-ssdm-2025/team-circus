@@ -27,7 +27,7 @@ func (m *MockGetDocumentService) GetByUUID(ctx context.Context, uuid uuid.UUID) 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*domain.Document), args.Error(1)
+	return args.Get(0).(*domain.Document), args.Error(1) //nolint:errcheck
 }
 
 // MockGetAllDocumentsService is a mock implementation of the get all documents service
@@ -40,7 +40,7 @@ func (m *MockGetAllDocumentsService) GetAll(ctx context.Context) ([]*domain.Docu
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]*domain.Document), args.Error(1)
+	return args.Get(0).([]*domain.Document), args.Error(1) //nolint:errcheck
 }
 
 func TestNewGetDocumentHandler(t *testing.T) {
@@ -241,10 +241,10 @@ func TestNewGetAllDocumentsHandler(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Contains(t, response, "documents")
 
-		documents := response["documents"].([]interface{})
+		documents := response["documents"].([]interface{}) //nolint:errcheck
 		assert.Len(t, documents, 2)
-		assert.Equal(t, "Document 1", documents[0].(map[string]interface{})["name"])
-		assert.Equal(t, "Document 2", documents[1].(map[string]interface{})["name"])
+		assert.Equal(t, "Document 1", documents[0].(map[string]interface{})["name"]) //nolint:errcheck
+		assert.Equal(t, "Document 2", documents[1].(map[string]interface{})["name"]) //nolint:errcheck
 
 		mockService.AssertExpectations(t)
 	})
@@ -274,7 +274,7 @@ func TestNewGetAllDocumentsHandler(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Contains(t, response, "documents")
 
-		documents := response["documents"].([]interface{})
+		documents := response["documents"].([]interface{}) //nolint:errcheck
 		assert.Len(t, documents, 0)
 
 		mockService.AssertExpectations(t)

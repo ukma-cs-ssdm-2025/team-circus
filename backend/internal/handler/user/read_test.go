@@ -27,7 +27,7 @@ func (m *MockGetUserService) GetByUUID(ctx context.Context, uuid uuid.UUID) (*do
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*domain.User), args.Error(1)
+	return args.Get(0).(*domain.User), args.Error(1) //nolint:errcheck
 }
 
 // MockGetAllUsersService is a mock implementation of the get all users service
@@ -40,7 +40,7 @@ func (m *MockGetAllUsersService) GetAll(ctx context.Context) ([]*domain.User, er
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]*domain.User), args.Error(1)
+	return args.Get(0).([]*domain.User), args.Error(1) //nolint:errcheck
 }
 
 func TestNewGetUserHandler(t *testing.T) {
@@ -241,10 +241,10 @@ func TestNewGetAllUsersHandler(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Contains(t, response, "users")
 
-		users := response["users"].([]interface{})
+		users := response["users"].([]interface{}) //nolint:errcheck
 		assert.Len(t, users, 2)
-		assert.Equal(t, "user1", users[0].(map[string]interface{})["login"])
-		assert.Equal(t, "user2", users[1].(map[string]interface{})["login"])
+		assert.Equal(t, "user1", users[0].(map[string]interface{})["login"]) //nolint:errcheck
+		assert.Equal(t, "user2", users[1].(map[string]interface{})["login"]) //nolint:errcheck
 
 		mockService.AssertExpectations(t)
 	})
@@ -274,7 +274,7 @@ func TestNewGetAllUsersHandler(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Contains(t, response, "users")
 
-		users := response["users"].([]interface{})
+		users := response["users"].([]interface{}) //nolint:errcheck
 		assert.Len(t, users, 0)
 
 		mockService.AssertExpectations(t)

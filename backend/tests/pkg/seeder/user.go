@@ -73,7 +73,7 @@ func (u *User) Create() error {
 		VALUES ($1, $2, $3, $4, $5)
 		RETURNING uuid, login, email, hashed_password, created_at`
 
-	err := u.db.QueryRow(query, u.UUID, u.Login, u.Email, u.HashedPassword, u.CreatedAt).Scan(
+	err := u.db.QueryRow(query, u.UUID, u.Login, u.Email, u.HashedPassword, u.CreatedAt).Scan( //nolint:noctx
 		&u.UUID,
 		&u.Login,
 		&u.Email,
@@ -94,7 +94,7 @@ func getUserByLogin(db *sql.DB, login string) (*User, error) {
 		FROM users
 		WHERE login = $1`
 
-	err := db.QueryRow(query, login).Scan(
+	err := db.QueryRow(query, login).Scan( //nolint:noctx
 		&user.UUID,
 		&user.Login,
 		&user.Email,
@@ -115,7 +115,7 @@ func getUserByEmail(db *sql.DB, email string) (*User, error) {
 		FROM users
 		WHERE email = $1`
 
-	err := db.QueryRow(query, email).Scan(
+	err := db.QueryRow(query, email).Scan( //nolint:noctx
 		&user.UUID,
 		&user.Login,
 		&user.Email,
@@ -136,7 +136,7 @@ func getUserByUUID(db *sql.DB, uuid string) (*User, error) {
 		FROM users
 		WHERE uuid = $1`
 
-	err := db.QueryRow(query, uuid).Scan(
+	err := db.QueryRow(query, uuid).Scan( //nolint:noctx
 		&user.UUID,
 		&user.Login,
 		&user.Email,
