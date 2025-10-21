@@ -15,14 +15,14 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/user"
+	"go.uber.org/zap"
 )
 
-// MockGetUserService is a mock implementation of the get user service
-type MockGetUserService struct {
+type mockGetUserService struct {
 	mock.Mock
 }
 
-func (m *MockGetUserService) GetByUUID(ctx context.Context, uuid uuid.UUID) (*domain.User, error) {
+func (m *mockGetUserService) GetByUUID(ctx context.Context, uuid uuid.UUID) (*domain.User, error) {
 	args := m.Called(ctx, uuid)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -30,7 +30,6 @@ func (m *MockGetUserService) GetByUUID(ctx context.Context, uuid uuid.UUID) (*do
 	return args.Get(0).(*domain.User), args.Error(1) //nolint:errcheck
 }
 
-// MockGetAllUsersService is a mock implementation of the get all users service
 type MockGetAllUsersService struct {
 	mock.Mock
 }
@@ -46,10 +45,18 @@ func (m *MockGetAllUsersService) GetAll(ctx context.Context) ([]*domain.User, er
 func TestNewGetUserHandler(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
+	setup := func(t *testing.T) (*mockGetUserService, gin.HandlerFunc) {
+		mockService := &mockGetUserService{}
+		handler := user.NewGetUserHandler(mockService, zap.NewNop())
+		t.Cleanup(func() {
+			mockService.AssertExpectations(t)
+		})
+		return mockService, handler
+	}
+
 	t.Run("SuccessfulGetUser", func(t *testing.T) {
 		// Arrange
-		mockService := new(MockGetUserService)
-		handler := user.NewGetUserHandler(mockService)
+		mockService, handler := setup(t)
 
 		userUUID := uuid.New()
 		expectedUser := &domain.User{
@@ -86,8 +93,7 @@ func TestNewGetUserHandler(t *testing.T) {
 
 	t.Run("InvalidUUID", func(t *testing.T) {
 		// Arrange
-		mockService := new(MockGetUserService)
-		handler := user.NewGetUserHandler(mockService)
+		mockService, handler := setup(t)
 
 		req := httptest.NewRequest("GET", "/users/invalid-uuid", nil)
 		w := httptest.NewRecorder()
@@ -112,8 +118,7 @@ func TestNewGetUserHandler(t *testing.T) {
 
 	t.Run("UserNotFound", func(t *testing.T) {
 		// Arrange
-		mockService := new(MockGetUserService)
-		handler := user.NewGetUserHandler(mockService)
+		mockService, handler := setup(t)
 
 		userUUID := uuid.New()
 		mockService.On("GetByUUID", mock.Anything, userUUID).Return(nil, domain.ErrUserNotFound)
@@ -141,8 +146,7 @@ func TestNewGetUserHandler(t *testing.T) {
 
 	t.Run("ServiceInternalError", func(t *testing.T) {
 		// Arrange
-		mockService := new(MockGetUserService)
-		handler := user.NewGetUserHandler(mockService)
+		mockService, handler := setup(t)
 
 		userUUID := uuid.New()
 		mockService.On("GetByUUID", mock.Anything, userUUID).Return(nil, domain.ErrInternal)
@@ -170,8 +174,7 @@ func TestNewGetUserHandler(t *testing.T) {
 
 	t.Run("ServiceGenericError", func(t *testing.T) {
 		// Arrange
-		mockService := new(MockGetUserService)
-		handler := user.NewGetUserHandler(mockService)
+		mockService, handler := setup(t)
 
 		userUUID := uuid.New()
 		mockService.On("GetByUUID", mock.Anything, userUUID).Return(nil, errors.New("database connection failed"))
@@ -201,10 +204,18 @@ func TestNewGetUserHandler(t *testing.T) {
 func TestNewGetAllUsersHandler(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
+	setup := func(t *testing.T) (*MockGetAllUsersService, gin.HandlerFunc) {
+		mockService := &MockGetAllUsersService{}
+		handler := user.NewGetAllUsersHandler(mockService, zap.NewNop())
+		t.Cleanup(func() {
+			mockService.AssertExpectations(t)
+		})
+		return mockService, handler
+	}
+
 	t.Run("SuccessfulGetAllUsers", func(t *testing.T) {
 		// Arrange
-		mockService := new(MockGetAllUsersService)
-		handler := user.NewGetAllUsersHandler(mockService)
+		mockService, handler := setup(t)
 
 		user1 := &domain.User{
 			UUID:      uuid.New(),
@@ -251,8 +262,7 @@ func TestNewGetAllUsersHandler(t *testing.T) {
 
 	t.Run("EmptyUsersList", func(t *testing.T) {
 		// Arrange
-		mockService := new(MockGetAllUsersService)
-		handler := user.NewGetAllUsersHandler(mockService)
+		mockService, handler := setup(t)
 
 		expectedUsers := []*domain.User{}
 		mockService.On("GetAll", mock.Anything).Return(expectedUsers, nil)
@@ -282,8 +292,7 @@ func TestNewGetAllUsersHandler(t *testing.T) {
 
 	t.Run("ServiceInternalError", func(t *testing.T) {
 		// Arrange
-		mockService := new(MockGetAllUsersService)
-		handler := user.NewGetAllUsersHandler(mockService)
+		mockService, handler := setup(t)
 
 		mockService.On("GetAll", mock.Anything).Return(nil, domain.ErrInternal)
 
@@ -309,8 +318,7 @@ func TestNewGetAllUsersHandler(t *testing.T) {
 
 	t.Run("ServiceGenericError", func(t *testing.T) {
 		// Arrange
-		mockService := new(MockGetAllUsersService)
-		handler := user.NewGetAllUsersHandler(mockService)
+		mockService, handler := setup(t)
 
 		mockService.On("GetAll", mock.Anything).Return(nil, errors.New("database connection failed"))
 

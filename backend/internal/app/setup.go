@@ -74,10 +74,10 @@ func (a *App) setupRouter() *gin.Engine {
 
 		users := apiV1.Group("/users")
 		{
-			users.GET("/:uuid", userhandler.NewGetUserHandler(userService))
-			users.GET("", userhandler.NewGetAllUsersHandler(userService))
-			users.PUT("/:uuid", userhandler.NewUpdateUserHandler(userService))
-			users.DELETE("/:uuid", userhandler.NewDeleteUserHandler(userService))
+			users.GET("/:uuid", userhandler.NewGetUserHandler(userService, a.l))
+			users.GET("", userhandler.NewGetAllUsersHandler(userService, a.l))
+			users.PUT("/:uuid", userhandler.NewUpdateUserHandler(userService, a.l))
+			users.DELETE("/:uuid", userhandler.NewDeleteUserHandler(userService, a.l))
 		}
 
 		reg := apiV1.Group("/signup")
