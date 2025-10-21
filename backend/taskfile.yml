@@ -57,7 +57,7 @@ tasks:
   test:func:run:
     desc: Run functional tests
     cmds:
-      - go test {{.CLI_ARGS | default "./..."}} -v -tags=func_test
+      -  go test {{.CLI_ARGS | default "./..."}} -v -tags=func_test
 
   test:func:
     desc: Run functional tests
@@ -66,6 +66,7 @@ tasks:
       - sleep 2
       - defer: task test:func:down
       - task: test:func:run
+
 
   test:unit:
     desc: Run unit tests
@@ -91,7 +92,7 @@ tasks:
   install:linter:
     desc: Install linter
     cmds:
-      - go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.1.6
+      - go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.4.0
 
   install:swagger:
     desc: Install Swagger tools
