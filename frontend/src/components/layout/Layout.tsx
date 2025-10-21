@@ -40,7 +40,17 @@ const Layout = ({ children, className = "" }: LayoutProps) => {
           py: { xs: 2, md: 3 },
         }}
       >
-        {children}
+        <Box
+          component="section"
+          sx={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            width: "100%",
+          }}
+        >
+          {children}
+        </Box>
       </Box>
       <Footer />
       <Sidebar open={isSidebarOpen} onClose={handleCloseSidebar} />
