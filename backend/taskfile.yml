@@ -70,7 +70,17 @@ tasks:
   test:unit:
     desc: Run unit tests
     cmds:
-      - go test {{.CLI_ARGS | default "./..."}} -v -tags=unit 
+      - go test {{.CLI_ARGS | default "./..."}} -v
+
+  test:unit:coverage:
+    desc: Run tests with coverage
+    cmds:
+      - go test {{.CLI_ARGS | default "./..."}} -v -coverprofile=./coverage/coverage.out -covermode=atomic
+
+  test:unit:coverage:html:
+    desc: Generate HTML coverage report
+    cmds:
+      - go tool cover -html=./coverage/coverage.out -o ./coverage/coverage.html
 
   install:
     desc: Install dependencies
