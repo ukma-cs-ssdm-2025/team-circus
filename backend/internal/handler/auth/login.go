@@ -54,13 +54,13 @@ func NewLogInHandler(userRepo userRepository) gin.HandlerFunc {
 		}
 
 		if user == nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid login"})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
 			return
 		}
 
 		err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password))
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid password"})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
 			return
 		}
 
