@@ -4,13 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/group/responses"
+	"go.uber.org/zap"
 )
 
 type getGroupService interface {
@@ -33,19 +33,20 @@ type getAllGroupsService interface {
 // @Failure 404 {object} map[string]interface{} "Group not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /groups/{uuid} [get]
-func NewGetGroupHandler(service getGroupService) gin.HandlerFunc {
+func NewGetGroupHandler(service getGroupService, logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		uuidParam := c.Param("uuid")
 		parsedUUID, err := uuid.Parse(uuidParam)
 		if err != nil {
 			err = fmt.Errorf("get group handler: failed to parse uuid: %v", err)
-			log.Println(err)
+			logger.Error("failed to parse uuid", zap.Error(err))
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid uuid format"})
 			return
 		}
 
 		group, err := service.GetByUUID(c, parsedUUID)
 		if errors.Is(err, domain.ErrGroupNotFound) {
+			logger.Warn("group not found", zap.String("uuid", uuidParam))
 			c.JSON(http.StatusNotFound, gin.H{"error": "group not found"})
 			return
 		}
@@ -54,7 +55,7 @@ func NewGetGroupHandler(service getGroupService) gin.HandlerFunc {
 			return
 		}
 		if err != nil {
-			log.Println(err)
+			logger.Error("failed to get group", zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get group"})
 			return
 		}
@@ -74,15 +75,16 @@ func NewGetGroupHandler(service getGroupService) gin.HandlerFunc {
 // @Success 200 {object} responses.GetAllGroupsResponse "Groups retrieved successfully"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /groups [get]
-func NewGetAllGroupsHandler(service getAllGroupsService) gin.HandlerFunc {
+func NewGetAllGroupsHandler(service getAllGroupsService, logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		groups, err := service.GetAll(c)
 		if errors.Is(err, domain.ErrInternal) {
+			logger.Error("failed to get groups", zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get groups"})
 			return
 		}
 		if err != nil {
-			log.Println(err)
+			logger.Error("failed to get groups", zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get groups"})
 			return
 		}

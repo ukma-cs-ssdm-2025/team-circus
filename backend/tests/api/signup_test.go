@@ -262,4 +262,184 @@ func TestSignUpHandler(main *testing.T) {
 		assert.Contains(t, response, "error")
 		assert.Equal(t, "failed to register", response["error"])
 	})
+
+	main.Run("EdgeCases", func(t *testing.T) {
+		_, err := setup(t)
+		require.NoError(t, err)
+
+		t.Run("VeryLongFields", func(t *testing.T) {
+			// Arrange
+			longString := string(make([]byte, 300)) // 300 character string
+			requestBody := map[string]string{
+				"login":    longString,
+				"email":    longString,
+				"password": longString,
+			}
+
+			jsonBody, err := json.Marshal(requestBody)
+			require.NoError(t, err)
+
+			// Act
+			resp, err := http.Post(
+				fmt.Sprintf("%s/api/v1/signup", testapp.Addr),
+				"application/json",
+				bytes.NewBuffer(jsonBody),
+			)
+			require.NoError(t, err)
+			defer resp.Body.Close()
+
+			// Assert
+			assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+			var response map[string]interface{}
+			err = json.NewDecoder(resp.Body).Decode(&response)
+			require.NoError(t, err)
+
+			assert.Contains(t, response, "error")
+			assert.Equal(t, "validation failed", response["error"])
+		})
+
+		t.Run("SpecialCharacters", func(t *testing.T) {
+			// Arrange
+			requestBody := map[string]string{
+				"login":    "user@#$%^&*()",
+				"email":    "test@example.com",
+				"password": "password123!@#$%",
+			}
+
+			jsonBody, err := json.Marshal(requestBody)
+			require.NoError(t, err)
+
+			// Act
+			resp, err := http.Post(
+				fmt.Sprintf("%s/api/v1/signup", testapp.Addr),
+				"application/json",
+				bytes.NewBuffer(jsonBody),
+			)
+			require.NoError(t, err)
+			defer resp.Body.Close()
+
+			// Assert - should succeed with special characters
+			assert.Equal(t, http.StatusCreated, resp.StatusCode)
+
+			var response map[string]interface{}
+			err = json.NewDecoder(resp.Body).Decode(&response)
+			require.NoError(t, err)
+			assert.Equal(t, "user@#$%^&*()", response["login"])
+		})
+
+		t.Run("UnicodeCharacters", func(t *testing.T) {
+			// Arrange
+			requestBody := map[string]string{
+				"login":    "用户123",
+				"email":    "тест@example.com",
+				"password": "пароль123",
+			}
+
+			jsonBody, err := json.Marshal(requestBody)
+			require.NoError(t, err)
+
+			// Act
+			resp, err := http.Post(
+				fmt.Sprintf("%s/api/v1/signup", testapp.Addr),
+				"application/json",
+				bytes.NewBuffer(jsonBody),
+			)
+			require.NoError(t, err)
+			defer resp.Body.Close()
+
+			// Assert - should succeed with unicode characters
+			assert.Equal(t, http.StatusCreated, resp.StatusCode)
+
+			var response map[string]interface{}
+			err = json.NewDecoder(resp.Body).Decode(&response)
+			require.NoError(t, err)
+			assert.Equal(t, "用户123", response["login"])
+		})
+
+		t.Run("MissingContentType", func(t *testing.T) {
+			// Arrange
+			requestBody := map[string]string{
+				"login":    "testuser",
+				"email":    "test@example.com",
+				"password": "testpassword123",
+			}
+
+			jsonBody, err := json.Marshal(requestBody)
+			require.NoError(t, err)
+
+			// Act - don't set Content-Type header
+			resp, err := http.Post(
+				fmt.Sprintf("%s/api/v1/signup", testapp.Addr),
+				"", // No content type
+				bytes.NewBuffer(jsonBody),
+			)
+			require.NoError(t, err)
+			defer resp.Body.Close()
+
+			// Assert - The handler processes the request but fails at service level
+			assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+
+			var response map[string]interface{}
+			err = json.NewDecoder(resp.Body).Decode(&response)
+			require.NoError(t, err)
+
+			assert.Contains(t, response, "error")
+			assert.Equal(t, "failed to register", response["error"])
+		})
+	})
+
+	main.Run("DatabaseConstraints", func(t *testing.T) {
+		_, err := setup(t)
+		require.NoError(t, err)
+
+		t.Run("DuplicateEmail", func(t *testing.T) {
+			// First user
+			user1 := map[string]string{
+				"login":    "user1",
+				"email":    "same@example.com",
+				"password": "password123",
+			}
+
+			jsonBody1, err := json.Marshal(user1)
+			require.NoError(t, err)
+
+			resp1, err := http.Post(
+				fmt.Sprintf("%s/api/v1/signup", testapp.Addr),
+				"application/json",
+				bytes.NewBuffer(jsonBody1),
+			)
+			require.NoError(t, err)
+			resp1.Body.Close()
+			assert.Equal(t, http.StatusCreated, resp1.StatusCode)
+
+			// Second user with same email
+			user2 := map[string]string{
+				"login":    "user2",
+				"email":    "same@example.com",
+				"password": "password123",
+			}
+
+			jsonBody2, err := json.Marshal(user2)
+			require.NoError(t, err)
+
+			resp2, err := http.Post(
+				fmt.Sprintf("%s/api/v1/signup", testapp.Addr),
+				"application/json",
+				bytes.NewBuffer(jsonBody2),
+			)
+			require.NoError(t, err)
+			defer resp2.Body.Close()
+
+			// Should fail due to duplicate email
+			assert.Equal(t, http.StatusInternalServerError, resp2.StatusCode)
+
+			var response map[string]interface{}
+			err = json.NewDecoder(resp2.Body).Decode(&response)
+			require.NoError(t, err)
+
+			assert.Contains(t, response, "error")
+			assert.Equal(t, "failed to register", response["error"])
+		})
+	})
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"time"
@@ -13,6 +12,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/auth/requests"
+	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -32,23 +32,24 @@ type userRepository interface {
 // @Failure 401 {object} map[string]string "Invalid credentials"
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /auth/login [post]
-func NewLogInHandler(userRepo userRepository) gin.HandlerFunc {
+func NewLogInHandler(userRepo userRepository, logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req requests.LogInRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
 			err = fmt.Errorf("log in handler: failed to bind request: %v", err)
-			log.Println(err)
+			logger.Error("failed to bind request", zap.Error(err))
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request format"})
 			return
 		}
 
 		user, err := userRepo.GetByLogin(c, req.Login)
 		if errors.Is(err, domain.ErrInternal) {
+			logger.Error("failed to log in", zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to log in"})
 			return
 		}
 		if err != nil {
-			log.Println(err)
+			logger.Error("failed to log in", zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to log in"})
 			return
 		}
@@ -66,6 +67,7 @@ func NewLogInHandler(userRepo userRepository) gin.HandlerFunc {
 
 		secretToken := os.Getenv("SECRET_TOKEN")
 		if secretToken == "" {
+			logger.Error("server misconfiguration")
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "server misconfiguration"})
 			return
 		}
@@ -78,6 +80,7 @@ func NewLogInHandler(userRepo userRepository) gin.HandlerFunc {
 
 		accessTokenString, err := accessToken.SignedString([]byte(secretToken))
 		if err != nil {
+			logger.Error("failed to generate access token", zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to generate access token"})
 			return
 		}
@@ -90,6 +93,7 @@ func NewLogInHandler(userRepo userRepository) gin.HandlerFunc {
 
 		refreshTokenString, err := refreshToken.SignedString([]byte(secretToken))
 		if err != nil {
+			logger.Error("failed to generate refresh token", zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to generate refresh token"})
 			return
 		}

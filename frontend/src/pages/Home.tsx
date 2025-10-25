@@ -1,12 +1,15 @@
 import { Box, Stack } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 import { ActionButton } from '../components/forms';
 import { useLanguage } from '../contexts/LanguageContext';
 import type { BaseComponentProps } from '../types';
+import { ROUTES } from '../constants';
 
 type HomeProps = BaseComponentProps;
 
 const Home = ({ className = '' }: HomeProps) => {
   const { t } = useLanguage();
+  const navigate = useNavigate();
 
   return (
     <Box
@@ -28,12 +31,12 @@ const Home = ({ className = '' }: HomeProps) => {
         alignItems="center"
       >
         <ActionButton
-          onClick={() => alert(t('home.createDocumentAlert'))}
+          onClick={() => navigate(ROUTES.DOCUMENTS)}
         >
           {t('home.createDocument')}
         </ActionButton>
         <ActionButton
-          onClick={() => alert(t('home.createGroupAlert'))}
+          onClick={() => navigate(ROUTES.GROUPS)}
         >
           {t('home.createGroup')}
         </ActionButton>

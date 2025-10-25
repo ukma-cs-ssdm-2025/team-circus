@@ -65,3 +65,38 @@ tasks:
     desc: Build backend
     cmds:
       - docker compose build backend
+
+  postgres:logs:
+    desc: Show postgres database logs
+    cmds:
+      - docker compose logs postgres
+
+  migrator:logs:
+    desc: Show migrator logs
+    cmds:
+      - docker compose logs migrator
+
+  backend:logs:
+    desc: Show backend logs
+    cmds:
+      - docker compose logs backend
+  
+  postgres:inside:
+    desc: Open postgres database shell
+    cmds:
+      - docker compose exec -it postgres bash
+    
+  migrator:inside:
+    desc: Open migrator shell
+    cmds:
+      - docker compose exec -it migrator bash
+    
+  backend:inside:
+    desc: Open backend shell
+    cmds:
+      - docker compose exec -it backend bash
+    
+  ps:
+    desc: Show all services
+    cmds:
+      - docker compose ps

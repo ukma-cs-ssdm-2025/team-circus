@@ -17,13 +17,13 @@ func ResetDB(db *sql.DB) error {
 	var err error
 	var errs []error
 
-	_, err = db.Exec("DELETE FROM user_groups")
+	_, err = db.Exec("DELETE FROM user_groups") //nolint:noctx
 	errs = append(errs, err)
-	_, err = db.Exec("DELETE FROM documents")
+	_, err = db.Exec("DELETE FROM documents") //nolint:noctx
 	errs = append(errs, err)
-	_, err = db.Exec("DELETE FROM groups")
+	_, err = db.Exec("DELETE FROM groups") //nolint:noctx
 	errs = append(errs, err)
-	_, err = db.Exec("DELETE FROM users")
+	_, err = db.Exec("DELETE FROM users") //nolint:noctx
 	errs = append(errs, err)
 
 	resetErr := errors.Join(errs...)

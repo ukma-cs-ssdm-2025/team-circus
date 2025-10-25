@@ -55,40 +55,40 @@ func (a *App) setupRouter() *gin.Engine {
 	{
 		groups := apiV1.Group("/groups")
 		{
-			groups.POST("", grouphandler.NewCreateGroupHandler(groupService))
-			groups.GET("/:uuid", grouphandler.NewGetGroupHandler(groupService))
-			groups.GET("", grouphandler.NewGetAllGroupsHandler(groupService))
-			groups.PUT("/:uuid", grouphandler.NewUpdateGroupHandler(groupService))
-			groups.DELETE("/:uuid", grouphandler.NewDeleteGroupHandler(groupService))
-			groups.GET("/:uuid/documents", documenthandler.NewGetDocumentsByGroupHandler(documentService))
+			groups.POST("", grouphandler.NewCreateGroupHandler(groupService, a.l))
+			groups.GET("/:uuid", grouphandler.NewGetGroupHandler(groupService, a.l))
+			groups.GET("", grouphandler.NewGetAllGroupsHandler(groupService, a.l))
+			groups.PUT("/:uuid", grouphandler.NewUpdateGroupHandler(groupService, a.l))
+			groups.DELETE("/:uuid", grouphandler.NewDeleteGroupHandler(groupService, a.l))
+			groups.GET("/:uuid/documents", documenthandler.NewGetDocumentsByGroupHandler(documentService, a.l))
 		}
 
 		documents := apiV1.Group("/documents")
 		{
-			documents.POST("", documenthandler.NewCreateDocumentHandler(documentService))
-			documents.GET("/:uuid", documenthandler.NewGetDocumentHandler(documentService))
-			documents.GET("", documenthandler.NewGetAllDocumentsHandler(documentService))
-			documents.PUT("/:uuid", documenthandler.NewUpdateDocumentHandler(documentService))
-			documents.DELETE("/:uuid", documenthandler.NewDeleteDocumentHandler(documentService))
+			documents.POST("", documenthandler.NewCreateDocumentHandler(documentService, a.l))
+			documents.GET("/:uuid", documenthandler.NewGetDocumentHandler(documentService, a.l))
+			documents.GET("", documenthandler.NewGetAllDocumentsHandler(documentService, a.l))
+			documents.PUT("/:uuid", documenthandler.NewUpdateDocumentHandler(documentService, a.l))
+			documents.DELETE("/:uuid", documenthandler.NewDeleteDocumentHandler(documentService, a.l))
 		}
 
 		users := apiV1.Group("/users")
 		{
-			users.GET("/:uuid", userhandler.NewGetUserHandler(userService))
-			users.GET("", userhandler.NewGetAllUsersHandler(userService))
-			users.PUT("/:uuid", userhandler.NewUpdateUserHandler(userService))
-			users.DELETE("/:uuid", userhandler.NewDeleteUserHandler(userService))
+			users.GET("/:uuid", userhandler.NewGetUserHandler(userService, a.l))
+			users.GET("", userhandler.NewGetAllUsersHandler(userService, a.l))
+			users.PUT("/:uuid", userhandler.NewUpdateUserHandler(userService, a.l))
+			users.DELETE("/:uuid", userhandler.NewDeleteUserHandler(userService, a.l))
 		}
 
 		reg := apiV1.Group("/signup")
 		{
-			reg.POST("", reghandler.NewRegHandler(regService))
+			reg.POST("", reghandler.NewRegHandler(regService, a.l))
 		}
 
 		auth := apiV1.Group("/auth")
 		{
-			auth.POST("/login", authhandler.NewLogInHandler(userRepo))
-			auth.POST("/refresh", authhandler.NewRefreshTokenHandler(userRepo))
+			auth.POST("/login", authhandler.NewLogInHandler(userRepo, a.l))
+			auth.POST("/refresh", authhandler.NewRefreshTokenHandler(userRepo, a.l))
 		}
 
 		test := apiV1.Group("/validate")

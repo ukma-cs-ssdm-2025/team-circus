@@ -4,13 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/group/responses"
+	"go.uber.org/zap"
 )
 
 type deleteGroupService interface {
@@ -29,28 +29,30 @@ type deleteGroupService interface {
 // @Failure 404 {object} map[string]interface{} "Group not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /groups/{uuid} [delete]
-func NewDeleteGroupHandler(service deleteGroupService) gin.HandlerFunc {
+func NewDeleteGroupHandler(service deleteGroupService, logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		uuidParam := c.Param("uuid")
 		parsedUUID, err := uuid.Parse(uuidParam)
 		if err != nil {
 			err = fmt.Errorf("delete group handler: failed to parse uuid: %v", err)
-			log.Println(err)
+			logger.Error("failed to parse uuid", zap.Error(err))
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid uuid format"})
 			return
 		}
 
 		err = service.Delete(c, parsedUUID)
 		if errors.Is(err, domain.ErrGroupNotFound) {
+			logger.Warn("group not found", zap.String("uuid", uuidParam))
 			c.JSON(http.StatusNotFound, gin.H{"error": "group not found"})
 			return
 		}
 		if errors.Is(err, domain.ErrInternal) {
+			logger.Error("failed to delete group", zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete group"})
 			return
 		}
 		if err != nil {
-			log.Println(err)
+			logger.Error("failed to delete group", zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete group"})
 			return
 		}

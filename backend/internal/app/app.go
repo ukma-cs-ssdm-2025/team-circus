@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
 	"net/http"
 	"time"
 
@@ -51,10 +50,10 @@ func (a *App) Run(ctx context.Context) error {
 	}
 	go func() {
 		if err := a.API.ListenAndServe(); err != nil {
-			log.Printf("api server: %v", err)
+			a.l.Error("API server error", zap.Error(err))
 		}
 	}()
-	log.Printf("APIServer started on port %s", a.cfg.Srv.Port)
+	a.l.Info("API server started", zap.String("port", a.cfg.Srv.Port))
 
 	// wait for shutdown signal
 	<-ctx.Done()
@@ -78,10 +77,10 @@ func (a *App) shutdown(timeoutCtx context.Context) error {
 	if a.API != nil {
 		if err := a.API.Shutdown(timeoutCtx); err != nil {
 			wrapped := fmt.Errorf("shutdown api server: %w", err)
-			log.Println(wrapped)
+			a.l.Error("Shutdown API server error", zap.Error(wrapped))
 			shutdownErr = wrapped
 		} else {
-			log.Println("APIServer Shutdown successfully")
+			a.l.Info("API server shutdown successfully")
 		}
 	}
 
@@ -89,12 +88,12 @@ func (a *App) shutdown(timeoutCtx context.Context) error {
 	if a.DB != nil {
 		if err := a.DB.Close(); err != nil {
 			wrapped := fmt.Errorf("shutdown db: %w", err)
-			log.Println(wrapped)
+			a.l.Error("Shutdown DB error", zap.Error(wrapped))
 			if shutdownErr == nil {
 				shutdownErr = wrapped
 			}
 		} else {
-			a.l.Info("DB closed")
+			a.l.Info("DB shutdown successfully")
 		}
 	}
 	return shutdownErr
