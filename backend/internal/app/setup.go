@@ -63,6 +63,8 @@ func (a *App) setupRouter() *gin.Engine {
 	protected := apiV1.Group("")
 	protected.Use(middleware.AuthMiddleware(userRepo))
 	{
+		protected.POST("/auth/logout", authhandler.NewLogOutHandler(a.l))
+
 		groups := protected.Group("/groups")
 		{
 			groups.POST("", grouphandler.NewCreateGroupHandler(groupService, a.l))
