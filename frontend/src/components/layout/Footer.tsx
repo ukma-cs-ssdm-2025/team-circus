@@ -1,12 +1,12 @@
 import {
   Box,
   Container,
-  Grid,
   Typography,
   Link,
   Divider,
   useTheme
 } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import { useLanguage } from '../../contexts/LanguageContext';
 import type { BaseComponentProps } from '../../types';
 
@@ -32,7 +32,7 @@ const Footer = ({ className = '' }: FooterProps) => {
     >
       <Container maxWidth="lg" sx={{ py: 6 }}>
         <Grid container spacing={6} justifyContent="center">
-          <Grid item xs={12} md={4} sx={{ textAlign: { xs: 'center', md: 'left' } }}>
+          <Grid size={{ xs: 12, md: 4 }} sx={{ textAlign: { xs: 'center', md: 'left' } }}>
             <Typography
               variant="h5"
               sx={{
@@ -56,7 +56,7 @@ const Footer = ({ className = '' }: FooterProps) => {
             </Typography>
           </Grid>
 
-          <Grid item xs={12} md={4} sx={{ textAlign: { xs: 'center', md: 'left' } }}>
+          <Grid size={{ xs: 12, md: 4 }} sx={{ textAlign: { xs: 'center', md: 'left' } }}>
             <Typography
               variant="h6"
               sx={{

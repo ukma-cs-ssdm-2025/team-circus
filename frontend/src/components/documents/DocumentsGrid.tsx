@@ -1,4 +1,4 @@
-import { Grid } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import DocumentCard from './DocumentCard';
 import type { DocumentItem } from '../../types/entities';
 
@@ -20,7 +20,7 @@ const DocumentsGrid = ({
   return (
     <Grid container spacing={3}>
       {documents.map(document => (
-        <Grid item xs={12} md={6} key={document.uuid}>
+        <Grid key={document.uuid} size={{ xs: 12, md: 6 }}>
           <DocumentCard
             document={document}
             groupName={groupNameByUUID[document.group_uuid]}

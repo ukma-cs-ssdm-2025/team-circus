@@ -1,6 +1,7 @@
+import { useEffect } from 'react';
 import { useLocalStorage } from './useLocalStorage';
 import { THEME } from '../constants';
-import { Theme } from '../types';
+import type { Theme } from '../types';
 
 export function useTheme() {
   const [theme, setTheme] = useLocalStorage<Theme>('mcd_theme', THEME.LIGHT as Theme);

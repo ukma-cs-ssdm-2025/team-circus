@@ -1,21 +1,22 @@
 import { Button, useTheme } from '@mui/material';
+import type { ElementType, ReactNode } from 'react';
 import type { BaseComponentProps } from '../../types';
 
 interface ActionButtonProps extends BaseComponentProps {
-  children: React.ReactNode;
+  children: ReactNode;
   onClick?: () => void;
   variant?: 'contained' | 'outlined' | 'text';
   size?: 'small' | 'medium' | 'large';
-  startIcon?: React.ReactNode;
-  endIcon?: React.ReactNode;
+  startIcon?: ReactNode;
+  endIcon?: ReactNode;
   fullWidth?: boolean;
   disabled?: boolean;
-  component?: React.ElementType;
+  component?: ElementType;
   to?: string;
 }
 
-const ActionButton = ({ 
-  children, 
+const ActionButton = ({
+  children,
   onClick,
   variant = 'contained',
   size = 'large',
@@ -41,6 +42,14 @@ const ActionButton = ({
     return {};
   };
 
+  const linkProps =
+    component !== undefined
+      ? {
+          component,
+          ...(to !== undefined ? { to } : {}),
+        }
+      : {};
+
   return (
     <Button
       variant={variant}
@@ -50,8 +59,6 @@ const ActionButton = ({
       endIcon={endIcon}
       fullWidth={fullWidth}
       disabled={disabled}
-      component={component}
-      to={to}
       className={className}
       sx={{
         minWidth: fullWidth ? 'auto' : 200,
@@ -62,6 +69,7 @@ const ActionButton = ({
         borderRadius: 2,
         ...getButtonStyles(),
       }}
+      {...linkProps}
     >
       {children}
     </Button>

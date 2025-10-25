@@ -94,7 +94,7 @@ export const Login: React.FC = () => {
               <Box component="form" onSubmit={handleSubmit}>
                 <TextField
                   fullWidth
-                  label="Username or Email"
+                  label="Username"
                   name="login"
                   value={formData.login}
                   onChange={handleChange}
