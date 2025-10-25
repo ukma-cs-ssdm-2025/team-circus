@@ -12,10 +12,12 @@ import {
   LightMode as LightModeIcon,
   DarkMode as DarkModeIcon,
   Menu as MenuIcon,
+  Logout as LogoutIcon,
 } from '@mui/icons-material';
 import type { BaseComponentProps } from '../../types';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme as useAppTheme } from '../../contexts/ThemeContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { ROUTES } from '../../constants';
 
 interface HeaderProps extends BaseComponentProps {
@@ -27,9 +29,19 @@ const Header = ({ className = '', onToggleSidebar }: HeaderProps) => {
   const theme = useTheme();
   const { t } = useLanguage();
   const { theme: appTheme, toggleTheme } = useAppTheme();
+  const { logout, user } = useAuth();
 
   const handleAccountSettings = () => {
     navigate(ROUTES.SETTINGS);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate(ROUTES.LOGIN);
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
   };
 
   const commonIconStyles = {
@@ -87,7 +99,20 @@ const Header = ({ className = '', onToggleSidebar }: HeaderProps) => {
           </Typography>
         </Box>
 
-        <Box sx={{ display: 'flex', gap: 1 }}>
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+          {user && (
+            <Typography
+              variant="body2"
+              sx={{
+                color: theme.palette.text.secondary,
+                mr: 1,
+                display: { xs: 'none', sm: 'block' },
+              }}
+            >
+              {user.login}
+            </Typography>
+          )}
+          
           <IconButton
             onClick={toggleTheme}
             title={t('header.toggleTheme')}
@@ -102,6 +127,14 @@ const Header = ({ className = '', onToggleSidebar }: HeaderProps) => {
             sx={commonIconStyles}
           >
             <SettingsIcon />
+          </IconButton>
+
+          <IconButton
+            onClick={handleLogout}
+            title="Logout"
+            sx={commonIconStyles}
+          >
+            <LogoutIcon />
           </IconButton>
         </Box>
       </Toolbar>
