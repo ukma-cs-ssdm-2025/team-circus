@@ -21,7 +21,16 @@ class AuthService {
       throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
     }
 
-    return response.json();
+    if (response.status === 204) {
+      return undefined as T;
+    }
+
+    const contentType = response.headers.get('content-type');
+    if (contentType?.includes('application/json')) {
+      return response.json() as Promise<T>;
+    }
+
+    return undefined as T;
   }
 
   async login(credentials: LoginRequest): Promise<void> {
@@ -32,19 +41,27 @@ class AuthService {
   }
 
   async register(userData: RegisterRequest): Promise<AuthUser> {
-    const response = await this.requestWithCredentials<{ user: AuthUser }>(
-      API_ENDPOINTS.AUTH.REGISTER,
-      {
-        method: 'POST',
-        body: JSON.stringify(userData),
-      }
-    );
-    return response.user;
+    const response = await this.requestWithCredentials<{
+      uuid: string;
+      login: string;
+      email: string;
+      created_at: string;
+    }>(API_ENDPOINTS.AUTH.REGISTER, {
+      method: 'POST',
+      body: JSON.stringify(userData),
+    });
+
+    return {
+      uuid: response.uuid,
+      login: response.login,
+      email: response.email,
+      createdAt: response.created_at,
+    };
   }
 
   async refreshToken(): Promise<boolean> {
     try {
-      await this.requestWithCredentials('/auth/refresh', {
+      await this.requestWithCredentials(API_ENDPOINTS.AUTH.REFRESH, {
         method: 'POST',
       });
       return true;
@@ -55,9 +72,9 @@ class AuthService {
   }
 
   async logout(): Promise<void> {
-    // Clear cookies by setting them to expire in the past
-    document.cookie = 'accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-    document.cookie = 'refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    await this.requestWithCredentials(API_ENDPOINTS.AUTH.LOGOUT, {
+      method: 'POST',
+    });
   }
 }
 

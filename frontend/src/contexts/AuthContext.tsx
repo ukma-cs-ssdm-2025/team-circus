@@ -1,11 +1,47 @@
 import React, { createContext, useContext, useReducer, useEffect, type ReactNode } from 'react';
 import { authService } from '../services/auth';
+import { STORAGE_KEYS } from '../constants';
 import type { AuthContextType, AuthState, AuthUser, LoginRequest, RegisterRequest } from '../types/auth';
 
+const loadStoredUser = (): AuthUser | null => {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.USER);
+    if (!raw) {
+      return null;
+    }
+    return JSON.parse(raw) as AuthUser;
+  } catch (error) {
+    console.warn('Failed to parse stored user', error);
+    return null;
+  }
+};
+
+const persistUser = (user: AuthUser | null): void => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  try {
+    if (user) {
+      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+    } else {
+      localStorage.removeItem(STORAGE_KEYS.USER);
+    }
+  } catch (error) {
+    console.warn('Failed to persist user', error);
+  }
+};
+
 // Initial state
+const storedUser = loadStoredUser();
+
 const initialState: AuthState = {
-  user: null,
-  isAuthenticated: false,
+  user: storedUser,
+  isAuthenticated: Boolean(storedUser),
   isLoading: true,
 };
 
@@ -78,19 +114,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const refreshSuccess = await authService.refreshToken();
 
         if (refreshSuccess) {
-          // Replace this placeholder with a real user fetch when you have one (e.g. authService.getProfile()).
-          const user: AuthUser = {
-            uuid: 'placeholder-uuid',
-            login: 'user',
-            email: 'user@example.com',
-            createdAt: new Date().toISOString(),
-          };
+          const stored = loadStoredUser();
+          const user: AuthUser =
+            stored ?? {
+              uuid: 'placeholder-uuid',
+              login: 'user',
+              email: 'user@example.com',
+              createdAt: new Date().toISOString(),
+            };
+
+          persistUser(user);
           dispatch({ type: 'AUTH_SUCCESS', payload: user });
         } else {
+          persistUser(null);
           dispatch({ type: 'AUTH_FAILURE' });
         }
       } catch (error) {
         console.error('Auth check failed:', error);
+        persistUser(null);
         dispatch({ type: 'AUTH_FAILURE' });
       }
     };
@@ -103,17 +144,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       dispatch({ type: 'AUTH_START' });
       await authService.login(credentials);
 
-      // After successful login, set user (placeholder until you fetch real profile).
-      const user: AuthUser = {
-        uuid: 'placeholder-uuid',
-        login: credentials.login,
-        email: 'user@example.com',
-        createdAt: new Date().toISOString(),
-      };
+      const stored = loadStoredUser();
+      const user: AuthUser =
+        stored?.login === credentials.login
+          ? stored
+          : {
+              uuid: 'placeholder-uuid',
+              login: credentials.login,
+              email: 'user@example.com',
+              createdAt: new Date().toISOString(),
+            };
 
+      persistUser(user);
       dispatch({ type: 'AUTH_SUCCESS', payload: user });
     } catch (error) {
       console.error('Login failed:', error);
+      persistUser(null);
       dispatch({ type: 'AUTH_FAILURE' });
       throw error;
     }
@@ -123,9 +169,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       dispatch({ type: 'AUTH_START' });
       const user = await authService.register(userData);
+      await authService.login({ login: userData.login, password: userData.password });
+      persistUser(user);
       dispatch({ type: 'AUTH_SUCCESS', payload: user });
     } catch (error) {
       console.error('Registration failed:', error);
+      persistUser(null);
       dispatch({ type: 'AUTH_FAILURE' });
       throw error;
     }
@@ -134,10 +183,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = async (): Promise<void> => {
     try {
       await authService.logout();
+      persistUser(null);
       dispatch({ type: 'LOGOUT' });
     } catch (error) {
       console.error('Logout failed:', error);
       // Still dispatch logout even if the request fails
+      persistUser(null);
       dispatch({ type: 'LOGOUT' });
     }
   };
@@ -147,20 +198,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const success = await authService.refreshToken();
       if (success) {
-        const user: AuthUser = {
-          uuid: 'placeholder-uuid',
-          login: state.user?.login ?? 'user',
-          email: state.user?.email ?? 'user@example.com',
-          createdAt: state.user?.createdAt ?? new Date().toISOString(),
-        };
+        const stored = loadStoredUser();
+        const existingUser = state.user ?? stored;
+        const user: AuthUser =
+          existingUser ?? {
+            uuid: 'placeholder-uuid',
+            login: 'user',
+            email: 'user@example.com',
+            createdAt: new Date().toISOString(),
+          };
+
+        persistUser(user);
         dispatch({ type: 'AUTH_SUCCESS', payload: user });
         return true;
       } else {
+        persistUser(null);
         dispatch({ type: 'AUTH_FAILURE' });
         return false;
       }
     } catch (error) {
       console.error('Token refresh failed:', error);
+      persistUser(null);
       dispatch({ type: 'AUTH_FAILURE' });
       return false;
     }

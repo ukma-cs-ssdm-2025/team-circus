@@ -4,6 +4,8 @@ export const API_ENDPOINTS = {
   AUTH: {
     LOGIN: '/auth/login',
     REGISTER: '/signup',
+    REFRESH: '/auth/refresh',
+    LOGOUT: '/auth/logout',
   },
   USERS: {
     BASE: '/users',
