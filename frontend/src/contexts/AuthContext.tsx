@@ -72,14 +72,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const checkAuthStatus = async () => {
       try {
         dispatch({ type: 'AUTH_START' });
-        
-        // Try to validate the current token
-        const isValid = await authService.validateToken();
-        
-        if (isValid) {
-          // If token is valid, try to get user info
-          // For now, we'll set a placeholder user since we don't have a user profile endpoint
-          // In a real app, you'd fetch the user data here
+
+        // No validateToken available — try to refresh tokens instead.
+        // If refresh succeeds, assume user is authenticated.
+        const refreshSuccess = await authService.refreshToken();
+
+        if (refreshSuccess) {
+          // Replace this placeholder with a real user fetch when you have one (e.g. authService.getProfile()).
           const user: AuthUser = {
             uuid: 'placeholder-uuid',
             login: 'user',
@@ -88,19 +87,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           };
           dispatch({ type: 'AUTH_SUCCESS', payload: user });
         } else {
-          // Try to refresh the token
-          const refreshSuccess = await authService.refreshToken();
-          if (refreshSuccess) {
-            const user: AuthUser = {
-              uuid: 'placeholder-uuid',
-              login: 'user',
-              email: 'user@example.com',
-              createdAt: new Date().toISOString(),
-            };
-            dispatch({ type: 'AUTH_SUCCESS', payload: user });
-          } else {
-            dispatch({ type: 'AUTH_FAILURE' });
-          }
+          dispatch({ type: 'AUTH_FAILURE' });
         }
       } catch (error) {
         console.error('Auth check failed:', error);
@@ -115,16 +102,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       dispatch({ type: 'AUTH_START' });
       await authService.login(credentials);
-      
-      // After successful login, get user info
-      // For now, we'll use placeholder data
+
+      // After successful login, set user (placeholder until you fetch real profile).
       const user: AuthUser = {
         uuid: 'placeholder-uuid',
         login: credentials.login,
         email: 'user@example.com',
         createdAt: new Date().toISOString(),
       };
-      
+
       dispatch({ type: 'AUTH_SUCCESS', payload: user });
     } catch (error) {
       console.error('Login failed:', error);
@@ -156,14 +142,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  // Exposed refreshToken: will attempt refresh and update auth state accordingly
   const refreshToken = async (): Promise<boolean> => {
     try {
       const success = await authService.refreshToken();
       if (success) {
-        // Token refreshed successfully, user is still authenticated
+        const user: AuthUser = {
+          uuid: 'placeholder-uuid',
+          login: state.user?.login ?? 'user',
+          email: state.user?.email ?? 'user@example.com',
+          createdAt: state.user?.createdAt ?? new Date().toISOString(),
+        };
+        dispatch({ type: 'AUTH_SUCCESS', payload: user });
         return true;
       } else {
-        // Refresh failed, user needs to login again
         dispatch({ type: 'AUTH_FAILURE' });
         return false;
       }

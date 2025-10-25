@@ -54,18 +54,6 @@ class AuthService {
     }
   }
 
-  async validateToken(): Promise<boolean> {
-    try {
-      await this.requestWithCredentials('/validate', {
-        method: 'GET',
-      });
-      return true;
-    } catch (error) {
-      console.error('Token validation failed:', error);
-      return false;
-    }
-  }
-
   async logout(): Promise<void> {
     // Clear cookies by setting them to expire in the past
     document.cookie = 'accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
