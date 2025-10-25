@@ -1,4 +1,14 @@
-import { Card, CardActionArea, CardContent, Chip, Stack, Typography } from '@mui/material';
+import type { MouseEvent } from 'react';
+import {
+  Card,
+  CardActionArea,
+  CardActions,
+  CardContent,
+  Chip,
+  Stack,
+  Typography,
+  Button,
+} from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import { formatDate, truncateText } from '../../utils';
 import { ROUTES } from '../../constants';
@@ -10,6 +20,9 @@ interface DocumentCardProps {
   createdAtLabel: string;
   noContentLabel: string;
   groupUnknownLabel: string;
+  editLabel: string;
+  deleteLabel: string;
+  onDelete?: (document: DocumentItem) => void;
 }
 
 const DocumentCard = ({
@@ -17,9 +30,18 @@ const DocumentCard = ({
   groupName,
   createdAtLabel,
   noContentLabel,
-  groupUnknownLabel
+  groupUnknownLabel,
+  editLabel,
+  deleteLabel,
+  onDelete,
 }: DocumentCardProps) => {
   const documentPath = `${ROUTES.DOCUMENTS}/${document.uuid}`;
+
+  const handleDeleteClick = (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    onDelete?.(document);
+  };
 
   return (
     <Card
@@ -43,28 +65,46 @@ const DocumentCard = ({
       >
         <CardContent sx={{ flex: 1 }}>
           <Stack spacing={2}>
-            <Stack direction="row" spacing={1} alignItems="center">
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+            <Stack direction='row' spacing={1} alignItems='center'>
+              <Typography variant='h6' sx={{ fontWeight: 600 }}>
                 {document.name}
               </Typography>
               <Chip
                 label={groupName || groupUnknownLabel}
-                size="small"
-                color="primary"
+                size='small'
+                color='primary'
                 sx={{ fontWeight: 600 }}
               />
             </Stack>
 
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant='body2' color='text.secondary'>
               {truncateText(document.content || noContentLabel, 180)}
             </Typography>
 
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant='body2' color='text.secondary'>
               {`${createdAtLabel}: ${formatDate(document.created_at)}`}
             </Typography>
           </Stack>
         </CardContent>
       </CardActionArea>
+      <CardActions sx={{ justifyContent: 'flex-end', pt: 0, pb: 2, px: 2 }}>
+        <Button
+          size='small'
+          component={RouterLink}
+          to={documentPath}
+          onClick={(event) => event.stopPropagation()}
+        >
+          {editLabel}
+        </Button>
+        <Button
+          size='small'
+          color='error'
+          onClick={handleDeleteClick}
+          disabled={!onDelete}
+        >
+          {deleteLabel}
+        </Button>
+      </CardActions>
     </Card>
   );
 };

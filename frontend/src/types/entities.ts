@@ -32,3 +32,16 @@ export interface DocumentFilters {
   selectedGroup: string;
   searchTerm: string;
 }
+
+// Mutation payload types
+export interface CreateGroupPayload {
+  name: string;
+}
+
+export type UpdateGroupPayload = CreateGroupPayload;
+
+export interface CreateDocumentPayload {
+  group_uuid: string;
+  name: string;
+  content: string;
+}
