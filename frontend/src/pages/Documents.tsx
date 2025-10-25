@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Alert, Button, Snackbar, Stack, Typography } from '@mui/material';
-import type { AlertColor } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useState } from "react";
+import { Alert, Button, Snackbar, Stack, Typography } from "@mui/material";
+import type { AlertColor } from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   CenteredContent,
   PageCard,
@@ -13,10 +13,10 @@ import {
   DocumentsGrid,
   DocumentFormDialog,
   ConfirmDialog,
-} from '../components';
-import { useLanguage } from '../contexts/LanguageContext';
-import { useApi, useMutation } from '../hooks';
-import { API_ENDPOINTS, ROUTES } from '../constants';
+} from "../components";
+import { useLanguage } from "../contexts/LanguageContext";
+import { useApi, useMutation } from "../hooks";
+import { API_ENDPOINTS, ROUTES } from "../constants";
 import type {
   BaseComponentProps,
   DocumentsResponse,
@@ -25,17 +25,17 @@ import type {
   DocumentFilters as DocumentFiltersType,
   GroupOption,
   CreateDocumentPayload,
-} from '../types';
+} from "../types";
 
 type DocumentsProps = BaseComponentProps;
 
-const Documents = ({ className = '' }: DocumentsProps) => {
+const Documents = ({ className = "" }: DocumentsProps) => {
   const { t } = useLanguage();
   const location = useLocation();
   const navigate = useNavigate();
   const [filters, setFilters] = useState<DocumentFiltersType>({
-    selectedGroup: 'all',
-    searchTerm: '',
+    selectedGroup: "all",
+    searchTerm: "",
   });
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<DocumentItem | null>(null);
@@ -62,14 +62,14 @@ const Documents = ({ className = '' }: DocumentsProps) => {
     reset: resetCreate,
   } = useMutation<DocumentItem, CreateDocumentPayload>(
     API_ENDPOINTS.DOCUMENTS.BASE,
-    'POST',
+    "POST",
   );
 
   const deleteEndpoint = useMemo(() => {
     if (deleteTarget) {
       return `${API_ENDPOINTS.DOCUMENTS.BASE}/${deleteTarget.uuid}`;
     }
-    return '';
+    return "";
   }, [deleteTarget]);
 
   const {
@@ -77,7 +77,7 @@ const Documents = ({ className = '' }: DocumentsProps) => {
     loading: deletingDocument,
     error: deleteError,
     reset: resetDelete,
-  } = useMutation<unknown, void>(deleteEndpoint, 'DELETE');
+  } = useMutation<unknown, void>(deleteEndpoint, "DELETE");
 
   const documents = useMemo(
     () => documentsData?.documents ?? [],
@@ -102,7 +102,7 @@ const Documents = ({ className = '' }: DocumentsProps) => {
   const filteredDocuments = useMemo(() => {
     return documents.filter((document) => {
       const matchesGroup =
-        filters.selectedGroup === 'all' ||
+        filters.selectedGroup === "all" ||
         document.group_uuid === filters.selectedGroup;
       const matchesSearch = document.name
         .toLowerCase()
@@ -139,14 +139,14 @@ const Documents = ({ className = '' }: DocumentsProps) => {
     groupUUID: string;
   }) => {
     try {
-      const defaultContent = t('documents.defaultContent');
+      const defaultContent = t("documents.defaultContent");
       const payload: CreateDocumentPayload = {
         name,
         group_uuid: groupUUID,
         content:
-          defaultContent && defaultContent !== 'documents.defaultContent'
+          defaultContent && defaultContent !== "documents.defaultContent"
             ? defaultContent
-            : ' ',
+            : " ",
       };
 
       const created = await createDocument({
@@ -154,8 +154,8 @@ const Documents = ({ className = '' }: DocumentsProps) => {
       });
 
       setSnackbar({
-        message: t('documents.createSuccess'),
-        severity: 'success',
+        message: t("documents.createSuccess"),
+        severity: "success",
       });
 
       await refetchDocuments();
@@ -166,10 +166,10 @@ const Documents = ({ className = '' }: DocumentsProps) => {
       }
     } catch (mutationError) {
       setSnackbar({
-        message: t('documents.createError'),
-        severity: 'error',
+        message: t("documents.createError"),
+        severity: "error",
       });
-      console.error('Document creation failed', mutationError);
+      console.error("Document creation failed", mutationError);
     }
   };
 
@@ -194,17 +194,17 @@ const Documents = ({ className = '' }: DocumentsProps) => {
     try {
       await removeDocument();
       setSnackbar({
-        message: t('documents.deleteSuccess'),
-        severity: 'success',
+        message: t("documents.deleteSuccess"),
+        severity: "success",
       });
       await refetchDocuments();
       handleCloseDelete();
     } catch (mutationError) {
       setSnackbar({
-        message: t('documents.deleteError'),
-        severity: 'error',
+        message: t("documents.deleteError"),
+        severity: "error",
       });
-      console.error('Document deletion failed', mutationError);
+      console.error("Document deletion failed", mutationError);
     }
   };
 
@@ -213,20 +213,20 @@ const Documents = ({ className = '' }: DocumentsProps) => {
   };
 
   const createErrorMessage = createError
-    ? createError.message || t('documents.createError')
+    ? createError.message || t("documents.createError")
     : null;
   const deleteErrorMessage = deleteError
-    ? deleteError.message || t('documents.deleteError')
+    ? deleteError.message || t("documents.deleteError")
     : null;
 
-  const deleteDescriptionTemplate = t('documents.deleteConfirmDescription');
+  const deleteDescriptionTemplate = t("documents.deleteConfirmDescription");
   const deleteDescription = deleteTarget
-    ? deleteDescriptionTemplate.replace('{name}', deleteTarget.name)
-    : deleteDescriptionTemplate.replace('{name}', '');
+    ? deleteDescriptionTemplate.replace("{name}", deleteTarget.name)
+    : deleteDescriptionTemplate.replace("{name}", "");
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const groupFromQuery = params.get('group');
+    const groupFromQuery = params.get("group");
 
     if (!groupFromQuery) {
       return;
@@ -242,28 +242,28 @@ const Documents = ({ className = '' }: DocumentsProps) => {
     <CenteredContent className={className}>
       <PageCard>
         <PageHeader
-          title={t('documents.title')}
-          subtitle={t('documents.subtitle')}
+          title={t("documents.title")}
+          subtitle={t("documents.subtitle")}
         />
 
         <Stack spacing={3}>
           <Stack
-            direction={{ xs: 'column', sm: 'row' }}
+            direction={{ xs: "column", sm: "row" }}
             spacing={2}
-            alignItems={{ xs: 'stretch', sm: 'center' }}
+            alignItems={{ xs: "stretch", sm: "center" }}
           >
             <Button
-              variant='contained'
+              variant="contained"
               startIcon={<AddIcon />}
               onClick={handleOpenCreate}
               disabled={groups.length === 0}
-              sx={{ alignSelf: { xs: 'stretch', sm: 'flex-start' } }}
+              sx={{ alignSelf: { xs: "stretch", sm: "flex-start" } }}
             >
-              {t('documents.createButton')}
+              {t("documents.createButton")}
             </Button>
             {groups.length === 0 && !groupsLoading && (
-              <Alert severity='info' sx={{ flex: 1 }}>
-                {t('documents.noGroupsHint')}
+              <Alert severity="info" sx={{ flex: 1 }}>
+                {t("documents.noGroupsHint")}
               </Alert>
             )}
           </Stack>
@@ -273,35 +273,35 @@ const Documents = ({ className = '' }: DocumentsProps) => {
             groupOptions={groupOptions}
             onGroupChange={handleGroupChange}
             onSearchChange={handleSearchChange}
-            filterGroupLabel={t('documents.filterGroup')}
-            filterAllLabel={t('documents.filterAll')}
-            searchPlaceholder={t('documents.searchPlaceholder')}
+            filterGroupLabel={t("documents.filterGroup")}
+            filterAllLabel={t("documents.filterAll")}
+            searchPlaceholder={t("documents.searchPlaceholder")}
           />
 
           {isLoading && <LoadingSpinner py={6} />}
 
           {documentsError && (
             <ErrorAlert
-              message={t('documents.error')}
+              message={t("documents.error")}
               onRetry={refetchDocuments}
-              retryText={t('documents.refresh')}
+              retryText={t("documents.refresh")}
             />
           )}
 
           {!isLoading && !documentsError && filteredDocuments.length === 0 && (
-            <Typography color='text.secondary' align='center'>
-              {t('documents.empty')}
+            <Typography color="text.secondary" align="center">
+              {t("documents.empty")}
             </Typography>
           )}
 
           <DocumentsGrid
             documents={filteredDocuments}
             groupNameByUUID={groupNameByUUID}
-            createdAtLabel={t('documents.createdAt')}
-            noContentLabel={t('documents.noContent')}
-            groupUnknownLabel={t('documents.groupUnknown')}
-            editLabel={t('documents.editLabel')}
-            deleteLabel={t('documents.deleteLabel')}
+            createdAtLabel={t("documents.createdAt")}
+            noContentLabel={t("documents.noContent")}
+            groupUnknownLabel={t("documents.groupUnknown")}
+            editLabel={t("documents.editLabel")}
+            deleteLabel={t("documents.deleteLabel")}
             onDocumentDelete={handleRequestDelete}
           />
         </Stack>
@@ -309,13 +309,13 @@ const Documents = ({ className = '' }: DocumentsProps) => {
 
       <DocumentFormDialog
         open={isCreateOpen}
-        title={t('documents.createDialogTitle')}
-        confirmLabel={t('documents.createConfirm')}
-        cancelLabel={t('documents.cancel')}
-        nameLabel={t('documents.nameLabel')}
-        namePlaceholder={t('documents.namePlaceholder')}
-        nameHelperText={t('documents.nameHelper')}
-        groupLabel={t('documents.groupLabel')}
+        title={t("documents.createDialogTitle")}
+        confirmLabel={t("documents.createConfirm")}
+        cancelLabel={t("documents.cancel")}
+        nameLabel={t("documents.nameLabel")}
+        namePlaceholder={t("documents.namePlaceholder")}
+        nameHelperText={t("documents.nameHelper")}
+        groupLabel={t("documents.groupLabel")}
         groupOptions={groupOptions}
         loading={creatingDocument}
         errorMessage={createErrorMessage}
@@ -325,10 +325,10 @@ const Documents = ({ className = '' }: DocumentsProps) => {
 
       <ConfirmDialog
         open={Boolean(deleteTarget)}
-        title={t('documents.deleteConfirmTitle')}
+        title={t("documents.deleteConfirmTitle")}
         description={deleteDescription}
-        confirmLabel={t('documents.deleteConfirmAccept')}
-        cancelLabel={t('documents.cancel')}
+        confirmLabel={t("documents.deleteConfirmAccept")}
+        cancelLabel={t("documents.cancel")}
         loading={deletingDocument}
         errorMessage={deleteErrorMessage}
         onCancel={handleCloseDelete}
@@ -339,17 +339,17 @@ const Documents = ({ className = '' }: DocumentsProps) => {
         open={Boolean(snackbar)}
         autoHideDuration={4000}
         onClose={handleSnackbarClose}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
-        {snackbar && (
+        {snackbar ? (
           <Alert
             onClose={handleSnackbarClose}
             severity={snackbar.severity}
-            sx={{ width: '100%' }}
+            sx={{ width: "100%" }}
           >
             {snackbar.message}
           </Alert>
-        )}
+        ) : undefined}
       </Snackbar>
     </CenteredContent>
   );

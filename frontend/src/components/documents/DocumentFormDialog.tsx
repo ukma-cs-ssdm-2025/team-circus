@@ -4,7 +4,7 @@ import {
   useState,
   type ChangeEvent,
   type FormEvent,
-} from 'react';
+} from "react";
 import {
   Alert,
   Button,
@@ -15,9 +15,9 @@ import {
   MenuItem,
   Stack,
   TextField,
-} from '@mui/material';
-import type { BaseComponentProps } from '../../types';
-import type { GroupOption } from '../../types/entities';
+} from "@mui/material";
+import type { BaseComponentProps } from "../../types";
+import type { GroupOption } from "../../types/entities";
 
 interface DocumentFormDialogProps extends BaseComponentProps {
   open: boolean;
@@ -52,20 +52,20 @@ const DocumentFormDialog = ({
   errorMessage = null,
   onClose,
   onSubmit,
-  className = '',
+  className = "",
 }: DocumentFormDialogProps) => {
-  const [name, setName] = useState('');
-  const [selectedGroup, setSelectedGroup] = useState('');
+  const [name, setName] = useState("");
+  const [selectedGroup, setSelectedGroup] = useState("");
   const [touched, setTouched] = useState(false);
 
   const defaultGroup = useMemo(
-    () => groupOptions[0]?.value ?? '',
+    () => groupOptions[0]?.value ?? "",
     [groupOptions],
   );
 
   useEffect(() => {
     if (open) {
-      setName('');
+      setName("");
       setSelectedGroup(defaultGroup);
       setTouched(false);
     }
@@ -82,7 +82,7 @@ const DocumentFormDialog = ({
     setSelectedGroup(event.target.value);
   };
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLDivElement>) => {
     event.preventDefault();
     setTouched(true);
 
@@ -107,9 +107,9 @@ const DocumentFormDialog = ({
       onClose={loading ? undefined : onClose}
       disableEscapeKeyDown={loading}
       fullWidth
-      maxWidth='sm'
+      maxWidth="sm"
       className={className}
-      component='form'
+      component="form"
       onSubmit={handleSubmit}
     >
       <DialogTitle>{title}</DialogTitle>
@@ -124,7 +124,7 @@ const DocumentFormDialog = ({
             onChange={handleNameChange}
             disabled={loading}
             error={touched && !isNameValid}
-            helperText={touched && !isNameValid ? nameHelperText : ' '}
+            helperText={touched && !isNameValid ? nameHelperText : " "}
           />
 
           <TextField
@@ -142,7 +142,7 @@ const DocumentFormDialog = ({
             ))}
           </TextField>
 
-          {errorMessage && <Alert severity='error'>{errorMessage}</Alert>}
+          {errorMessage && <Alert severity="error">{errorMessage}</Alert>}
         </Stack>
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 3 }}>
@@ -150,8 +150,8 @@ const DocumentFormDialog = ({
           {cancelLabel}
         </Button>
         <Button
-          type='submit'
-          variant='contained'
+          type="submit"
+          variant="contained"
           disabled={!isFormValid || loading}
         >
           {loading ? `${confirmLabel}...` : confirmLabel}

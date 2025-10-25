@@ -1,4 +1,4 @@
-import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
+import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import {
   Alert,
   Button,
@@ -8,8 +8,8 @@ import {
   DialogTitle,
   Stack,
   TextField,
-} from '@mui/material';
-import type { BaseComponentProps } from '../../types';
+} from "@mui/material";
+import type { BaseComponentProps } from "../../types";
 
 interface GroupFormDialogProps extends BaseComponentProps {
   open: boolean;
@@ -34,12 +34,12 @@ const GroupFormDialog = ({
   nameLabel,
   namePlaceholder,
   nameHelperText,
-  initialName = '',
+  initialName = "",
   loading = false,
   errorMessage = null,
   onClose,
   onSubmit,
-  className = '',
+  className = "",
 }: GroupFormDialogProps) => {
   const [name, setName] = useState(initialName);
   const [touched, setTouched] = useState(false);
@@ -58,7 +58,7 @@ const GroupFormDialog = ({
     setName(event.target.value);
   };
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLDivElement>) => {
     event.preventDefault();
     setTouched(true);
 
@@ -77,9 +77,9 @@ const GroupFormDialog = ({
       onClose={loading ? undefined : onClose}
       disableEscapeKeyDown={loading}
       fullWidth
-      maxWidth='sm'
+      maxWidth="sm"
       className={className}
-      component='form'
+      component="form"
       onSubmit={handleSubmit}
     >
       <DialogTitle>{title}</DialogTitle>
@@ -94,10 +94,10 @@ const GroupFormDialog = ({
             onChange={handleChange}
             disabled={loading}
             error={touched && !isNameValid}
-            helperText={touched && !isNameValid ? nameHelperText : ' '}
+            helperText={touched && !isNameValid ? nameHelperText : " "}
           />
 
-          {errorMessage && <Alert severity='error'>{errorMessage}</Alert>}
+          {errorMessage && <Alert severity="error">{errorMessage}</Alert>}
         </Stack>
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 3 }}>
@@ -105,8 +105,8 @@ const GroupFormDialog = ({
           {cancelLabel}
         </Button>
         <Button
-          type='submit'
-          variant='contained'
+          type="submit"
+          variant="contained"
           disabled={!isNameValid || loading}
         >
           {loading ? `${confirmLabel}...` : confirmLabel}
