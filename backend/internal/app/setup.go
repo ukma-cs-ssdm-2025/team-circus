@@ -49,7 +49,7 @@ func (a *App) setupRouter() *gin.Engine {
 	userService := userservice.NewUserService(userRepo)
 
 	regRepo := regrepo.NewRegRepository(a.DB)
-	regService := regservice.NewRegService(regRepo)
+	regService := regservice.NewRegService(regRepo, a.cfg.HashingCost.HashingCost)
 
 	apiV1 := router.Group("/api/v1")
 	{

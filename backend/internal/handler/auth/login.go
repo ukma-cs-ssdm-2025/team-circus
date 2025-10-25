@@ -13,6 +13,7 @@ import (
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/auth/requests"
 	"go.uber.org/zap"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type userRepository interface {
@@ -58,8 +59,8 @@ func NewLogInHandler(userRepo userRepository, logger *zap.Logger) gin.HandlerFun
 			return
 		}
 
-		if req.Password != user.Password {
-			logger.Error("invalid credentials", zap.String("login", req.Login))
+		err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password))
+		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
 			return
 		}

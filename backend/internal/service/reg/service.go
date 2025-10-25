@@ -11,11 +11,13 @@ type RegRepository interface {
 }
 
 type RegService struct {
-	repo RegRepository
+	repo        RegRepository
+	hashingCost int
 }
 
-func NewRegService(repo RegRepository) *RegService {
+func NewRegService(repo RegRepository, cost int) *RegService {
 	return &RegService{
-		repo: repo,
+		repo:        repo,
+		hashingCost: cost,
 	}
 }

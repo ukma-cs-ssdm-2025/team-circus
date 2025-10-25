@@ -16,6 +16,7 @@ import (
 	"github.com/ukma-cs-ssdm-2025/team-circus/tests/pkg/seeder"
 	"github.com/ukma-cs-ssdm-2025/team-circus/tests/pkg/testapp"
 	"github.com/ukma-cs-ssdm-2025/team-circus/tests/pkg/testdb"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func TestSignUpHandler(main *testing.T) {
@@ -73,11 +74,13 @@ func TestSignUpHandler(main *testing.T) {
 		assert.Equal(t, "testuser", response["login"])
 		assert.Equal(t, "test@example.com", response["email"])
 
-		// Assert usr in db
+		// Assert user in db
 		user, err := seeder.GetUserByLogin("testuser")
 		require.NoError(t, err)
 		assert.Equal(t, "testuser", user.Login)
 		assert.Equal(t, "test@example.com", user.Email)
+		err = bcrypt.CompareHashAndPassword([]byte(user.HashedPassword), []byte("testpassword123"))
+		require.NoError(t, err)
 		assert.False(t, user.CreatedAt.IsZero())
 	})
 
@@ -236,6 +239,8 @@ func TestSignUpHandler(main *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, "duplicateuser", user.Login)
 		assert.Equal(t, "duplicate@example.com", user.Email)
+		err = bcrypt.CompareHashAndPassword([]byte(user.HashedPassword), []byte("testpassword123"))
+		require.NoError(t, err)
 		assert.False(t, user.CreatedAt.IsZero())
 
 		// Act

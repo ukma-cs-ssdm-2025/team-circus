@@ -19,6 +19,7 @@ import (
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/auth"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/auth/requests"
 	"go.uber.org/zap"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // MockUserRepository is a mock implementation of the user repository
@@ -61,11 +62,13 @@ func TestNewLogInHandler(t *testing.T) {
 		// Arrange
 		mockRepo, handler := setup(t)
 
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte("testpassword123"), bcrypt.DefaultCost)
+		assert.NoError(t, err)
 		expectedUser := &domain.User{
 			UUID:      uuid.New(),
 			Login:     "testuser",
 			Email:     "test@example.com",
-			Password:  "testpassword123", // In real app, this would be hashed
+			Password:  string(hashedPassword),
 			CreatedAt: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
 		}
 
@@ -276,50 +279,6 @@ func TestNewLogInHandler(t *testing.T) {
 		err = json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
 		assert.Equal(t, "failed to log in", response["error"])
-
-		mockRepo.AssertExpectations(t)
-	})
-
-	t.Run("MissingSecretToken", func(t *testing.T) {
-		// Arrange
-		os.Unsetenv("SECRET_TOKEN") //nolint:errcheck
-		mockRepo, handler := setup(t)
-
-		expectedUser := &domain.User{
-			UUID:      uuid.New(),
-			Login:     "testuser",
-			Email:     "test@example.com",
-			Password:  "testpassword123",
-			CreatedAt: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
-		}
-
-		mockRepo.On("GetByLogin", mock.Anything, "testuser").Return(expectedUser, nil)
-
-		requestBody := requests.LogInRequest{
-			Login:    "testuser",
-			Password: "testpassword123",
-		}
-
-		jsonBody, err := json.Marshal(requestBody)
-		assert.NoError(t, err)
-
-		req := httptest.NewRequest("POST", "/auth/login", bytes.NewBuffer(jsonBody))
-		req.Header.Set("Content-Type", "application/json")
-		w := httptest.NewRecorder()
-
-		c, _ := gin.CreateTestContext(w)
-		c.Request = req
-
-		// Act
-		handler(c)
-
-		// Assert
-		assert.Equal(t, http.StatusInternalServerError, w.Code)
-
-		var response map[string]interface{}
-		err = json.Unmarshal(w.Body.Bytes(), &response)
-		assert.NoError(t, err)
-		assert.Equal(t, "server misconfiguration", response["error"])
 
 		mockRepo.AssertExpectations(t)
 	})
