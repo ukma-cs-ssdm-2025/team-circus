@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -9,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 	"go.uber.org/zap"
 )
 
@@ -74,14 +76,31 @@ func NewRefreshTokenHandler(userRepo userRepository, logger *zap.Logger) gin.Han
 
 		uid, err := uuid.Parse(claims.Subject)
 		if err != nil {
-			logger.Error("invalid uuid format in access token", zap.Error(err))
+			logger.Error("invalid uuid format in refresh token", zap.Error(err))
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid uuid format in refresh token"})
+			return
+		}
+
+		user, err := userRepo.GetByUUID(c.Request.Context(), uid)
+		if err != nil {
+			if errors.Is(err, domain.ErrInternal) {
+				logger.Error("failed to fetch user from refresh token", zap.Error(err))
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch user from refresh token"})
+				return
+			}
+			logger.Error("invalid refresh token", zap.Error(err))
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid refresh token"})
+			return
+		}
+
+		if user == nil {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid refresh token"})
 			return
 		}
 
 		accessTokenExpTime := time.Now().Add(10 * time.Minute)
 		accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
-			Subject:   uid.String(),
+			Subject:   user.UUID.String(),
 			ExpiresAt: jwt.NewNumericDate(accessTokenExpTime),
 		})
 
@@ -93,7 +112,7 @@ func NewRefreshTokenHandler(userRepo userRepository, logger *zap.Logger) gin.Han
 		}
 
 		refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
-			Subject:   uid.String(),
+			Subject:   user.UUID.String(),
 			ExpiresAt: claims.ExpiresAt,
 		})
 

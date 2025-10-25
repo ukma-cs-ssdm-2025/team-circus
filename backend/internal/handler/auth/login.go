@@ -10,6 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/auth/requests"
 	"go.uber.org/zap"
@@ -18,6 +19,7 @@ import (
 
 type userRepository interface {
 	GetByLogin(ctx context.Context, login string) (*domain.User, error)
+	GetByUUID(ctx context.Context, uuid uuid.UUID) (*domain.User, error)
 }
 
 // NewLogInHandler handles user login and saves JWT tokens in cookies.
