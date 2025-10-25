@@ -9,7 +9,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/auth/requests"
 	"go.uber.org/zap"
 )
 
@@ -27,11 +26,17 @@ import (
 // @Router /auth/refresh [post]
 func NewRefreshTokenHandler(userRepo userRepository, logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var req requests.RefreshTokenRequest
-		if err := c.ShouldBindJSON(&req); err != nil {
-			err = fmt.Errorf("refresh token handler: failed to bind request: %v", err)
-			logger.Error("failed to bind request", zap.Error(err))
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request format"})
+		// var req requests.RefreshTokenRequest
+		// if err := c.ShouldBindJSON(&req); err != nil {
+		// 	err = fmt.Errorf("refresh token handler: failed to bind request: %v", err)
+		// 	logger.Error("failed to bind request", zap.Error(err))
+		// 	c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request format"})
+		// 	return
+		// }
+
+		tokenString, err := c.Cookie("refreshToken")
+		if err != nil || tokenString == "" {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "refresh token required"})
 			return
 		}
 
@@ -42,22 +47,22 @@ func NewRefreshTokenHandler(userRepo userRepository, logger *zap.Logger) gin.Han
 			return
 		}
 
-		token, err := jwt.ParseWithClaims(req.RefreshToken, &jwt.RegisteredClaims{}, func(t *jwt.Token) (interface{}, error) {
+		token, err := jwt.ParseWithClaims(tokenString, &jwt.RegisteredClaims{}, func(t *jwt.Token) (interface{}, error) {
 			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
 			}
 			return []byte(secretToken), nil
 		})
 		if err != nil {
-			logger.Error("invalid access token", zap.Error(err))
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid access token"})
+			logger.Error("invalid refresh token", zap.Error(err))
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid refresh token"})
 			return
 		}
 
 		claims, ok := token.Claims.(*jwt.RegisteredClaims)
 		if !ok || !token.Valid {
-			logger.Error("invalid access token claims")
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid access token claims"})
+			logger.Error("invalid refresh token claims")
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid refresh token claims"})
 			return
 		}
 
@@ -70,7 +75,7 @@ func NewRefreshTokenHandler(userRepo userRepository, logger *zap.Logger) gin.Han
 		uid, err := uuid.Parse(claims.Subject)
 		if err != nil {
 			logger.Error("invalid uuid format in access token", zap.Error(err))
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid uuid format in access token"})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid uuid format in refresh token"})
 			return
 		}
 
@@ -99,9 +104,10 @@ func NewRefreshTokenHandler(userRepo userRepository, logger *zap.Logger) gin.Han
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{
-			"access_token":  accessTokenString,
-			"refresh_token": refreshTokenString,
-		})
+		c.SetSameSite(http.SameSiteLaxMode)
+		c.SetCookie("accessToken", accessTokenString, int(time.Until(accessTokenExpTime).Seconds()), "/", "", true, true)
+		c.SetCookie("refreshToken", refreshTokenString, int(time.Until(claims.ExpiresAt.Time).Seconds()), "/", "", true, true)
+
+		c.JSON(http.StatusOK, gin.H{})
 	}
 }
