@@ -9,7 +9,7 @@ import {
   Chip,
   Divider,
 } from '@mui/material';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContextBase';
 
 export const AuthTest: React.FC = () => {
   const { user, isAuthenticated, isLoading, logout, refreshToken } = useAuth();

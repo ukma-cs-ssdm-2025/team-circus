@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useReducer, useEffect, type ReactNode } from 'react';
+import React, { useReducer, useEffect, type ReactNode } from 'react';
 import { authService } from '../services/auth';
 import { STORAGE_KEYS } from '../constants';
+import { AuthContext } from './AuthContextBase';
 import type { AuthContextType, AuthState, AuthUser, LoginRequest, RegisterRequest } from '../types/auth';
 
 const loadStoredUser = (): AuthUser | null => {
@@ -92,9 +93,6 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
   }
 };
 
-// Create context
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
 // Provider component
 interface AuthProviderProps {
   children: ReactNode;
@@ -103,25 +101,44 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
+  const hasAuthCookies = () => {
+    if (typeof document === 'undefined') {
+      return false;
+    }
+    return document.cookie.split(';').some((cookie) => {
+      const trimmed = cookie.trim();
+      return trimmed.startsWith('refreshToken=') || trimmed.startsWith('accessToken=');
+    });
+  };
+
   // Check authentication status on mount
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
-        dispatch({ type: 'AUTH_START' });
+        const stored = loadStoredUser();
+        const hasCookies = hasAuthCookies();
 
-        // No validateToken available — try to refresh tokens instead.
-        // If refresh succeeds, assume user is authenticated.
+        if (stored) {
+          dispatch({ type: 'AUTH_SUCCESS', payload: stored });
+          return;
+        }
+
+        if (!hasCookies) {
+          persistUser(null);
+          dispatch({ type: 'AUTH_FAILURE' });
+          return;
+        }
+
+        dispatch({ type: 'AUTH_START' });
         const refreshSuccess = await authService.refreshToken();
 
         if (refreshSuccess) {
-          const stored = loadStoredUser();
-          const user: AuthUser =
-            stored ?? {
-              uuid: 'placeholder-uuid',
-              login: 'user',
-              email: 'user@example.com',
-              createdAt: new Date().toISOString(),
-            };
+          const user: AuthUser = {
+            uuid: 'placeholder-uuid',
+            login: 'user',
+            email: 'user@example.com',
+            createdAt: new Date().toISOString(),
+          };
 
           persistUser(user);
           dispatch({ type: 'AUTH_SUCCESS', payload: user });
@@ -235,13 +252,4 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-};
-
-// Custom hook to use auth context
-export const useAuth = (): AuthContextType => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
 };

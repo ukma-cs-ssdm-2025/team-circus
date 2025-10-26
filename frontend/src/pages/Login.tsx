@@ -12,9 +12,21 @@ import {
   Container,
   Paper,
 } from '@mui/material';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContextBase';
 import { ROUTES } from '../constants';
 import type { LoginRequest } from '../types/auth';
+
+type AuthLocationState = { from?: { pathname?: string } };
+
+const resolveRedirectPath = (state: unknown): string | undefined => {
+  if (typeof state !== 'object' || state === null) {
+    return undefined;
+  }
+
+  const maybeState = state as AuthLocationState;
+  const pathname = maybeState.from?.pathname;
+  return typeof pathname === 'string' ? pathname : undefined;
+};
 
 export const Login: React.FC = () => {
   const { login, isAuthenticated, isLoading } = useAuth();
@@ -28,7 +40,7 @@ export const Login: React.FC = () => {
 
   // Redirect if already authenticated
   if (isAuthenticated) {
-    const from = (location.state as any)?.from?.pathname || ROUTES.HOME;
+    const from = resolveRedirectPath(location.state) ?? ROUTES.HOME;
     return <Navigate to={from} replace />;
   }
 

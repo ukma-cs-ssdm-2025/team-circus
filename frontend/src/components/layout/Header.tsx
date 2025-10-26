@@ -17,7 +17,7 @@ import {
 import type { BaseComponentProps } from '../../types';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme as useAppTheme } from '../../contexts/ThemeContext';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContextBase';
 import { ROUTES } from '../../constants';
 
 interface HeaderProps extends BaseComponentProps {
