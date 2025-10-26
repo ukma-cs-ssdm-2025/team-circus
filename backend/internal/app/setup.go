@@ -43,7 +43,7 @@ func (a *App) setupRouter() *gin.Engine {
 	groupService := groupservice.NewGroupService(groupRepo)
 
 	documentRepo := documentrepo.NewDocumentRepository(a.DB)
-	documentService := documentservice.NewDocumentService(documentRepo)
+	documentService := documentservice.NewDocumentService(documentRepo, groupRepo)
 
 	userRepo := userrepo.NewUserRepository(a.DB)
 	userService := userservice.NewUserService(userRepo)
@@ -72,7 +72,6 @@ func (a *App) setupRouter() *gin.Engine {
 			groups.GET("", grouphandler.NewGetAllGroupsHandler(groupService, a.l))
 			groups.PUT("/:uuid", grouphandler.NewUpdateGroupHandler(groupService, a.l))
 			groups.DELETE("/:uuid", grouphandler.NewDeleteGroupHandler(groupService, a.l))
-			groups.GET("/:uuid/documents", documenthandler.NewGetDocumentsByGroupHandler(documentService, a.l))
 		}
 
 		documents := protected.Group("/documents")

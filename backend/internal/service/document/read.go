@@ -21,19 +21,37 @@ func (s *DocumentService) GetByUUID(ctx context.Context, uuid uuid.UUID) (*domai
 	return document, nil
 }
 
-func (s *DocumentService) GetByGroupUUID(ctx context.Context, groupUUID uuid.UUID) ([]*domain.Document, error) {
-	documents, err := s.repo.GetByGroupUUID(ctx, groupUUID)
+func (s *DocumentService) GetByUUIDForUser(ctx context.Context, documentUUID, userUUID uuid.UUID) (*domain.Document, error) {
+	document, err := s.GetByUUID(ctx, documentUUID)
 	if err != nil {
-		return nil, fmt.Errorf("document service: getByGroupUUID: %w", err)
+		return nil, err
 	}
 
-	return documents, nil
+	isMember, err := s.groupRepo.IsMember(ctx, document.GroupUUID, userUUID)
+	if err != nil {
+		return nil, fmt.Errorf("document service: getByUUIDForUser: %w", err)
+	}
+
+	if !isMember {
+		return nil, domain.ErrForbidden
+	}
+
+	return document, nil
 }
 
 func (s *DocumentService) GetAll(ctx context.Context) ([]*domain.Document, error) {
 	documents, err := s.repo.GetAll(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("document service: getAll: %w", err)
+	}
+
+	return documents, nil
+}
+
+func (s *DocumentService) GetAllForUser(ctx context.Context, userUUID uuid.UUID) ([]*domain.Document, error) {
+	documents, err := s.repo.GetAllForUser(ctx, userUUID)
+	if err != nil {
+		return nil, fmt.Errorf("document service: getAllForUser: %w", err)
 	}
 
 	return documents, nil
