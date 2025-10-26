@@ -18,6 +18,7 @@ import (
 // @Router /auth/logout [post]
 func NewLogOutHandler(logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		c.SetSameSite(http.SameSiteLaxMode)
 		c.SetCookie("accessToken", "", -1, "/", "", true, true)
 		c.SetCookie("refreshToken", "", -1, "/", "", true, true)
 

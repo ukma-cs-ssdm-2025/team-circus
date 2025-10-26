@@ -101,31 +101,14 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
-  const hasAuthCookies = () => {
-    if (typeof document === 'undefined') {
-      return false;
-    }
-    return document.cookie.split(';').some((cookie) => {
-      const trimmed = cookie.trim();
-      return trimmed.startsWith('refreshToken=') || trimmed.startsWith('accessToken=');
-    });
-  };
-
   // Check authentication status on mount
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
         const stored = loadStoredUser();
-        const hasCookies = hasAuthCookies();
 
         if (stored) {
           dispatch({ type: 'AUTH_SUCCESS', payload: stored });
-          return;
-        }
-
-        if (!hasCookies) {
-          persistUser(null);
-          dispatch({ type: 'AUTH_FAILURE' });
           return;
         }
 

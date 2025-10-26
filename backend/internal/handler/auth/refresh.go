@@ -16,13 +16,12 @@ import (
 
 // NewUpdateRefreshTokenHandler handles refresh token requests
 // @Summary Refresh access token
-// @Description Validates a refresh token and issues a new access and refresh token pair
+// @Description Validates the refresh token cookie and issues a new access/refresh token pair
 // @Tags auth
-// @Accept json
+// @Accept */*
 // @Produce json
-// @Param request body requests.RefreshTokenRequest true "Refresh token request"
+// @Param refreshToken cookie string true "Refresh token"
 // @Success 200 {object} map[string]string "Tokens refreshed successfully"
-// @Failure 400 {object} map[string]string "Invalid request format"
 // @Failure 401 {object} map[string]string "Invalid or expired refresh token"
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /auth/refresh [post]
@@ -38,7 +37,7 @@ func NewRefreshTokenHandler(userRepo userRepository, logger *zap.Logger) gin.Han
 
 		tokenString, err := c.Cookie("refreshToken")
 		if err != nil || tokenString == "" {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "refresh token required"})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "refresh token required"})
 			return
 		}
 
@@ -94,7 +93,7 @@ func NewRefreshTokenHandler(userRepo userRepository, logger *zap.Logger) gin.Han
 		}
 
 		if user == nil {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid refresh token"})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid refresh token"})
 			return
 		}
 
