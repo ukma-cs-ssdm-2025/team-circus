@@ -14,13 +14,12 @@ import (
 	"go.uber.org/zap"
 )
 
-// NewUpdateRefreshTokenHandler handles refresh token requests
+// NewRefreshTokenHandler handles refresh token requests
 // @Summary Refresh access token
 // @Description Validates the refresh token cookie and issues a new access/refresh token pair
 // @Tags auth
-// @Accept */*
 // @Produce json
-// @Param refreshToken cookie string true "Refresh token"
+// @Param Cookie header string true "Cookie header containing refreshToken cookie"
 // @Success 200 {object} map[string]string "Tokens refreshed successfully"
 // @Failure 401 {object} map[string]string "Invalid or expired refresh token"
 // @Failure 500 {object} map[string]string "Internal server error"
