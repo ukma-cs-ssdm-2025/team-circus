@@ -21,11 +21,6 @@ definitions:
       password:
         type: string
     type: object
-  requests.RefreshTokenRequest:
-    properties:
-      refresh_token:
-        type: string
-    type: object
   requests.RegRequest:
     properties:
       email:
@@ -126,13 +121,6 @@ definitions:
         type: string
       uuid:
         type: string
-    type: object
-  responses.GetDocumentsByGroupResponse:
-    properties:
-      documents:
-        items:
-          $ref: '#/definitions/responses.GetDocumentResponse'
-        type: array
     type: object
   responses.GetGroupResponse:
     properties:
@@ -249,30 +237,30 @@ paths:
       summary: User login
       tags:
       - auth
+  /auth/logout:
+    post:
+      description: Expires the JWT access/refresh cookies.
+      responses:
+        "204":
+          description: Logged out successfully
+      summary: User logout
+      tags:
+      - auth
   /auth/refresh:
     post:
-      consumes:
-      - application/json
-      description: Validates a refresh token and issues a new access and refresh token
-        pair
+      description: Validates the refresh token cookie and issues a new access/refresh
+        token pair
       parameters:
-      - description: Refresh token request
-        in: body
-        name: request
+      - description: Cookie header containing refreshToken cookie
+        in: header
+        name: Cookie
         required: true
-        schema:
-          $ref: '#/definitions/requests.RefreshTokenRequest'
+        type: string
       produces:
       - application/json
       responses:
         "200":
           description: Tokens refreshed successfully
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "400":
-          description: Invalid request format
           schema:
             additionalProperties:
               type: string
@@ -296,7 +284,8 @@ paths:
     get:
       consumes:
       - application/json
-      description: Retrieve a list of all documents
+      description: Retrieve a list of all documents belonging to groups the requesting
+        user is a member of
       produces:
       - application/json
       responses:
@@ -304,6 +293,11 @@ paths:
           description: Documents retrieved successfully
           schema:
             $ref: '#/definitions/responses.GetAllDocumentsResponse'
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties: true
+            type: object
         "500":
           description: Internal server error
           schema:
@@ -382,7 +376,8 @@ paths:
     get:
       consumes:
       - application/json
-      description: Retrieve a specific document by its UUID
+      description: Retrieve a specific document by its UUID if the requesting user
+        is a member of the owning group
       parameters:
       - description: Document UUID
         in: path
@@ -398,6 +393,16 @@ paths:
             $ref: '#/definitions/responses.GetDocumentResponse'
         "400":
           description: Invalid UUID format
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Access forbidden
           schema:
             additionalProperties: true
             type: object
@@ -459,7 +464,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: Retrieve a list of all groups
+      description: Retrieve a list of all groups the requesting user belongs to
       produces:
       - application/json
       responses:
@@ -467,6 +472,11 @@ paths:
           description: Groups retrieved successfully
           schema:
             $ref: '#/definitions/responses.GetAllGroupsResponse'
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties: true
+            type: object
         "500":
           description: Internal server error
           schema:
@@ -545,7 +555,8 @@ paths:
     get:
       consumes:
       - application/json
-      description: Retrieve a specific group by its UUID
+      description: Retrieve a specific group by its UUID if the requesting user is
+        a member
       parameters:
       - description: Group UUID
         in: path
@@ -561,6 +572,16 @@ paths:
             $ref: '#/definitions/responses.GetGroupResponse'
         "400":
           description: Invalid UUID format
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Access forbidden
           schema:
             additionalProperties: true
             type: object
@@ -618,37 +639,6 @@ paths:
       summary: Update a group by UUID
       tags:
       - groups
-  /groups/{uuid}/documents:
-    get:
-      consumes:
-      - application/json
-      description: Retrieve all documents for a specific group
-      parameters:
-      - description: Group UUID
-        in: path
-        name: uuid
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Documents retrieved successfully
-          schema:
-            $ref: '#/definitions/responses.GetDocumentsByGroupResponse'
-        "400":
-          description: Invalid UUID format
-          schema:
-            additionalProperties: true
-            type: object
-        "500":
-          description: Internal server error
-          schema:
-            additionalProperties: true
-            type: object
-      summary: Get documents by group UUID
-      tags:
-      - documents
   /signup:
     post:
       consumes:

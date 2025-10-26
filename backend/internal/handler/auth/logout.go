@@ -11,10 +11,7 @@ import (
 // @Summary User logout
 // @Description Expires the JWT access/refresh cookies.
 // @Tags auth
-// @Accept json
-// @Produce json
-// @Success 204 "No Content"
-// @Failure 500 {object} map[string]string "Internal server error"
+// @Success 204 "Logged out successfully"
 // @Router /auth/logout [post]
 func NewLogOutHandler(logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {

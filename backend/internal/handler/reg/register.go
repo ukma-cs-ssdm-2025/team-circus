@@ -16,7 +16,7 @@ type regService interface {
 	Register(ctx context.Context, login string, email string, password string) (*domain.User, error)
 }
 
-// NewCreateUserHandler registers a new user
+// NewRegHandler registers a new user
 // @Summary Register a new user
 // @Description Register a new user with the provided login, email and password
 // @Tags registration

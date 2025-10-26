@@ -81,12 +81,23 @@ const docTemplate = `{
                 }
             }
         },
+        "/auth/logout": {
+            "post": {
+                "description": "Expires the JWT access/refresh cookies.",
+                "tags": [
+                    "auth"
+                ],
+                "summary": "User logout",
+                "responses": {
+                    "204": {
+                        "description": "Logged out successfully"
+                    }
+                }
+            }
+        },
         "/auth/refresh": {
             "post": {
-                "description": "Validates a refresh token and issues a new access and refresh token pair",
-                "consumes": [
-                    "application/json"
-                ],
+                "description": "Validates the refresh token cookie and issues a new access/refresh token pair",
                 "produces": [
                     "application/json"
                 ],
@@ -96,27 +107,16 @@ const docTemplate = `{
                 "summary": "Refresh access token",
                 "parameters": [
                     {
-                        "description": "Refresh token request",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/requests.RefreshTokenRequest"
-                        }
+                        "type": "string",
+                        "description": "Cookie header containing refreshToken cookie",
+                        "name": "Cookie",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "Tokens refreshed successfully",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request format",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -147,7 +147,7 @@ const docTemplate = `{
         },
         "/documents": {
             "get": {
-                "description": "Retrieve a list of all documents",
+                "description": "Retrieve a list of all documents belonging to groups the requesting user is a member of",
                 "consumes": [
                     "application/json"
                 ],
@@ -163,6 +163,13 @@ const docTemplate = `{
                         "description": "Documents retrieved successfully",
                         "schema": {
                             "$ref": "#/definitions/responses.GetAllDocumentsResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
                         }
                     },
                     "500": {
@@ -223,7 +230,7 @@ const docTemplate = `{
         },
         "/documents/{uuid}": {
             "get": {
-                "description": "Retrieve a specific document by its UUID",
+                "description": "Retrieve a specific document by its UUID if the requesting user is a member of the owning group",
                 "consumes": [
                     "application/json"
                 ],
@@ -252,6 +259,20 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Invalid UUID format",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "403": {
+                        "description": "Access forbidden",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
@@ -387,7 +408,7 @@ const docTemplate = `{
         },
         "/groups": {
             "get": {
-                "description": "Retrieve a list of all groups",
+                "description": "Retrieve a list of all groups the requesting user belongs to",
                 "consumes": [
                     "application/json"
                 ],
@@ -403,6 +424,13 @@ const docTemplate = `{
                         "description": "Groups retrieved successfully",
                         "schema": {
                             "$ref": "#/definitions/responses.GetAllGroupsResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
                         }
                     },
                     "500": {
@@ -463,7 +491,7 @@ const docTemplate = `{
         },
         "/groups/{uuid}": {
             "get": {
-                "description": "Retrieve a specific group by its UUID",
+                "description": "Retrieve a specific group by its UUID if the requesting user is a member",
                 "consumes": [
                     "application/json"
                 ],
@@ -492,6 +520,20 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Invalid UUID format",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "403": {
+                        "description": "Access forbidden",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
@@ -610,52 +652,6 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Group not found",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    }
-                }
-            }
-        },
-        "/groups/{uuid}/documents": {
-            "get": {
-                "description": "Retrieve all documents for a specific group",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "documents"
-                ],
-                "summary": "Get documents by group UUID",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Group UUID",
-                        "name": "uuid",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Documents retrieved successfully",
-                        "schema": {
-                            "$ref": "#/definitions/responses.GetDocumentsByGroupResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid UUID format",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
@@ -948,14 +944,6 @@ const docTemplate = `{
                 }
             }
         },
-        "requests.RefreshTokenRequest": {
-            "type": "object",
-            "properties": {
-                "refresh_token": {
-                    "type": "string"
-                }
-            }
-        },
         "requests.RegRequest": {
             "type": "object",
             "properties": {
@@ -1111,17 +1099,6 @@ const docTemplate = `{
                 },
                 "uuid": {
                     "type": "string"
-                }
-            }
-        },
-        "responses.GetDocumentsByGroupResponse": {
-            "type": "object",
-            "properties": {
-                "documents": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/responses.GetDocumentResponse"
-                    }
                 }
             }
         },
