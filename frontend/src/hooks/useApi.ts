@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { apiClient } from '../services/api';
+import { apiClient } from '../services/apiClient';
 import type { ApiResponse, ApiError } from '../types';
 
 // Hook state interface
