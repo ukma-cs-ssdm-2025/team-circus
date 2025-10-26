@@ -89,6 +89,7 @@ tasks:
     cmds:
       - task: install:linter
       - task: install:swagger
+      - task: install:cover
 
   install:linter:
     desc: Install linter
@@ -99,6 +100,11 @@ tasks:
     desc: Install Swagger tools
     cmds:
       - go install github.com/swaggo/swag/cmd/swag@v1.8.12
+
+  install:cover:
+    desc: Install cover tool
+    cmds:
+      - go install golang.org/x/tools/cmd/cover@latest
 
   tidy:
     desc: Tidy go modules
