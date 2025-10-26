@@ -42,11 +42,11 @@ func TestNewRefreshTokenHandler(t *testing.T) {
 		if originalSecret == "" {
 			os.Unsetenv("SECRET_TOKEN") //nolint:errcheck
 		} else {
-			os.Setenv("SECRET_TOKEN", originalSecret) //nolint:errcheck
+			os.Setenv("SECRET_TOKEN", originalSecret) //nolint:errcheck,gosec
 		}
 	}()
 
-	os.Setenv("SECRET_TOKEN", "test-secret-key") //nolint:errcheck
+	os.Setenv("SECRET_TOKEN", "test-secret-key") //nolint:errcheck,gosec
 
 	t.Run("Successful refresh", func(t *testing.T) {
 		repo := new(mockUserRepository)
@@ -161,6 +161,6 @@ func TestNewRefreshTokenHandler(t *testing.T) {
 		handler(c)
 
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
-		os.Setenv("SECRET_TOKEN", "test-secret-key") //nolint:errcheck
+		os.Setenv("SECRET_TOKEN", "test-secret-key") //nolint:errcheck,gosec
 	})
 }
