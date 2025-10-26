@@ -71,11 +71,12 @@ tasks:
   test:unit:
     desc: Run unit tests
     cmds:
-      - go test {{.CLI_ARGS | default "./..."}} -v
+      - go test {{.CLI_ARGS | default "./..."}} -v -cover
 
   test:unit:coverage:
     desc: Run tests with coverage
     cmds:
+      - mkdir -p coverage
       - go test {{.CLI_ARGS | default "./..."}} -v -coverprofile=./coverage/coverage.out -covermode=atomic
 
   test:unit:coverage:html:

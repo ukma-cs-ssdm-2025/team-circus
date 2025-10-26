@@ -132,6 +132,22 @@ task --list-all
    task back:test:unit
    ```
 
+Команда запусутить всі юніт тести, тобто тестові файли, які не мають жодних тегів по типу `func_test`. Також Буде виведеий coverage по кожному пакету.
+
+#### Відображення coverage у інтерактивному форматі
+
+   ```bash
+   task back:test:unit:coverage
+   ```
+
+   Згенерує звіт, який буде лежати в [`./backend/coverage/coverage.out`](./backend/coverage/coverage.out)
+
+   ```bash
+   task back:test:unit:coverage:html
+   ```
+
+   Згенерує html, який буде лежати в [`./backend/coverage/coverage.html`](./backend/coverage/coverage.html)
+
 ### Функціональні (інтеграційні) тести
 
 З функціональним тестами ситуація трохи складніша.  
