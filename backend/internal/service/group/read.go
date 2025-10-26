@@ -21,10 +21,40 @@ func (s *GroupService) GetByUUID(ctx context.Context, uuid uuid.UUID) (*domain.G
 	return group, nil
 }
 
+func (s *GroupService) GetByUUIDForUser(ctx context.Context, groupUUID, userUUID uuid.UUID) (*domain.Group, error) {
+	isMember, err := s.repo.IsMember(ctx, groupUUID, userUUID)
+	if err != nil {
+		return nil, fmt.Errorf("group service: getByUUIDForUser: %w", err)
+	}
+	if !isMember {
+		return nil, domain.ErrForbidden
+	}
+
+	group, err := s.repo.GetByUUID(ctx, groupUUID)
+	if err != nil {
+		return nil, fmt.Errorf("group service: getByUUIDForUser: %w", err)
+	}
+
+	if group == nil {
+		return nil, domain.ErrGroupNotFound
+	}
+
+	return group, nil
+}
+
 func (s *GroupService) GetAll(ctx context.Context) ([]*domain.Group, error) {
 	groups, err := s.repo.GetAll(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("group service: getAll: %w", err)
+	}
+
+	return groups, nil
+}
+
+func (s *GroupService) GetAllForUser(ctx context.Context, userUUID uuid.UUID) ([]*domain.Group, error) {
+	groups, err := s.repo.GetAllForUser(ctx, userUUID)
+	if err != nil {
+		return nil, fmt.Errorf("group service: getAllForUser: %w", err)
 	}
 
 	return groups, nil
