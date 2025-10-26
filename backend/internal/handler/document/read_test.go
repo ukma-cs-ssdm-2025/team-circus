@@ -22,8 +22,8 @@ type mockGetDocumentService struct {
 	mock.Mock
 }
 
-func (m *mockGetDocumentService) GetByUUID(ctx context.Context, uuid uuid.UUID) (*domain.Document, error) {
-	args := m.Called(ctx, uuid)
+func (m *mockGetDocumentService) GetByUUIDForUser(ctx context.Context, documentUUID, userUUID uuid.UUID) (*domain.Document, error) {
+	args := m.Called(ctx, documentUUID, userUUID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -34,8 +34,8 @@ type mockGetAllDocumentsService struct {
 	mock.Mock
 }
 
-func (m *mockGetAllDocumentsService) GetAll(ctx context.Context) ([]*domain.Document, error) {
-	args := m.Called(ctx)
+func (m *mockGetAllDocumentsService) GetAllForUser(ctx context.Context, userUUID uuid.UUID) ([]*domain.Document, error) {
+	args := m.Called(ctx, userUUID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -59,6 +59,7 @@ func TestNewGetDocumentHandler(main *testing.T) {
 		mockService, handler := setup(t)
 
 		documentUUID := uuid.New()
+		userUUID := uuid.New()
 		expectedDocument := &domain.Document{
 			UUID:      documentUUID,
 			GroupUUID: uuid.New(),
@@ -67,7 +68,7 @@ func TestNewGetDocumentHandler(main *testing.T) {
 			CreatedAt: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
 		}
 
-		mockService.On("GetByUUID", mock.Anything, documentUUID).Return(expectedDocument, nil)
+		mockService.On("GetByUUIDForUser", mock.Anything, documentUUID, userUUID).Return(expectedDocument, nil)
 
 		req := httptest.NewRequest("GET", "/documents/"+documentUUID.String(), nil)
 		w := httptest.NewRecorder()
@@ -75,6 +76,7 @@ func TestNewGetDocumentHandler(main *testing.T) {
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
 		c.Params = gin.Params{{Key: "uuid", Value: documentUUID.String()}}
+		c.Set("user_uid", userUUID)
 
 		// Act
 		handler(c)
@@ -95,12 +97,15 @@ func TestNewGetDocumentHandler(main *testing.T) {
 		// Arrange
 		mockService, handler := setup(t)
 
+		userUUID := uuid.New()
+
 		req := httptest.NewRequest("GET", "/documents/invalid-uuid", nil)
 		w := httptest.NewRecorder()
 
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
 		c.Params = gin.Params{{Key: "uuid", Value: "invalid-uuid"}}
+		c.Set("user_uid", userUUID)
 
 		// Act
 		handler(c)
@@ -113,15 +118,13 @@ func TestNewGetDocumentHandler(main *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, "invalid uuid format", response["error"])
 
-		mockService.AssertNotCalled(t, "GetByUUID")
+		mockService.AssertNotCalled(t, "GetByUUIDForUser")
 	})
 
-	main.Run("DocumentNotFound", func(t *testing.T) {
-		// Arrange
+	main.Run("MissingUserContext", func(t *testing.T) {
 		mockService, handler := setup(t)
 
 		documentUUID := uuid.New()
-		mockService.On("GetByUUID", mock.Anything, documentUUID).Return(nil, domain.ErrDocumentNotFound)
 
 		req := httptest.NewRequest("GET", "/documents/"+documentUUID.String(), nil)
 		w := httptest.NewRecorder()
@@ -129,6 +132,28 @@ func TestNewGetDocumentHandler(main *testing.T) {
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
 		c.Params = gin.Params{{Key: "uuid", Value: documentUUID.String()}}
+
+		handler(c)
+
+		assert.Equal(t, http.StatusUnauthorized, w.Code)
+		mockService.AssertNotCalled(t, "GetByUUIDForUser")
+	})
+
+	main.Run("DocumentNotFound", func(t *testing.T) {
+		// Arrange
+		mockService, handler := setup(t)
+
+		documentUUID := uuid.New()
+		userUUID := uuid.New()
+		mockService.On("GetByUUIDForUser", mock.Anything, documentUUID, userUUID).Return(nil, domain.ErrDocumentNotFound)
+
+		req := httptest.NewRequest("GET", "/documents/"+documentUUID.String(), nil)
+		w := httptest.NewRecorder()
+
+		c, _ := gin.CreateTestContext(w)
+		c.Request = req
+		c.Params = gin.Params{{Key: "uuid", Value: documentUUID.String()}}
+		c.Set("user_uid", userUUID)
 
 		// Act
 		handler(c)
@@ -149,7 +174,8 @@ func TestNewGetDocumentHandler(main *testing.T) {
 		mockService, handler := setup(t)
 
 		documentUUID := uuid.New()
-		mockService.On("GetByUUID", mock.Anything, documentUUID).Return(nil, domain.ErrInternal)
+		userUUID := uuid.New()
+		mockService.On("GetByUUIDForUser", mock.Anything, documentUUID, userUUID).Return(nil, domain.ErrInternal)
 
 		req := httptest.NewRequest("GET", "/documents/"+documentUUID.String(), nil)
 		w := httptest.NewRecorder()
@@ -157,6 +183,7 @@ func TestNewGetDocumentHandler(main *testing.T) {
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
 		c.Params = gin.Params{{Key: "uuid", Value: documentUUID.String()}}
+		c.Set("user_uid", userUUID)
 
 		// Act
 		handler(c)
@@ -177,7 +204,8 @@ func TestNewGetDocumentHandler(main *testing.T) {
 		mockService, handler := setup(t)
 
 		documentUUID := uuid.New()
-		mockService.On("GetByUUID", mock.Anything, documentUUID).Return(nil, errors.New("database connection failed"))
+		userUUID := uuid.New()
+		mockService.On("GetByUUIDForUser", mock.Anything, documentUUID, userUUID).Return(nil, errors.New("database connection failed"))
 
 		req := httptest.NewRequest("GET", "/documents/"+documentUUID.String(), nil)
 		w := httptest.NewRecorder()
@@ -185,6 +213,7 @@ func TestNewGetDocumentHandler(main *testing.T) {
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
 		c.Params = gin.Params{{Key: "uuid", Value: documentUUID.String()}}
+		c.Set("user_uid", userUUID)
 
 		// Act
 		handler(c)
@@ -196,6 +225,33 @@ func TestNewGetDocumentHandler(main *testing.T) {
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
 		assert.Equal(t, "failed to get document", response["error"])
+
+		mockService.AssertExpectations(t)
+	})
+
+	main.Run("Forbidden", func(t *testing.T) {
+		mockService, handler := setup(t)
+
+		documentUUID := uuid.New()
+		userUUID := uuid.New()
+		mockService.On("GetByUUIDForUser", mock.Anything, documentUUID, userUUID).Return(nil, domain.ErrForbidden)
+
+		req := httptest.NewRequest("GET", "/documents/"+documentUUID.String(), nil)
+		w := httptest.NewRecorder()
+
+		c, _ := gin.CreateTestContext(w)
+		c.Request = req
+		c.Params = gin.Params{{Key: "uuid", Value: documentUUID.String()}}
+		c.Set("user_uid", userUUID)
+
+		handler(c)
+
+		assert.Equal(t, http.StatusForbidden, w.Code)
+
+		var response map[string]interface{}
+		err := json.Unmarshal(w.Body.Bytes(), &response)
+		assert.NoError(t, err)
+		assert.Equal(t, "access forbidden", response["error"])
 
 		mockService.AssertExpectations(t)
 	})
@@ -217,6 +273,8 @@ func TestNewGetAllDocumentsHandler(t *testing.T) {
 		// Arrange
 		mockService, handler := setup(t)
 
+		userUUID := uuid.New()
+
 		document1 := &domain.Document{
 			UUID:      uuid.New(),
 			GroupUUID: uuid.New(),
@@ -233,13 +291,14 @@ func TestNewGetAllDocumentsHandler(t *testing.T) {
 		}
 
 		expectedDocuments := []*domain.Document{document1, document2}
-		mockService.On("GetAll", mock.Anything).Return(expectedDocuments, nil)
+		mockService.On("GetAllForUser", mock.Anything, userUUID).Return(expectedDocuments, nil)
 
 		req := httptest.NewRequest("GET", "/documents", nil)
 		w := httptest.NewRecorder()
 
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
+		c.Set("user_uid", userUUID)
 
 		// Act
 		handler(c)
@@ -264,14 +323,16 @@ func TestNewGetAllDocumentsHandler(t *testing.T) {
 		// Arrange
 		mockService, handler := setup(t)
 
+		userUUID := uuid.New()
 		expectedDocuments := []*domain.Document{}
-		mockService.On("GetAll", mock.Anything).Return(expectedDocuments, nil)
+		mockService.On("GetAllForUser", mock.Anything, userUUID).Return(expectedDocuments, nil)
 
 		req := httptest.NewRequest("GET", "/documents", nil)
 		w := httptest.NewRecorder()
 
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
+		c.Set("user_uid", userUUID)
 
 		// Act
 		handler(c)
@@ -294,13 +355,15 @@ func TestNewGetAllDocumentsHandler(t *testing.T) {
 		// Arrange
 		mockService, handler := setup(t)
 
-		mockService.On("GetAll", mock.Anything).Return(nil, domain.ErrInternal)
+		userUUID := uuid.New()
+		mockService.On("GetAllForUser", mock.Anything, userUUID).Return(nil, domain.ErrInternal)
 
 		req := httptest.NewRequest("GET", "/documents", nil)
 		w := httptest.NewRecorder()
 
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
+		c.Set("user_uid", userUUID)
 
 		// Act
 		handler(c)
@@ -320,13 +383,15 @@ func TestNewGetAllDocumentsHandler(t *testing.T) {
 		// Arrange
 		mockService, handler := setup(t)
 
-		mockService.On("GetAll", mock.Anything).Return(nil, errors.New("database connection failed"))
+		userUUID := uuid.New()
+		mockService.On("GetAllForUser", mock.Anything, userUUID).Return(nil, errors.New("database connection failed"))
 
 		req := httptest.NewRequest("GET", "/documents", nil)
 		w := httptest.NewRecorder()
 
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
+		c.Set("user_uid", userUUID)
 
 		// Act
 		handler(c)
@@ -340,5 +405,20 @@ func TestNewGetAllDocumentsHandler(t *testing.T) {
 		assert.Equal(t, "failed to get documents", response["error"])
 
 		mockService.AssertExpectations(t)
+	})
+
+	t.Run("MissingUserContext", func(t *testing.T) {
+		mockService, handler := setup(t)
+
+		req := httptest.NewRequest("GET", "/documents", nil)
+		w := httptest.NewRecorder()
+
+		c, _ := gin.CreateTestContext(w)
+		c.Request = req
+
+		handler(c)
+
+		assert.Equal(t, http.StatusUnauthorized, w.Code)
+		mockService.AssertNotCalled(t, "GetAllForUser")
 	})
 }

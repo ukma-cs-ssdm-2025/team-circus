@@ -4,3 +4,6 @@ export { default as NotFound } from './NotFound';
 export { default as Documents } from './Documents';
 export { default as Groups } from './Groups';
 export { default as DocumentEditor } from './DocumentEditor';
+export { Login } from './Login';
+export { Register } from './Register';
+export { AuthTest } from './AuthTest';

@@ -1,8 +1,8 @@
 import { FormControl, InputLabel, MenuItem, Select, Stack, TextField } from '@mui/material';
-import type { GroupOption, DocumentFilters } from '../../types/entities';
+import type { GroupOption, DocumentFilters as DocumentFiltersState } from '../../types/entities';
 
 interface DocumentFiltersProps {
-  filters: DocumentFilters;
+  filters: DocumentFiltersState;
   groupOptions: GroupOption[];
   onGroupChange: (value: string) => void;
   onSearchChange: (value: string) => void;

@@ -1,13 +1,17 @@
 import { getApiUrl } from '../config/env';
+import { authService } from './auth';
 import type { ApiResponse } from '../types';
 
-// API Client class
+// Enhanced API Client with automatic token refresh
 class ApiClient {
+  private isRefreshing = false;
+  private refreshPromise: Promise<boolean> | null = null;
+
   constructor() {
     // API_BASE_URL is used in getApiUrl function
   }
 
-  private async request<T>(
+  private async requestWithAuth<T>(
     endpoint: string,
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
@@ -19,6 +23,7 @@ class ApiClient {
 
     const config: RequestInit = {
       ...options,
+      credentials: 'include', // Important for cookies
       headers: {
         ...defaultHeaders,
         ...options.headers,
@@ -28,8 +33,21 @@ class ApiClient {
     try {
       const response = await fetch(url, config);
 
+      // If token is expired, try to refresh it
+      if (response.status === 401) {
+        const refreshed = await this.handleTokenRefresh();
+        if (refreshed) {
+          // Retry the original request with refreshed token
+          return this.requestWithAuth<T>(endpoint, options);
+        } else {
+          // Refresh failed, user needs to login again
+          throw new Error('Authentication expired. Please login again.');
+        }
+      }
+
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
       }
 
       let parsed: unknown;
@@ -65,9 +83,28 @@ class ApiClient {
     }
   }
 
+  private async handleTokenRefresh(): Promise<boolean> {
+    // If already refreshing, wait for the existing refresh to complete
+    if (this.isRefreshing && this.refreshPromise) {
+      return this.refreshPromise;
+    }
+
+    // Start a new refresh process
+    this.isRefreshing = true;
+    this.refreshPromise = authService.refreshToken();
+
+    try {
+      const result = await this.refreshPromise;
+      return result;
+    } finally {
+      this.isRefreshing = false;
+      this.refreshPromise = null;
+    }
+  }
+
   // GET request
   async get<T>(endpoint: string, options?: RequestInit): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, {
+    return this.requestWithAuth<T>(endpoint, {
       method: 'GET',
       ...options,
     });
@@ -79,7 +116,7 @@ class ApiClient {
     data?: P,
     options?: RequestInit
   ): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, {
+    return this.requestWithAuth<T>(endpoint, {
       method: 'POST',
       body: data !== undefined ? JSON.stringify(data) : undefined,
       ...options,
@@ -92,7 +129,7 @@ class ApiClient {
     data?: P,
     options?: RequestInit
   ): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, {
+    return this.requestWithAuth<T>(endpoint, {
       method: 'PUT',
       body: data !== undefined ? JSON.stringify(data) : undefined,
       ...options,
@@ -101,7 +138,7 @@ class ApiClient {
 
   // DELETE request
   async delete<T>(endpoint: string, options?: RequestInit): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, {
+    return this.requestWithAuth<T>(endpoint, {
       method: 'DELETE',
       ...options,
     });

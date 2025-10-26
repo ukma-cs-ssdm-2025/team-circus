@@ -76,7 +76,7 @@ func AuthMiddleware(userRepo userRepository) gin.HandlerFunc {
 			return
 		}
 
-		// c.Set("user", user)
+		c.Set("user_uid", user.UUID)
 
 		c.Next()
 	}

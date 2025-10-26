@@ -35,6 +35,14 @@ func (m *MockUserRepository) GetByLogin(ctx context.Context, login string) (*dom
 	return args.Get(0).(*domain.User), args.Error(1) //nolint:errcheck
 }
 
+func (m *MockUserRepository) GetByUUID(ctx context.Context, uuid uuid.UUID) (*domain.User, error) {
+	args := m.Called(ctx, uuid)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.User), args.Error(1) //nolint:errcheck
+}
+
 func TestNewLogInHandler(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 

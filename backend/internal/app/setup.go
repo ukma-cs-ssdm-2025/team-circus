@@ -43,7 +43,7 @@ func (a *App) setupRouter() *gin.Engine {
 	groupService := groupservice.NewGroupService(groupRepo)
 
 	documentRepo := documentrepo.NewDocumentRepository(a.DB)
-	documentService := documentservice.NewDocumentService(documentRepo)
+	documentService := documentservice.NewDocumentService(documentRepo, groupRepo)
 
 	userRepo := userrepo.NewUserRepository(a.DB)
 	userService := userservice.NewUserService(userRepo)
@@ -52,18 +52,29 @@ func (a *App) setupRouter() *gin.Engine {
 	regService := regservice.NewRegService(regRepo, a.cfg.HashingCost.HashingCost)
 
 	apiV1 := router.Group("/api/v1")
+
+	public := apiV1.Group("")
 	{
-		groups := apiV1.Group("/groups")
+		public.POST("/signup", reghandler.NewRegHandler(regService, a.l))
+		public.POST("/auth/login", authhandler.NewLogInHandler(userRepo, a.l))
+		public.POST("/auth/refresh", authhandler.NewRefreshTokenHandler(userRepo, a.l))
+	}
+
+	protected := apiV1.Group("")
+	protected.Use(middleware.AuthMiddleware(userRepo))
+	{
+		protected.POST("/auth/logout", authhandler.NewLogOutHandler(a.l))
+
+		groups := protected.Group("/groups")
 		{
 			groups.POST("", grouphandler.NewCreateGroupHandler(groupService, a.l))
 			groups.GET("/:uuid", grouphandler.NewGetGroupHandler(groupService, a.l))
 			groups.GET("", grouphandler.NewGetAllGroupsHandler(groupService, a.l))
 			groups.PUT("/:uuid", grouphandler.NewUpdateGroupHandler(groupService, a.l))
 			groups.DELETE("/:uuid", grouphandler.NewDeleteGroupHandler(groupService, a.l))
-			groups.GET("/:uuid/documents", documenthandler.NewGetDocumentsByGroupHandler(documentService, a.l))
 		}
 
-		documents := apiV1.Group("/documents")
+		documents := protected.Group("/documents")
 		{
 			documents.POST("", documenthandler.NewCreateDocumentHandler(documentService, a.l))
 			documents.GET("/:uuid", documenthandler.NewGetDocumentHandler(documentService, a.l))
@@ -72,28 +83,12 @@ func (a *App) setupRouter() *gin.Engine {
 			documents.DELETE("/:uuid", documenthandler.NewDeleteDocumentHandler(documentService, a.l))
 		}
 
-		users := apiV1.Group("/users")
+		users := protected.Group("/users")
 		{
 			users.GET("/:uuid", userhandler.NewGetUserHandler(userService, a.l))
 			users.GET("", userhandler.NewGetAllUsersHandler(userService, a.l))
 			users.PUT("/:uuid", userhandler.NewUpdateUserHandler(userService, a.l))
 			users.DELETE("/:uuid", userhandler.NewDeleteUserHandler(userService, a.l))
-		}
-
-		reg := apiV1.Group("/signup")
-		{
-			reg.POST("", reghandler.NewRegHandler(regService, a.l))
-		}
-
-		auth := apiV1.Group("/auth")
-		{
-			auth.POST("/login", authhandler.NewLogInHandler(userRepo, a.l))
-			auth.POST("/refresh", authhandler.NewRefreshTokenHandler(userRepo, a.l))
-		}
-
-		test := apiV1.Group("/validate")
-		{
-			test.GET("", middleware.AuthMiddleware(userRepo), authhandler.Validate)
 		}
 	}
 	return router

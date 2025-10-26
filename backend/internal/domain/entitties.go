@@ -34,4 +34,5 @@ var (
 	ErrDocumentNotFound = errors.New("document not found")
 	ErrUserNotFound     = errors.New("user not found")
 	ErrInternal         = errors.New("internal error")
+	ErrForbidden        = errors.New("forbidden")
 )
