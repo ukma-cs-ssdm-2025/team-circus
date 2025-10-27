@@ -26,17 +26,20 @@ type createGroupService interface {
 // @Param request body requests.CreateGroupRequest true "Group creation request"
 // @Success 201 {object} responses.CreateGroupResponse "Group created successfully"
 // @Failure 400 {object} map[string]interface{} "Invalid request format or validation failed"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /groups [post]
 func NewCreateGroupHandler(service createGroupService, logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userUUIDValue, exists := c.Get("user_uid")
 		if !exists {
+			logger.Warn("missing user context", zap.String("request_id", c.GetString("request_id")), zap.String("client_ip", c.ClientIP()))
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "user context missing"})
 			return
 		}
 		userUUID, ok := userUUIDValue.(uuid.UUID)
 		if !ok {
+			logger.Warn("invalid user context", zap.String("request_id", c.GetString("request_id")), zap.String("client_ip", c.ClientIP()))
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid user context"})
 			return
 		}
