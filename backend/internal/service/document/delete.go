@@ -27,7 +27,7 @@ func (s *DocumentService) Delete(ctx context.Context, userUUID, documentUUID uui
 		return err
 	}
 
-	err = s.repo.Delete(ctx, documentUUID)
+	err = s.repo.Delete(ctx, userUUID, documentUUID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return domain.ErrDocumentNotFound
