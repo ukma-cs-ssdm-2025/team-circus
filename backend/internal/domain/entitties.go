@@ -41,15 +41,15 @@ type User struct {
 }
 
 var (
-	ErrGroupNotFound    = errors.New("group not found")
-	ErrDocumentNotFound = errors.New("document not found")
-	ErrUserNotFound     = errors.New("user not found")
-	ErrInternal         = errors.New("internal error")
-	ErrForbidden        = errors.New("forbidden")
-	ErrAlreadyExists    = errors.New("already exists")
+	ErrGroupNotFound     = errors.New("group not found")
+	ErrDocumentNotFound  = errors.New("document not found")
+	ErrUserNotFound      = errors.New("user not found")
+	ErrInternal          = errors.New("internal error")
+	ErrForbidden         = errors.New("forbidden")
+	ErrAlreadyExists     = errors.New("already exists")
 	ErrSelfAddNotAllowed = errors.New("cannot add yourself to the group")
-	ErrInvalidRole      = errors.New("invalid role")
-	ErrLastAuthor       = errors.New("cannot remove last author from group")
+	ErrInvalidRole       = errors.New("invalid role")
+	ErrLastAuthor        = errors.New("cannot remove last author from group")
 )
 
 const (
