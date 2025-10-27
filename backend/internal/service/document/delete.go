@@ -29,7 +29,7 @@ func (s *DocumentService) Delete(ctx context.Context, userUUID, documentUUID uui
 
 	err = s.repo.Delete(ctx, userUUID, documentUUID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return domain.ErrDocumentNotFound
 		}
 		return fmt.Errorf("document service: delete: %w", err)

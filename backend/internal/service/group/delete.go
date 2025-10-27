@@ -29,7 +29,7 @@ func (s *GroupService) Delete(ctx context.Context, userUUID, groupUUID uuid.UUID
 
 	err = s.repo.Delete(ctx, groupUUID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return domain.ErrGroupNotFound
 		}
 		return fmt.Errorf("group service: delete: %w", err)

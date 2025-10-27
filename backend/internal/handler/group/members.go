@@ -138,6 +138,10 @@ func NewAddGroupMemberHandler(service addGroupMemberService, logger *zap.Logger)
 			c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
 			return
 		}
+		if errors.Is(err, domain.ErrSelfAddNotAllowed) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "cannot add yourself"})
+			return
+		}
 		if errors.Is(err, domain.ErrAlreadyExists) {
 			c.JSON(http.StatusConflict, gin.H{"error": "member already exists"})
 			return

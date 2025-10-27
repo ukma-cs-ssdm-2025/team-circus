@@ -114,13 +114,9 @@ func (s *GroupMemberService) AddMember(
 		return nil, domain.ErrAlreadyExists
 	}
 
-	if _, err := s.groupRepo.AddMember(ctx, groupUUID, memberUUID, role); err != nil {
-		return nil, fmt.Errorf("group member service: add member insert: %w", err)
-	}
-
-	createdMember, err := s.groupRepo.GetMember(ctx, groupUUID, memberUUID)
+	createdMember, err := s.groupRepo.AddMember(ctx, groupUUID, memberUUID, role)
 	if err != nil {
-		return nil, fmt.Errorf("group member service: add member fetch created: %w", err)
+		return nil, fmt.Errorf("group member service: add member insert: %w", err)
 	}
 
 	return createdMember, nil
