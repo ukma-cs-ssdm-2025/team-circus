@@ -28,6 +28,7 @@ type createDocumentService interface {
 // @Failure 400 {object} map[string]interface{} "Invalid request format or validation failed"
 // @Failure 401 {object} map[string]interface{} "Authentication required"
 // @Failure 403 {object} map[string]interface{} "Access forbidden"
+// @Failure 404 {object} map[string]interface{} "Group not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /documents [post]
 func NewCreateDocumentHandler(service createDocumentService, logger *zap.Logger) gin.HandlerFunc {
@@ -60,6 +61,10 @@ func NewCreateDocumentHandler(service createDocumentService, logger *zap.Logger)
 		document, err := service.Create(c, userUUID, req.GroupUUID, req.Name, req.Content)
 		if errors.Is(err, domain.ErrForbidden) {
 			c.JSON(http.StatusForbidden, gin.H{"error": "access forbidden"})
+			return
+		}
+		if errors.Is(err, domain.ErrGroupNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "group not found"})
 			return
 		}
 		if errors.Is(err, domain.ErrInternal) {

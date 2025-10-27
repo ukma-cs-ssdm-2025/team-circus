@@ -5,12 +5,14 @@ import {
   removeGroupMember,
   updateGroupMemberRole,
 } from '../../groups/api';
-import type { GroupMember, GroupRole } from '../../../types';
+import type { ApiError, GroupMember, GroupRole } from '../../../types';
+import { normalizeApiError } from '../../../utils/apiError';
+import { HttpError } from '../../../services/httpError';
 
 interface UseGroupMembersResult {
   members: GroupMember[];
   loading: boolean;
-  error: string | null;
+  error: ApiError | null;
   mutating: boolean;
   refresh: () => Promise<void>;
   addMember: (userUUID: string, role: GroupRole) => Promise<void>;
@@ -19,12 +21,12 @@ interface UseGroupMembersResult {
   reset: () => void;
 }
 
-const unknownErrorMessage = 'Unknown error';
-
-export const useGroupMembers = (groupUUID: string | null): UseGroupMembersResult => {
+export const useGroupMembers = (
+  groupUUID: string | null,
+): UseGroupMembersResult => {
   const [members, setMembers] = useState<GroupMember[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ApiError | null>(null);
   const [mutating, setMutating] = useState(false);
 
   const loadMembers = useCallback(async () => {
@@ -40,8 +42,7 @@ export const useGroupMembers = (groupUUID: string | null): UseGroupMembersResult
       const list = await fetchGroupMembers(groupUUID);
       setMembers(list);
     } catch (err) {
-      const message = err instanceof Error ? err.message : unknownErrorMessage;
-      setError(message);
+      setError(normalizeApiError(err));
     } finally {
       setLoading(false);
     }
@@ -57,19 +58,30 @@ export const useGroupMembers = (groupUUID: string | null): UseGroupMembersResult
     void loadMembers();
   }, [groupUUID, loadMembers]);
 
-  const wrapMutation = useCallback(async <T>(operation: () => Promise<T>): Promise<T> => {
-    setMutating(true);
-    setError(null);
-    try {
-      return await operation();
-    } catch (err) {
-      const message = err instanceof Error ? err.message : unknownErrorMessage;
-      setError(message);
-      throw err instanceof Error ? err : new Error(message);
-    } finally {
-      setMutating(false);
-    }
-  }, []);
+  const wrapMutation = useCallback(
+    async <T>(operation: () => Promise<T>): Promise<T> => {
+      setMutating(true);
+      setError(null);
+      try {
+        return await operation();
+      } catch (err) {
+        const apiError = normalizeApiError(err);
+        setError(apiError);
+        if (err instanceof Error) {
+          throw err;
+        }
+        throw new HttpError(
+          apiError.message,
+          apiError.status,
+          apiError.details,
+          apiError.code,
+        );
+      } finally {
+        setMutating(false);
+      }
+    },
+    [],
+  );
 
   const addMemberHandler = useCallback(
     async (userUUID: string, role: GroupRole) => {
@@ -89,7 +101,9 @@ export const useGroupMembers = (groupUUID: string | null): UseGroupMembersResult
         throw new Error('Group not selected');
       }
 
-      await wrapMutation(() => updateGroupMemberRole(groupUUID, userUUID, role));
+      await wrapMutation(() =>
+        updateGroupMemberRole(groupUUID, userUUID, role),
+      );
       await loadMembers();
     },
     [groupUUID, loadMembers, wrapMutation],

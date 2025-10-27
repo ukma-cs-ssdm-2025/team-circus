@@ -24,7 +24,13 @@ import { LoadingSpinner } from '../../../components';
 import { useApi } from '../../../hooks';
 import { API_ENDPOINTS, GROUP_ROLES } from '../../../constants';
 import { useLanguage } from '../../../contexts/LanguageContext';
-import type { GroupItem, GroupMember, GroupRole, UsersResponse } from '../../../types';
+import type {
+  ApiError,
+  GroupItem,
+  GroupMember,
+  GroupRole,
+  UsersResponse,
+} from '../../../types';
 
 interface GroupMembersDialogProps {
   open: boolean;
@@ -32,7 +38,7 @@ interface GroupMembersDialogProps {
   members: GroupMember[];
   loading: boolean;
   mutating: boolean;
-  error: string | null;
+  error: ApiError | null;
   onClose: () => void;
   onAddMember: (userUUID: string, role: GroupRole) => Promise<void>;
   onUpdateMemberRole: (userUUID: string, role: GroupRole) => Promise<void>;
@@ -102,28 +108,32 @@ const GroupMembersDialog = ({
       setSelectedRole(defaultRole);
       setLocalError(null);
     } catch (err) {
-      const message = err instanceof Error ? err.message : t('groups.membersActionError');
+      const message =
+        err instanceof Error ? err.message : t('groups.membersActionError');
       setLocalError(message);
     }
   };
 
-  const handleRoleChange = (userUUID: string) => async (event: SelectChangeEvent<GroupRole>) => {
-    const newRole = event.target.value as GroupRole;
-    try {
-      await onUpdateMemberRole(userUUID, newRole);
-      setLocalError(null);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : t('groups.membersActionError');
-      setLocalError(message);
-    }
-  };
+  const handleRoleChange =
+    (userUUID: string) => async (event: SelectChangeEvent<GroupRole>) => {
+      const newRole = event.target.value as GroupRole;
+      try {
+        await onUpdateMemberRole(userUUID, newRole);
+        setLocalError(null);
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : t('groups.membersActionError');
+        setLocalError(message);
+      }
+    };
 
   const handleRemoveMember = (userUUID: string) => async () => {
     try {
       await onRemoveMember(userUUID);
       setLocalError(null);
     } catch (err) {
-      const message = err instanceof Error ? err.message : t('groups.membersActionError');
+      const message =
+        err instanceof Error ? err.message : t('groups.membersActionError');
       setLocalError(message);
     }
   };
@@ -144,34 +154,39 @@ const GroupMembersDialog = ({
     return match?.label ?? role;
   };
 
-  const dialogTitle = group ? t('groups.membersTitle').replace('{name}', group.name) : t('groups.membersTitleFallback');
+  const dialogTitle = group
+    ? t('groups.membersTitle').replace('{name}', group.name)
+    : t('groups.membersTitleFallback');
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth='sm'>
       <DialogTitle>{dialogTitle}</DialogTitle>
       <DialogContent dividers>
         <Stack spacing={3}>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant='body2' color='text.secondary'>
             {t('groups.membersSubtitle')}
           </Typography>
 
           {(error || localError) && (
-            <Alert severity="error">{error || localError}</Alert>
+            <Alert severity='error'>{localError ?? error?.message}</Alert>
           )}
 
           {usersError && !usersLoading && (
-            <Alert severity="warning">
-              {t('groups.membersUsersError')}
+            <Alert severity='warning'>
+              {usersError.message || t('groups.membersUsersError')}
             </Alert>
           )}
 
           <Stack spacing={2} direction={{ xs: 'column', md: 'row' }}>
             <Autocomplete
               fullWidth
-              size="small"
+              size='small'
               disabled={mutating || usersLoading}
               options={availableUsers}
-              value={availableUsers.find((option) => option.uuid === selectedUser) ?? null}
+              value={
+                availableUsers.find((option) => option.uuid === selectedUser) ??
+                null
+              }
               onChange={(_, option) => setSelectedUser(option?.uuid ?? '')}
               getOptionLabel={(option) => `${option.login} (${option.email})`}
               loading={usersLoading}
@@ -186,10 +201,12 @@ const GroupMembersDialog = ({
 
             <TextField
               select
-              size="small"
+              size='small'
               label={t('groups.membersRoleLabel')}
               value={selectedRole}
-              onChange={(event) => setSelectedRole(event.target.value as GroupRole)}
+              onChange={(event) =>
+                setSelectedRole(event.target.value as GroupRole)
+              }
               sx={{ minWidth: 160 }}
               disabled={mutating}
             >
@@ -201,7 +218,7 @@ const GroupMembersDialog = ({
             </TextField>
 
             <Button
-              variant="contained"
+              variant='contained'
               onClick={handleAddMember}
               disabled={!selectedUser || mutating}
             >
@@ -212,7 +229,7 @@ const GroupMembersDialog = ({
           {loading ? (
             <LoadingSpinner py={4} />
           ) : members.length === 0 ? (
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant='body2' color='text.secondary'>
               {t('groups.membersEmpty')}
             </Typography>
           ) : (
@@ -232,14 +249,14 @@ const GroupMembersDialog = ({
                     }}
                     secondaryAction={
                       isAuthor ? (
-                        <Typography variant="body2" color="text.secondary">
+                        <Typography variant='body2' color='text.secondary'>
                           {roleLabel}
                         </Typography>
                       ) : (
-                        <Stack direction="row" spacing={1} alignItems="center">
+                        <Stack direction='row' spacing={1} alignItems='center'>
                           <TextField
                             select
-                            size="small"
+                            size='small'
                             value={member.role}
                             onChange={handleRoleChange(member.user_uuid)}
                             disabled={mutating}
@@ -253,12 +270,12 @@ const GroupMembersDialog = ({
                           <Tooltip title={t('groups.membersRemoveTooltip')}>
                             <span>
                               <IconButton
-                                size="small"
-                                color="error"
+                                size='small'
+                                color='error'
                                 onClick={handleRemoveMember(member.user_uuid)}
                                 disabled={mutating}
                               >
-                                <DeleteOutlineIcon fontSize="small" />
+                                <DeleteOutlineIcon fontSize='small' />
                               </IconButton>
                             </span>
                           </Tooltip>
@@ -269,7 +286,7 @@ const GroupMembersDialog = ({
                     <ListItemText
                       primary={member.user_login}
                       secondary={
-                        <Typography variant="caption" color="text.secondary">
+                        <Typography variant='caption' color='text.secondary'>
                           {member.user_email}
                         </Typography>
                       }

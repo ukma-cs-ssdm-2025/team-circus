@@ -10,12 +10,13 @@ import (
 )
 
 type stubGroupMemberRepo struct {
-	getByUUIDFn        func(ctx context.Context, groupUUID uuid.UUID) (*domain.Group, error)
-	getMemberFn        func(ctx context.Context, groupUUID, userUUID uuid.UUID) (*domain.GroupMember, error)
-	listMembersFn      func(ctx context.Context, groupUUID uuid.UUID) ([]*domain.GroupMember, error)
-	addMemberFn        func(ctx context.Context, groupUUID, userUUID uuid.UUID, role string) (*domain.GroupMember, error)
-	updateMemberRoleFn func(ctx context.Context, groupUUID, userUUID uuid.UUID, role string) error
-	removeMemberFn     func(ctx context.Context, groupUUID, userUUID uuid.UUID) error
+	getByUUIDFn            func(ctx context.Context, groupUUID uuid.UUID) (*domain.Group, error)
+	getMemberFn            func(ctx context.Context, groupUUID, userUUID uuid.UUID) (*domain.GroupMember, error)
+	listMembersFn          func(ctx context.Context, groupUUID uuid.UUID) ([]*domain.GroupMember, error)
+	addMemberFn            func(ctx context.Context, groupUUID, userUUID uuid.UUID, role string) (*domain.GroupMember, error)
+	updateMemberRoleFn     func(ctx context.Context, groupUUID, userUUID uuid.UUID, role string) error
+	removeMemberFn         func(ctx context.Context, groupUUID, userUUID uuid.UUID) error
+	countMembersWithRoleFn func(ctx context.Context, groupUUID uuid.UUID, role string) (int, error)
 }
 
 func (s *stubGroupMemberRepo) GetByUUID(ctx context.Context, groupUUID uuid.UUID) (*domain.Group, error) {
@@ -58,6 +59,13 @@ func (s *stubGroupMemberRepo) RemoveMember(ctx context.Context, groupUUID, userU
 		return s.removeMemberFn(ctx, groupUUID, userUUID)
 	}
 	panic("unexpected call to RemoveMember")
+}
+
+func (s *stubGroupMemberRepo) CountMembersWithRole(ctx context.Context, groupUUID uuid.UUID, role string) (int, error) {
+	if s.countMembersWithRoleFn != nil {
+		return s.countMembersWithRoleFn(ctx, groupUUID, role)
+	}
+	panic("unexpected call to CountMembersWithRole")
 }
 
 type stubUserRepo struct {

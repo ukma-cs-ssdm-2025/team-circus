@@ -17,6 +17,7 @@ type groupRepository interface {
 	AddMember(ctx context.Context, groupUUID, userUUID uuid.UUID, role string) (*domain.GroupMember, error)
 	UpdateMemberRole(ctx context.Context, groupUUID, userUUID uuid.UUID, role string) error
 	RemoveMember(ctx context.Context, groupUUID, userUUID uuid.UUID) error
+	CountMembersWithRole(ctx context.Context, groupUUID uuid.UUID, role string) (int, error)
 }
 
 type userRepository interface {
@@ -156,9 +157,14 @@ func (s *GroupMemberService) UpdateMemberRole(
 			return nil, domain.ErrForbidden
 		}
 		if role != domain.GroupRoleAuthor {
-			return nil, domain.ErrLastAuthor
+			count, countErr := s.groupRepo.CountMembersWithRole(ctx, groupUUID, domain.GroupRoleAuthor)
+			if countErr != nil {
+				return nil, fmt.Errorf("group member service: update member count authors: %w", countErr)
+			}
+			if count <= 1 {
+				return nil, domain.ErrLastAuthor
+			}
 		}
-		return member, nil
 	}
 
 	if err := s.groupRepo.UpdateMemberRole(ctx, groupUUID, memberUUID, role); err != nil {
@@ -191,7 +197,13 @@ func (s *GroupMemberService) RemoveMember(ctx context.Context, requesterUUID, gr
 	}
 
 	if member.Role == domain.GroupRoleAuthor {
-		return domain.ErrLastAuthor
+		count, countErr := s.groupRepo.CountMembersWithRole(ctx, groupUUID, domain.GroupRoleAuthor)
+		if countErr != nil {
+			return fmt.Errorf("group member service: remove member count authors: %w", countErr)
+		}
+		if count <= 1 {
+			return domain.ErrLastAuthor
+		}
 	}
 
 	if err := s.groupRepo.RemoveMember(ctx, groupUUID, memberUUID); err != nil {

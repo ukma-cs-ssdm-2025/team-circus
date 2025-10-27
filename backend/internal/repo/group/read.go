@@ -73,12 +73,12 @@ func (r *GroupRepository) GetAll(ctx context.Context) ([]*domain.Group, error) {
 
 	var groups []*domain.Group
 	for rows.Next() {
-		var group domain.Group
+		g := new(domain.Group)
 		var authorUUID sql.NullString
 		err := rows.Scan(
-			&group.UUID,
-			&group.Name,
-			&group.CreatedAt,
+			&g.UUID,
+			&g.Name,
+			&g.CreatedAt,
 			&authorUUID,
 		)
 		if err != nil {
@@ -89,9 +89,9 @@ func (r *GroupRepository) GetAll(ctx context.Context) ([]*domain.Group, error) {
 			if parseErr != nil {
 				return nil, errors.Join(domain.ErrInternal, fmt.Errorf("group repository: getAll parse author: %w", parseErr))
 			}
-			group.AuthorUUID = parsedAuthorUUID
+			g.AuthorUUID = parsedAuthorUUID
 		}
-		groups = append(groups, &group)
+		groups = append(groups, g)
 	}
 
 	if err = rows.Err(); err != nil {
@@ -118,13 +118,13 @@ func (r *GroupRepository) GetAllForUser(ctx context.Context, userUUID uuid.UUID)
 
 	var groups []*domain.Group
 	for rows.Next() {
-		var group domain.Group
+		g := new(domain.Group)
 		var authorUUID sql.NullString
 		var role sql.NullString
 		err := rows.Scan(
-			&group.UUID,
-			&group.Name,
-			&group.CreatedAt,
+			&g.UUID,
+			&g.Name,
+			&g.CreatedAt,
 			&authorUUID,
 			&role,
 		)
@@ -136,12 +136,12 @@ func (r *GroupRepository) GetAllForUser(ctx context.Context, userUUID uuid.UUID)
 			if parseErr != nil {
 				return nil, errors.Join(domain.ErrInternal, fmt.Errorf("group repository: getAllForUser parse author: %w", parseErr))
 			}
-			group.AuthorUUID = parsedAuthorUUID
+			g.AuthorUUID = parsedAuthorUUID
 		}
 		if role.Valid {
-			group.Role = role.String
+			g.Role = role.String
 		}
-		groups = append(groups, &group)
+		groups = append(groups, g)
 	}
 
 	if err = rows.Err(); err != nil {

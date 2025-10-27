@@ -1,36 +1,49 @@
 // Note: We use direct fetch calls instead of apiClient to avoid circular dependencies
+import { getApiUrl } from '../config/env';
+import { HttpError, isRecord } from './httpError';
 import { API_ENDPOINTS } from '../constants';
 import type { LoginRequest, RegisterRequest, AuthUser } from '../types/auth';
 
 class AuthService {
   private async requestWithCredentials<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
   ): Promise<T> {
-    const response = await fetch(`${API_ENDPOINTS.BASE_URL}${endpoint}`, {
-      ...options,
-      credentials: 'include', // Important for cookies
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-    });
+    try {
+      const response = await fetch(getApiUrl(endpoint), {
+        ...options,
+        credentials: 'include', // Important for cookies
+        headers: {
+          'Content-Type': 'application/json',
+          ...options.headers,
+        },
+      });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-    }
+      if (!response.ok) {
+        const { message, details, code } =
+          await this.parseErrorResponse(response);
+        throw new HttpError(message, response.status, details, code);
+      }
 
-    if (response.status === 204) {
+      if (response.status === 204) {
+        return undefined as T;
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (contentType?.includes('application/json')) {
+        return response.json() as Promise<T>;
+      }
+
       return undefined as T;
+    } catch (error) {
+      if (error instanceof HttpError) {
+        throw error;
+      }
+      if (error instanceof Error) {
+        throw new HttpError(error.message, 0);
+      }
+      throw new HttpError('Unknown error', 0);
     }
-
-    const contentType = response.headers.get('content-type');
-    if (contentType?.includes('application/json')) {
-      return response.json() as Promise<T>;
-    }
-
-    return undefined as T;
   }
 
   async login(credentials: LoginRequest): Promise<void> {
@@ -75,6 +88,40 @@ class AuthService {
     await this.requestWithCredentials(API_ENDPOINTS.AUTH.LOGOUT, {
       method: 'POST',
     });
+  }
+
+  private async parseErrorResponse(
+    response: Response,
+  ): Promise<{ message: string; details?: unknown; code?: string }> {
+    const fallbackMessage = `Request failed with status ${response.status}`;
+    const contentType = response.headers.get('content-type') ?? '';
+
+    if (contentType.includes('application/json')) {
+      try {
+        const json = await response.json();
+        if (isRecord(json)) {
+          const message =
+            typeof json.error === 'string'
+              ? json.error
+              : typeof json.message === 'string'
+                ? json.message
+                : fallbackMessage;
+          const code = typeof json.code === 'string' ? json.code : undefined;
+          return { message, details: json, code };
+        }
+        return { message: fallbackMessage, details: json };
+      } catch {
+        return { message: fallbackMessage };
+      }
+    }
+
+    try {
+      const text = await response.text();
+      const message = text.trim() || response.statusText || fallbackMessage;
+      return { message, details: text };
+    } catch {
+      return { message: fallbackMessage };
+    }
   }
 }
 
