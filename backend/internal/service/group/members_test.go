@@ -306,19 +306,46 @@ func TestGroupMemberService_RemoveMember_ForbiddenForNonAuthorRequester(t *testi
 	require.ErrorIs(t, err, domain.ErrForbidden)
 }
 
+func TestGroupMemberService_RemoveMember_ForbiddenWhenRemovingAnotherAuthor(t *testing.T) {
+	groupID := uuid.New()
+	requesterID := uuid.New()
+	otherAuthorID := uuid.New()
+	removeCalled := false
+	repo := &stubGroupMemberRepo{
+		getByUUIDFn: func(ctx context.Context, id uuid.UUID) (*domain.Group, error) {
+			return &domain.Group{UUID: id}, nil
+		},
+		getMemberFn: func(ctx context.Context, gid, uid uuid.UUID) (*domain.GroupMember, error) {
+			if uid == requesterID {
+				return &domain.GroupMember{GroupUUID: gid, UserUUID: uid, Role: domain.GroupRoleAuthor}, nil
+			}
+			if uid == otherAuthorID {
+				return &domain.GroupMember{GroupUUID: gid, UserUUID: uid, Role: domain.GroupRoleAuthor}, nil
+			}
+			return nil, nil
+		},
+		removeMemberFn: func(ctx context.Context, gid, uid uuid.UUID) error {
+			removeCalled = true
+			return nil
+		},
+	}
+	service := NewGroupMemberService(repo, &stubUserRepo{})
+
+	err := service.RemoveMember(context.Background(), requesterID, groupID, otherAuthorID)
+
+	require.ErrorIs(t, err, domain.ErrForbidden)
+	require.False(t, removeCalled)
+}
+
 func TestGroupMemberService_RemoveMember_LastAuthorBlocked(t *testing.T) {
 	groupID := uuid.New()
 	authorID := uuid.New()
-	memberID := uuid.New()
 	repo := &stubGroupMemberRepo{
 		getByUUIDFn: func(ctx context.Context, id uuid.UUID) (*domain.Group, error) {
 			return &domain.Group{UUID: id}, nil
 		},
 		getMemberFn: func(ctx context.Context, gid, uid uuid.UUID) (*domain.GroupMember, error) {
 			if uid == authorID {
-				return &domain.GroupMember{GroupUUID: gid, UserUUID: uid, Role: domain.GroupRoleAuthor}, nil
-			}
-			if uid == memberID {
 				return &domain.GroupMember{GroupUUID: gid, UserUUID: uid, Role: domain.GroupRoleAuthor}, nil
 			}
 			return nil, nil
@@ -329,7 +356,7 @@ func TestGroupMemberService_RemoveMember_LastAuthorBlocked(t *testing.T) {
 	}
 	service := NewGroupMemberService(repo, &stubUserRepo{})
 
-	err := service.RemoveMember(context.Background(), authorID, groupID, memberID)
+	err := service.RemoveMember(context.Background(), authorID, groupID, authorID)
 
 	require.ErrorIs(t, err, domain.ErrLastAuthor)
 }

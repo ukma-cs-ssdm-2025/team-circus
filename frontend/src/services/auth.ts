@@ -8,7 +8,7 @@ class AuthService {
   private async requestWithCredentials<T>(
     endpoint: string,
     options: RequestInit = {},
-  ): Promise<T> {
+  ): Promise<T | undefined> {
     try {
       const { headers: customHeaders, ...restOptions } = options;
       const hasJsonBody =
@@ -33,15 +33,16 @@ class AuthService {
       }
 
       if (response.status === 204) {
-        return undefined as T;
+        return undefined;
       }
 
       const contentType = response.headers.get('content-type');
       if (contentType?.includes('application/json')) {
-        return response.json() as Promise<T>;
+        const data = (await response.json()) as T;
+        return data;
       }
 
-      return undefined as T;
+      return undefined;
     } catch (error) {
       if (error instanceof HttpError) {
         throw error;
@@ -70,6 +71,10 @@ class AuthService {
       method: 'POST',
       body: JSON.stringify(userData),
     });
+
+    if (!response) {
+      throw new HttpError('Empty response from registration endpoint', 0);
+    }
 
     return {
       uuid: response.uuid,

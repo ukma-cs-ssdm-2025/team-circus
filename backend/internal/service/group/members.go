@@ -189,6 +189,10 @@ func (s *GroupMemberService) RemoveMember(ctx context.Context, requesterUUID, gr
 		return domain.ErrUserNotFound
 	}
 
+	if member.Role == domain.GroupRoleAuthor && memberUUID != requesterUUID {
+		return domain.ErrForbidden
+	}
+
 	if err := s.groupRepo.RemoveMember(ctx, groupUUID, memberUUID); err != nil {
 		if errors.Is(err, domain.ErrLastAuthor) {
 			return domain.ErrLastAuthor
