@@ -93,49 +93,160 @@ func (r *GroupRepository) AddMember(ctx context.Context, groupUUID, userUUID uui
 	return &member, nil
 }
 
-func (r *GroupRepository) UpdateMemberRole(ctx context.Context, groupUUID, userUUID uuid.UUID, role string) error {
-	const query = `
+func (r *GroupRepository) UpdateMemberRole(ctx context.Context, groupUUID, userUUID uuid.UUID, role string) (err error) {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return errors.Join(domain.ErrInternal, fmt.Errorf("group repository: update member role begin tx: %w", err))
+	}
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback() //nolint:errcheck
+		}
+	}()
+
+	const lockMemberQuery = `
+		SELECT role
+		FROM user_groups
+		WHERE group_uuid = $1 AND user_uuid = $2
+		FOR UPDATE`
+
+	var currentRole string
+	if scanErr := tx.QueryRowContext(ctx, lockMemberQuery, groupUUID, userUUID).Scan(&currentRole); scanErr != nil {
+		if scanErr == sql.ErrNoRows {
+			return sql.ErrNoRows
+		}
+		err = errors.Join(domain.ErrInternal, fmt.Errorf("group repository: update member role select: %w", scanErr))
+		return err
+	}
+
+	if currentRole == domain.GroupRoleAuthor && role != domain.GroupRoleAuthor {
+		authorCount, countErr := countAuthorsForUpdate(ctx, tx, groupUUID)
+		if countErr != nil {
+			err = countErr
+			return err
+		}
+		if authorCount <= 1 {
+			err = domain.ErrLastAuthor
+			return err
+		}
+	}
+
+	const updateQuery = `
 		UPDATE user_groups
 		SET role = $3
 		WHERE group_uuid = $1 AND user_uuid = $2`
 
-	result, err := r.db.ExecContext(ctx, query, groupUUID, userUUID, role)
-	if err != nil {
-		return errors.Join(domain.ErrInternal, fmt.Errorf("group repository: update member role exec: %w", err))
+	result, execErr := tx.ExecContext(ctx, updateQuery, groupUUID, userUUID, role)
+	if execErr != nil {
+		err = errors.Join(domain.ErrInternal, fmt.Errorf("group repository: update member role exec: %w", execErr))
+		return err
 	}
 
-	affected, err := result.RowsAffected()
-	if err != nil {
-		return errors.Join(domain.ErrInternal, fmt.Errorf("group repository: update member role rows: %w", err))
+	affected, rowsErr := result.RowsAffected()
+	if rowsErr != nil {
+		err = errors.Join(domain.ErrInternal, fmt.Errorf("group repository: update member role rows: %w", rowsErr))
+		return err
 	}
 
 	if affected == 0 {
 		return sql.ErrNoRows
+	}
+
+	if commitErr := tx.Commit(); commitErr != nil {
+		return errors.Join(domain.ErrInternal, fmt.Errorf("group repository: update member role commit: %w", commitErr))
 	}
 
 	return nil
 }
 
-func (r *GroupRepository) RemoveMember(ctx context.Context, groupUUID, userUUID uuid.UUID) error {
-	const query = `
+func (r *GroupRepository) RemoveMember(ctx context.Context, groupUUID, userUUID uuid.UUID) (err error) {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return errors.Join(domain.ErrInternal, fmt.Errorf("group repository: remove member begin tx: %w", err))
+	}
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback() //nolint:errcheck
+		}
+	}()
+
+	const lockMemberQuery = `
+		SELECT role
+		FROM user_groups
+		WHERE group_uuid = $1 AND user_uuid = $2
+		FOR UPDATE`
+
+	var currentRole string
+	if scanErr := tx.QueryRowContext(ctx, lockMemberQuery, groupUUID, userUUID).Scan(&currentRole); scanErr != nil {
+		if scanErr == sql.ErrNoRows {
+			return sql.ErrNoRows
+		}
+		err = errors.Join(domain.ErrInternal, fmt.Errorf("group repository: remove member select: %w", scanErr))
+		return err
+	}
+
+	if currentRole == domain.GroupRoleAuthor {
+		authorCount, countErr := countAuthorsForUpdate(ctx, tx, groupUUID)
+		if countErr != nil {
+			err = countErr
+			return err
+		}
+		if authorCount <= 1 {
+			err = domain.ErrLastAuthor
+			return err
+		}
+	}
+
+	const deleteQuery = `
 		DELETE FROM user_groups
 		WHERE group_uuid = $1 AND user_uuid = $2`
 
-	result, err := r.db.ExecContext(ctx, query, groupUUID, userUUID)
-	if err != nil {
-		return errors.Join(domain.ErrInternal, fmt.Errorf("group repository: remove member exec: %w", err))
+	result, execErr := tx.ExecContext(ctx, deleteQuery, groupUUID, userUUID)
+	if execErr != nil {
+		err = errors.Join(domain.ErrInternal, fmt.Errorf("group repository: remove member exec: %w", execErr))
+		return err
 	}
 
-	affected, err := result.RowsAffected()
-	if err != nil {
-		return errors.Join(domain.ErrInternal, fmt.Errorf("group repository: remove member rows: %w", err))
+	affected, rowsErr := result.RowsAffected()
+	if rowsErr != nil {
+		err = errors.Join(domain.ErrInternal, fmt.Errorf("group repository: remove member rows: %w", rowsErr))
+		return err
 	}
 
 	if affected == 0 {
 		return sql.ErrNoRows
 	}
 
+	if commitErr := tx.Commit(); commitErr != nil {
+		return errors.Join(domain.ErrInternal, fmt.Errorf("group repository: remove member commit: %w", commitErr))
+	}
+
 	return nil
+}
+
+func countAuthorsForUpdate(ctx context.Context, tx *sql.Tx, groupUUID uuid.UUID) (int, error) {
+	const query = `
+		SELECT user_uuid
+		FROM user_groups
+		WHERE group_uuid = $1 AND role = $2
+		FOR UPDATE`
+
+	rows, err := tx.QueryContext(ctx, query, groupUUID, domain.GroupRoleAuthor)
+	if err != nil {
+		return 0, errors.Join(domain.ErrInternal, fmt.Errorf("group repository: count authors for update query: %w", err))
+	}
+	defer rows.Close() //nolint:errcheck
+
+	count := 0
+	for rows.Next() {
+		count++
+	}
+
+	if err := rows.Err(); err != nil {
+		return 0, errors.Join(domain.ErrInternal, fmt.Errorf("group repository: count authors for update rows: %w", err))
+	}
+
+	return count, nil
 }
 
 func (r *GroupRepository) CountMembersWithRole(ctx context.Context, groupUUID uuid.UUID, role string) (int, error) {

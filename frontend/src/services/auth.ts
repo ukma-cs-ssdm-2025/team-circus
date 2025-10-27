@@ -10,13 +10,20 @@ class AuthService {
     options: RequestInit = {},
   ): Promise<T> {
     try {
+      const { headers: customHeaders, ...restOptions } = options;
+      const hasJsonBody =
+        restOptions.body !== undefined && restOptions.body !== null;
+
+      const headers: HeadersInit = {
+        Accept: 'application/json',
+        ...(hasJsonBody ? { 'Content-Type': 'application/json' } : {}),
+        ...(customHeaders ?? {}),
+      };
+
       const response = await fetch(getApiUrl(endpoint), {
-        ...options,
+        ...restOptions,
         credentials: 'include', // Important for cookies
-        headers: {
-          'Content-Type': 'application/json',
-          ...options.headers,
-        },
+        headers,
       });
 
       if (!response.ok) {

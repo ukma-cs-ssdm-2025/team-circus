@@ -161,3 +161,231 @@ func TestGroupMemberService_AddMember_GroupNotFound(t *testing.T) {
 	require.ErrorIs(t, err, domain.ErrGroupNotFound)
 	require.Nil(t, member)
 }
+
+func TestGroupMemberService_AddMember_ForbiddenForNonAuthorRequester(t *testing.T) {
+	groupID := uuid.New()
+	requesterID := uuid.New()
+	repo := &stubGroupMemberRepo{
+		getByUUIDFn: func(ctx context.Context, id uuid.UUID) (*domain.Group, error) {
+			return &domain.Group{UUID: id}, nil
+		},
+		getMemberFn: func(ctx context.Context, gid, uid uuid.UUID) (*domain.GroupMember, error) {
+			if uid == requesterID {
+				return &domain.GroupMember{GroupUUID: gid, UserUUID: uid, Role: domain.GroupRoleReviewer}, nil
+			}
+			return nil, nil
+		},
+	}
+	service := NewGroupMemberService(repo, &stubUserRepo{})
+
+	member, err := service.AddMember(context.Background(), requesterID, groupID, uuid.New(), domain.GroupRoleReviewer)
+
+	require.ErrorIs(t, err, domain.ErrForbidden)
+	require.Nil(t, member)
+}
+
+func TestGroupMemberService_UpdateMemberRole_ForbiddenForNonAuthorRequester(t *testing.T) {
+	groupID := uuid.New()
+	requesterID := uuid.New()
+	memberID := uuid.New()
+	repo := &stubGroupMemberRepo{
+		getByUUIDFn: func(ctx context.Context, id uuid.UUID) (*domain.Group, error) {
+			return &domain.Group{UUID: id}, nil
+		},
+		getMemberFn: func(ctx context.Context, gid, uid uuid.UUID) (*domain.GroupMember, error) {
+			if uid == requesterID {
+				return &domain.GroupMember{GroupUUID: gid, UserUUID: uid, Role: domain.GroupRoleReviewer}, nil
+			}
+			return &domain.GroupMember{GroupUUID: gid, UserUUID: uid, Role: domain.GroupRoleReviewer}, nil
+		},
+	}
+	service := NewGroupMemberService(repo, &stubUserRepo{})
+
+	updated, err := service.UpdateMemberRole(context.Background(), requesterID, groupID, memberID, domain.GroupRoleReviewer)
+
+	require.ErrorIs(t, err, domain.ErrForbidden)
+	require.Nil(t, updated)
+}
+
+func TestGroupMemberService_UpdateMemberRole_ForbiddenWhenModifyingAnotherAuthor(t *testing.T) {
+	groupID := uuid.New()
+	requesterID := uuid.New()
+	otherAuthorID := uuid.New()
+	repo := &stubGroupMemberRepo{
+		getByUUIDFn: func(ctx context.Context, id uuid.UUID) (*domain.Group, error) {
+			return &domain.Group{UUID: id}, nil
+		},
+		getMemberFn: func(ctx context.Context, gid, uid uuid.UUID) (*domain.GroupMember, error) {
+			if uid == requesterID {
+				return &domain.GroupMember{GroupUUID: gid, UserUUID: uid, Role: domain.GroupRoleAuthor}, nil
+			}
+			return &domain.GroupMember{GroupUUID: gid, UserUUID: uid, Role: domain.GroupRoleAuthor}, nil
+		},
+	}
+	service := NewGroupMemberService(repo, &stubUserRepo{})
+
+	updated, err := service.UpdateMemberRole(context.Background(), requesterID, groupID, otherAuthorID, domain.GroupRoleCoAuthor)
+
+	require.ErrorIs(t, err, domain.ErrForbidden)
+	require.Nil(t, updated)
+}
+
+func TestGroupMemberService_UpdateMemberRole_LastAuthorDemotionBlocked(t *testing.T) {
+	groupID := uuid.New()
+	authorID := uuid.New()
+	memberRole := domain.GroupRoleAuthor
+	repo := &stubGroupMemberRepo{
+		getByUUIDFn: func(ctx context.Context, id uuid.UUID) (*domain.Group, error) {
+			return &domain.Group{UUID: id}, nil
+		},
+		getMemberFn: func(ctx context.Context, gid, uid uuid.UUID) (*domain.GroupMember, error) {
+			if uid == authorID {
+				return &domain.GroupMember{GroupUUID: gid, UserUUID: uid, Role: memberRole}, nil
+			}
+			return &domain.GroupMember{GroupUUID: gid, UserUUID: uid, Role: domain.GroupRoleAuthor}, nil
+		},
+		updateMemberRoleFn: func(ctx context.Context, gid, uid uuid.UUID, role string) error {
+			return domain.ErrLastAuthor
+		},
+	}
+	service := NewGroupMemberService(repo, &stubUserRepo{})
+
+	updated, err := service.UpdateMemberRole(context.Background(), authorID, groupID, authorID, domain.GroupRoleCoAuthor)
+
+	require.ErrorIs(t, err, domain.ErrLastAuthor)
+	require.Nil(t, updated)
+}
+
+func TestGroupMemberService_UpdateMemberRole_SelfDemoteWithMultipleAuthors(t *testing.T) {
+	groupID := uuid.New()
+	authorID := uuid.New()
+	currentRole := domain.GroupRoleAuthor
+	repo := &stubGroupMemberRepo{
+		getByUUIDFn: func(ctx context.Context, id uuid.UUID) (*domain.Group, error) {
+			return &domain.Group{UUID: id}, nil
+		},
+		getMemberFn: func(ctx context.Context, gid, uid uuid.UUID) (*domain.GroupMember, error) {
+			if uid == authorID {
+				return &domain.GroupMember{GroupUUID: gid, UserUUID: uid, Role: currentRole}, nil
+			}
+			return &domain.GroupMember{GroupUUID: gid, UserUUID: uid, Role: domain.GroupRoleAuthor}, nil
+		},
+		updateMemberRoleFn: func(ctx context.Context, gid, uid uuid.UUID, role string) error {
+			require.Equal(t, authorID, uid)
+			currentRole = role
+			return nil
+		},
+	}
+	service := NewGroupMemberService(repo, &stubUserRepo{})
+
+	updated, err := service.UpdateMemberRole(context.Background(), authorID, groupID, authorID, domain.GroupRoleCoAuthor)
+
+	require.NoError(t, err)
+	require.NotNil(t, updated)
+	require.Equal(t, domain.GroupRoleCoAuthor, updated.Role)
+}
+
+func TestGroupMemberService_RemoveMember_ForbiddenForNonAuthorRequester(t *testing.T) {
+	groupID := uuid.New()
+	requesterID := uuid.New()
+	repo := &stubGroupMemberRepo{
+		getByUUIDFn: func(ctx context.Context, id uuid.UUID) (*domain.Group, error) {
+			return &domain.Group{UUID: id}, nil
+		},
+		getMemberFn: func(ctx context.Context, gid, uid uuid.UUID) (*domain.GroupMember, error) {
+			if uid == requesterID {
+				return &domain.GroupMember{GroupUUID: gid, UserUUID: uid, Role: domain.GroupRoleReviewer}, nil
+			}
+			return &domain.GroupMember{GroupUUID: gid, UserUUID: uid, Role: domain.GroupRoleReviewer}, nil
+		},
+	}
+	service := NewGroupMemberService(repo, &stubUserRepo{})
+
+	err := service.RemoveMember(context.Background(), requesterID, groupID, uuid.New())
+
+	require.ErrorIs(t, err, domain.ErrForbidden)
+}
+
+func TestGroupMemberService_RemoveMember_LastAuthorBlocked(t *testing.T) {
+	groupID := uuid.New()
+	authorID := uuid.New()
+	memberID := uuid.New()
+	repo := &stubGroupMemberRepo{
+		getByUUIDFn: func(ctx context.Context, id uuid.UUID) (*domain.Group, error) {
+			return &domain.Group{UUID: id}, nil
+		},
+		getMemberFn: func(ctx context.Context, gid, uid uuid.UUID) (*domain.GroupMember, error) {
+			if uid == authorID {
+				return &domain.GroupMember{GroupUUID: gid, UserUUID: uid, Role: domain.GroupRoleAuthor}, nil
+			}
+			if uid == memberID {
+				return &domain.GroupMember{GroupUUID: gid, UserUUID: uid, Role: domain.GroupRoleAuthor}, nil
+			}
+			return nil, nil
+		},
+		removeMemberFn: func(ctx context.Context, gid, uid uuid.UUID) error {
+			return domain.ErrLastAuthor
+		},
+	}
+	service := NewGroupMemberService(repo, &stubUserRepo{})
+
+	err := service.RemoveMember(context.Background(), authorID, groupID, memberID)
+
+	require.ErrorIs(t, err, domain.ErrLastAuthor)
+}
+
+func TestGroupMemberService_RemoveMember_Success(t *testing.T) {
+	groupID := uuid.New()
+	authorID := uuid.New()
+	memberID := uuid.New()
+	removeCalled := false
+	repo := &stubGroupMemberRepo{
+		getByUUIDFn: func(ctx context.Context, id uuid.UUID) (*domain.Group, error) {
+			return &domain.Group{UUID: id}, nil
+		},
+		getMemberFn: func(ctx context.Context, gid, uid uuid.UUID) (*domain.GroupMember, error) {
+			if uid == authorID {
+				return &domain.GroupMember{GroupUUID: gid, UserUUID: uid, Role: domain.GroupRoleAuthor}, nil
+			}
+			if uid == memberID {
+				return &domain.GroupMember{GroupUUID: gid, UserUUID: uid, Role: domain.GroupRoleReviewer}, nil
+			}
+			return nil, nil
+		},
+		removeMemberFn: func(ctx context.Context, gid, uid uuid.UUID) error {
+			require.Equal(t, memberID, uid)
+			removeCalled = true
+			return nil
+		},
+	}
+	service := NewGroupMemberService(repo, &stubUserRepo{})
+
+	err := service.RemoveMember(context.Background(), authorID, groupID, memberID)
+
+	require.NoError(t, err)
+	require.True(t, removeCalled)
+}
+
+func TestValidateAssignableRole(t *testing.T) {
+	testcases := []struct {
+		name        string
+		role        string
+		expectedErr error
+	}{
+		{"coauthor valid", domain.GroupRoleCoAuthor, nil},
+		{"reviewer valid", domain.GroupRoleReviewer, nil},
+		{"author invalid", domain.GroupRoleAuthor, domain.ErrInvalidRole},
+		{"unknown invalid", "unknown", domain.ErrInvalidRole},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := validateAssignableRole(tc.role)
+			if tc.expectedErr == nil {
+				require.NoError(t, err)
+				return
+			}
+			require.ErrorIs(t, err, tc.expectedErr)
+		})
+	}
+}

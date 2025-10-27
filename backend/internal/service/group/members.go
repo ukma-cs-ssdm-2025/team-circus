@@ -2,6 +2,7 @@ package group
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -152,22 +153,14 @@ func (s *GroupMemberService) UpdateMemberRole(
 		return nil, domain.ErrUserNotFound
 	}
 
-	if member.Role == domain.GroupRoleAuthor {
-		if memberUUID != requesterUUID {
-			return nil, domain.ErrForbidden
-		}
-		if role != domain.GroupRoleAuthor {
-			count, countErr := s.groupRepo.CountMembersWithRole(ctx, groupUUID, domain.GroupRoleAuthor)
-			if countErr != nil {
-				return nil, fmt.Errorf("group member service: update member count authors: %w", countErr)
-			}
-			if count <= 1 {
-				return nil, domain.ErrLastAuthor
-			}
-		}
+	if member.Role == domain.GroupRoleAuthor && memberUUID != requesterUUID {
+		return nil, domain.ErrForbidden
 	}
 
 	if err := s.groupRepo.UpdateMemberRole(ctx, groupUUID, memberUUID, role); err != nil {
+		if errors.Is(err, domain.ErrLastAuthor) {
+			return nil, domain.ErrLastAuthor
+		}
 		return nil, fmt.Errorf("group member service: update member role: %w", err)
 	}
 
@@ -196,17 +189,10 @@ func (s *GroupMemberService) RemoveMember(ctx context.Context, requesterUUID, gr
 		return domain.ErrUserNotFound
 	}
 
-	if member.Role == domain.GroupRoleAuthor {
-		count, countErr := s.groupRepo.CountMembersWithRole(ctx, groupUUID, domain.GroupRoleAuthor)
-		if countErr != nil {
-			return fmt.Errorf("group member service: remove member count authors: %w", countErr)
-		}
-		if count <= 1 {
+	if err := s.groupRepo.RemoveMember(ctx, groupUUID, memberUUID); err != nil {
+		if errors.Is(err, domain.ErrLastAuthor) {
 			return domain.ErrLastAuthor
 		}
-	}
-
-	if err := s.groupRepo.RemoveMember(ctx, groupUUID, memberUUID); err != nil {
 		return fmt.Errorf("group member service: remove member delete: %w", err)
 	}
 

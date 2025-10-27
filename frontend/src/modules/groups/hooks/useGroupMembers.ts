@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   addGroupMember,
   fetchGroupMembers,
@@ -28,6 +28,7 @@ export const useGroupMembers = (
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
   const [mutating, setMutating] = useState(false);
+  const mutationCountRef = useRef(0);
 
   const loadMembers = useCallback(async () => {
     if (!groupUUID) {
@@ -60,6 +61,7 @@ export const useGroupMembers = (
 
   const wrapMutation = useCallback(
     async <T>(operation: () => Promise<T>): Promise<T> => {
+      mutationCountRef.current += 1;
       setMutating(true);
       setError(null);
       try {
@@ -67,7 +69,7 @@ export const useGroupMembers = (
       } catch (err) {
         const apiError = normalizeApiError(err);
         setError(apiError);
-        if (err instanceof Error) {
+        if (err instanceof HttpError) {
           throw err;
         }
         throw new HttpError(
@@ -77,7 +79,8 @@ export const useGroupMembers = (
           apiError.code,
         );
       } finally {
-        setMutating(false);
+        mutationCountRef.current = Math.max(0, mutationCountRef.current - 1);
+        setMutating(mutationCountRef.current > 0);
       }
     },
     [],
@@ -126,6 +129,7 @@ export const useGroupMembers = (
     setError(null);
     setLoading(false);
     setMutating(false);
+    mutationCountRef.current = 0;
   }, []);
 
   return {

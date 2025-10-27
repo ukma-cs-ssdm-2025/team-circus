@@ -118,6 +118,7 @@ const DocumentEditor = ({ className = '' }: DocumentEditorProps) => {
 
   const {
     data: groupsData,
+    loading: groupsLoading,
   } = useApi<GroupsResponse>(API_ENDPOINTS.GROUPS.BASE);
 
   const { mutate: updateDocument, loading: saving } = useMutation<DocumentItem, UpdateDocumentPayload>(
@@ -154,16 +155,20 @@ const DocumentEditor = ({ className = '' }: DocumentEditorProps) => {
 
   const canEditDocument = useMemo(() => {
     if (!documentGroupUUID) {
-      return true;
+      return false;
     }
 
-    const group = groupsData?.groups?.find(candidate => candidate.uuid === documentGroupUUID);
+    if (groupsLoading || !groupsData?.groups) {
+      return false;
+    }
+
+    const group = groupsData.groups.find(candidate => candidate.uuid === documentGroupUUID);
     if (!group || !group.role) {
-      return true;
+      return false;
     }
 
     return group.role === GROUP_ROLES.AUTHOR || group.role === GROUP_ROLES.COAUTHOR;
-  }, [documentGroupUUID, groupsData?.groups]);
+  }, [documentGroupUUID, groupsLoading, groupsData?.groups]);
 
   const isNameValid = name.trim().length > 0;
   const isDirty = lastSaved !== null && (lastSaved.name !== name || lastSaved.content !== content);

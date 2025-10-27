@@ -58,7 +58,7 @@ func NewCreateDocumentHandler(service createDocumentService, logger *zap.Logger)
 			return
 		}
 
-		document, err := service.Create(c, userUUID, req.GroupUUID, req.Name, req.Content)
+		document, err := service.Create(c.Request.Context(), userUUID, req.GroupUUID, req.Name, req.Content)
 		if errors.Is(err, domain.ErrForbidden) {
 			c.JSON(http.StatusForbidden, gin.H{"error": "access forbidden"})
 			return
