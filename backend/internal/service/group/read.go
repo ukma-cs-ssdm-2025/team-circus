@@ -22,21 +22,20 @@ func (s *GroupService) GetByUUID(ctx context.Context, uuid uuid.UUID) (*domain.G
 }
 
 func (s *GroupService) GetByUUIDForUser(ctx context.Context, groupUUID, userUUID uuid.UUID) (*domain.Group, error) {
+	group, err := s.repo.GetByUUID(ctx, groupUUID)
+	if err != nil {
+		return nil, fmt.Errorf("group service: getByUUIDForUser get group: %w", err)
+	}
+	if group == nil {
+		return nil, domain.ErrGroupNotFound
+	}
+
 	member, err := s.repo.GetMember(ctx, groupUUID, userUUID)
 	if err != nil {
 		return nil, fmt.Errorf("group service: getByUUIDForUser get member: %w", err)
 	}
 	if member == nil {
 		return nil, domain.ErrForbidden
-	}
-
-	group, err := s.repo.GetByUUID(ctx, groupUUID)
-	if err != nil {
-		return nil, fmt.Errorf("group service: getByUUIDForUser: %w", err)
-	}
-
-	if group == nil {
-		return nil, domain.ErrGroupNotFound
 	}
 
 	group.Role = member.Role

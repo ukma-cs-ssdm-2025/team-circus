@@ -10,25 +10,59 @@ import (
 	userrepo "github.com/ukma-cs-ssdm-2025/team-circus/internal/repo/user"
 )
 
-type GroupMemberService struct {
-	groupRepo *grouprepo.GroupRepository
-	userRepo  *userrepo.UserRepository
+type groupRepository interface {
+	GetByUUID(ctx context.Context, groupUUID uuid.UUID) (*domain.Group, error)
+	GetMember(ctx context.Context, groupUUID, userUUID uuid.UUID) (*domain.GroupMember, error)
+	ListMembers(ctx context.Context, groupUUID uuid.UUID) ([]*domain.GroupMember, error)
+	AddMember(ctx context.Context, groupUUID, userUUID uuid.UUID, role string) (*domain.GroupMember, error)
+	UpdateMemberRole(ctx context.Context, groupUUID, userUUID uuid.UUID, role string) error
+	RemoveMember(ctx context.Context, groupUUID, userUUID uuid.UUID) error
 }
 
-func NewGroupMemberService(groupRepo *grouprepo.GroupRepository, userRepo *userrepo.UserRepository) *GroupMemberService {
+type userRepository interface {
+	GetByUUID(ctx context.Context, uuid uuid.UUID) (*domain.User, error)
+}
+
+var (
+	_ groupRepository = (*grouprepo.GroupRepository)(nil)
+	_ userRepository  = (*userrepo.UserRepository)(nil)
+)
+
+type GroupMemberService struct {
+	groupRepo groupRepository
+	userRepo  userRepository
+}
+
+func NewGroupMemberService(groupRepo groupRepository, userRepo userRepository) *GroupMemberService {
 	return &GroupMemberService{
 		groupRepo: groupRepo,
 		userRepo:  userRepo,
 	}
 }
 
-func (s *GroupMemberService) ListMembers(ctx context.Context, requesterUUID, groupUUID uuid.UUID) ([]*domain.GroupMember, error) {
-	member, err := s.groupRepo.GetMember(ctx, groupUUID, requesterUUID)
+func (s *GroupMemberService) ensureGroupMember(ctx context.Context, groupUUID, userUUID uuid.UUID) (*domain.GroupMember, error) {
+	group, err := s.groupRepo.GetByUUID(ctx, groupUUID)
 	if err != nil {
-		return nil, fmt.Errorf("group member service: list members get requester: %w", err)
+		return nil, fmt.Errorf("group member service: ensure group: %w", err)
+	}
+	if group == nil {
+		return nil, domain.ErrGroupNotFound
+	}
+
+	member, err := s.groupRepo.GetMember(ctx, groupUUID, userUUID)
+	if err != nil {
+		return nil, fmt.Errorf("group member service: ensure membership: %w", err)
 	}
 	if member == nil {
 		return nil, domain.ErrForbidden
+	}
+
+	return member, nil
+}
+
+func (s *GroupMemberService) ListMembers(ctx context.Context, requesterUUID, groupUUID uuid.UUID) ([]*domain.GroupMember, error) {
+	if _, err := s.ensureGroupMember(ctx, groupUUID, requesterUUID); err != nil {
+		return nil, fmt.Errorf("group member service: list members ensure requester: %w", err)
 	}
 
 	members, err := s.groupRepo.ListMembers(ctx, groupUUID)
@@ -39,16 +73,22 @@ func (s *GroupMemberService) ListMembers(ctx context.Context, requesterUUID, gro
 	return members, nil
 }
 
-func (s *GroupMemberService) AddMember(ctx context.Context, requesterUUID, groupUUID, memberUUID uuid.UUID, role string) (*domain.GroupMember, error) {
+func (s *GroupMemberService) AddMember(
+	ctx context.Context,
+	requesterUUID uuid.UUID,
+	groupUUID uuid.UUID,
+	memberUUID uuid.UUID,
+	role string,
+) (*domain.GroupMember, error) {
 	if err := validateAssignableRole(role); err != nil {
 		return nil, err
 	}
 
-	requesterMember, err := s.groupRepo.GetMember(ctx, groupUUID, requesterUUID)
+	requesterMember, err := s.ensureGroupMember(ctx, groupUUID, requesterUUID)
 	if err != nil {
-		return nil, fmt.Errorf("group member service: add member get requester: %w", err)
+		return nil, fmt.Errorf("group member service: add member requester: %w", err)
 	}
-	if requesterMember == nil || requesterMember.Role != domain.GroupRoleAuthor {
+	if requesterMember.Role != domain.GroupRoleAuthor {
 		return nil, domain.ErrForbidden
 	}
 
@@ -84,16 +124,22 @@ func (s *GroupMemberService) AddMember(ctx context.Context, requesterUUID, group
 	return createdMember, nil
 }
 
-func (s *GroupMemberService) UpdateMemberRole(ctx context.Context, requesterUUID, groupUUID, memberUUID uuid.UUID, role string) (*domain.GroupMember, error) {
+func (s *GroupMemberService) UpdateMemberRole(
+	ctx context.Context,
+	requesterUUID uuid.UUID,
+	groupUUID uuid.UUID,
+	memberUUID uuid.UUID,
+	role string,
+) (*domain.GroupMember, error) {
 	if err := validateAssignableRole(role); err != nil {
 		return nil, err
 	}
 
-	requesterMember, err := s.groupRepo.GetMember(ctx, groupUUID, requesterUUID)
+	requesterMember, err := s.ensureGroupMember(ctx, groupUUID, requesterUUID)
 	if err != nil {
-		return nil, fmt.Errorf("group member service: update member get requester: %w", err)
+		return nil, fmt.Errorf("group member service: update member requester: %w", err)
 	}
-	if requesterMember == nil || requesterMember.Role != domain.GroupRoleAuthor {
+	if requesterMember.Role != domain.GroupRoleAuthor {
 		return nil, domain.ErrForbidden
 	}
 
@@ -128,11 +174,11 @@ func (s *GroupMemberService) UpdateMemberRole(ctx context.Context, requesterUUID
 }
 
 func (s *GroupMemberService) RemoveMember(ctx context.Context, requesterUUID, groupUUID, memberUUID uuid.UUID) error {
-	requesterMember, err := s.groupRepo.GetMember(ctx, groupUUID, requesterUUID)
+	requesterMember, err := s.ensureGroupMember(ctx, groupUUID, requesterUUID)
 	if err != nil {
-		return fmt.Errorf("group member service: remove member get requester: %w", err)
+		return fmt.Errorf("group member service: remove member requester: %w", err)
 	}
-	if requesterMember == nil || requesterMember.Role != domain.GroupRoleAuthor {
+	if requesterMember.Role != domain.GroupRoleAuthor {
 		return domain.ErrForbidden
 	}
 

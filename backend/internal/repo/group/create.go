@@ -18,7 +18,7 @@ func (r *GroupRepository) Create(ctx context.Context, name string, authorUUID uu
 	committed := false
 	defer func() {
 		if !committed {
-			_ = tx.Rollback()
+			_ = tx.Rollback() //nolint:errcheck
 		}
 	}()
 
