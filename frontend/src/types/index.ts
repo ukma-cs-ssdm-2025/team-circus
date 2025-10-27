@@ -4,7 +4,7 @@ export interface User {
   name: string;
   email: string;
   avatar?: string;
-  role: "admin" | "user";
+  role: 'admin' | 'user';
   createdAt: Date;
   updatedAt: Date;
 }
@@ -72,14 +72,14 @@ export interface BaseComponentProps {
 export interface FormField {
   name: string;
   label: string;
-  type: "text" | "email" | "password" | "textarea" | "select";
+  type: 'text' | 'email' | 'password' | 'textarea' | 'select';
   required?: boolean;
   placeholder?: string;
   options?: { value: string; label: string }[];
 }
 
 // Theme types
-export type Theme = "light" | "dark";
+export type Theme = 'light' | 'dark';
 
 export interface ThemeContextType {
   theme: Theme;

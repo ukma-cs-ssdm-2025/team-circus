@@ -281,7 +281,7 @@ func NewRemoveGroupMemberHandler(service removeGroupMemberService, logger *zap.L
 			return
 		}
 
-		c.JSON(http.StatusNoContent, gin.H{})
+		c.Status(http.StatusNoContent)
 	}
 }
 

@@ -95,7 +95,7 @@ func (s *GroupMemberService) AddMember(
 	}
 
 	if requesterUUID == memberUUID {
-		return nil, domain.ErrAlreadyExists
+		return nil, domain.ErrSelfAddNotAllowed
 	}
 
 	user, err := s.userRepo.GetByUUID(ctx, memberUUID)

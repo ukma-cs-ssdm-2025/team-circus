@@ -1,4 +1,10 @@
-import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from "react";
 import {
   Alert,
   Button,
@@ -44,12 +50,18 @@ const GroupFormDialog = ({
   const [name, setName] = useState(initialName);
   const [touched, setTouched] = useState(false);
 
+  const initialNameRef = useRef(initialName);
+
+  useEffect(() => {
+    initialNameRef.current = initialName;
+  }, [initialName]);
+
   useEffect(() => {
     if (open) {
-      setName(initialName);
+      setName(initialNameRef.current);
       setTouched(false);
     }
-  }, [initialName, open]);
+  }, [open]);
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     if (!touched) {

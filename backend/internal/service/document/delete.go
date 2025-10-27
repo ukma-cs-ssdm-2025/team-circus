@@ -3,6 +3,7 @@ package document
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -12,6 +13,9 @@ import (
 func (s *DocumentService) Delete(ctx context.Context, userUUID, documentUUID uuid.UUID) error {
 	current, err := s.repo.GetByUUID(ctx, documentUUID)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return domain.ErrDocumentNotFound
+		}
 		return fmt.Errorf("document service: delete get document: %w", err)
 	}
 
