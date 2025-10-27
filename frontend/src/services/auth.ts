@@ -11,14 +11,17 @@ class AuthService {
   ): Promise<T | undefined> {
     try {
       const { headers: customHeaders, ...restOptions } = options;
-      const hasJsonBody =
-        restOptions.body !== undefined && restOptions.body !== null;
+      const headers = new Headers(customHeaders as HeadersInit | undefined);
 
-      const headers: HeadersInit = {
-        Accept: 'application/json',
-        ...(hasJsonBody ? { 'Content-Type': 'application/json' } : {}),
-        ...(customHeaders ?? {}),
-      };
+      if (!headers.has('Accept')) {
+        headers.set('Accept', 'application/json');
+      }
+
+      const hasStringBody =
+        typeof restOptions.body === 'string' && restOptions.body.length > 0;
+      if (hasStringBody && !headers.has('Content-Type')) {
+        headers.set('Content-Type', 'application/json');
+      }
 
       const response = await fetch(getApiUrl(endpoint), {
         ...restOptions,

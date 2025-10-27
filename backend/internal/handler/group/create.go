@@ -56,7 +56,7 @@ func NewCreateGroupHandler(service createGroupService, logger *zap.Logger) gin.H
 			return
 		}
 
-		group, err := service.Create(c, userUUID, req.Name)
+		group, err := service.Create(c.Request.Context(), userUUID, req.Name)
 		if errors.Is(err, domain.ErrInternal) {
 			logger.Error("failed to create group", zap.Error(err), zap.String("name", req.Name))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create group"})

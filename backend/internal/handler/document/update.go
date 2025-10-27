@@ -68,7 +68,7 @@ func NewUpdateDocumentHandler(service updateDocumentService, logger *zap.Logger)
 			return
 		}
 
-		document, err := service.Update(c, userUUID, parsedUUID, req.Name, req.Content)
+		document, err := service.Update(c.Request.Context(), userUUID, parsedUUID, req.Name, req.Content)
 		if errors.Is(err, domain.ErrDocumentNotFound) {
 			logger.Warn("document not found", zap.String("uuid", uuidParam))
 			c.JSON(http.StatusNotFound, gin.H{"error": "document not found"})

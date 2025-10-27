@@ -69,7 +69,7 @@ func NewListGroupMembersHandler(service listGroupMembersService, logger *zap.Log
 			return
 		}
 
-		members, err := service.ListMembers(c, userUUID, groupUUID)
+		members, err := service.ListMembers(c.Request.Context(), userUUID, groupUUID)
 		if errors.Is(err, domain.ErrForbidden) {
 			c.JSON(http.StatusForbidden, gin.H{"error": "access forbidden"})
 			return
@@ -129,7 +129,7 @@ func NewAddGroupMemberHandler(service addGroupMemberService, logger *zap.Logger)
 			return
 		}
 
-		member, err := service.AddMember(c, userUUID, groupUUID, req.UserUUID, req.Role)
+		member, err := service.AddMember(c.Request.Context(), userUUID, groupUUID, req.UserUUID, req.Role)
 		if errors.Is(err, domain.ErrForbidden) {
 			c.JSON(http.StatusForbidden, gin.H{"error": "access forbidden"})
 			return
@@ -203,7 +203,7 @@ func NewUpdateGroupMemberHandler(service updateGroupMemberService, logger *zap.L
 			return
 		}
 
-		member, err := service.UpdateMemberRole(c, userUUID, groupUUID, memberUUID, req.Role)
+		member, err := service.UpdateMemberRole(c.Request.Context(), userUUID, groupUUID, memberUUID, req.Role)
 		if errors.Is(err, domain.ErrForbidden) {
 			c.JSON(http.StatusForbidden, gin.H{"error": "access forbidden"})
 			return
@@ -262,7 +262,7 @@ func NewRemoveGroupMemberHandler(service removeGroupMemberService, logger *zap.L
 			return
 		}
 
-		err = service.RemoveMember(c, userUUID, groupUUID, memberUUID)
+		err = service.RemoveMember(c.Request.Context(), userUUID, groupUUID, memberUUID)
 		if errors.Is(err, domain.ErrForbidden) {
 			c.JSON(http.StatusForbidden, gin.H{"error": "access forbidden"})
 			return
