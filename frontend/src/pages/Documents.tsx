@@ -16,7 +16,7 @@ import {
 } from "../components";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useApi, useMutation } from "../hooks";
-import { API_ENDPOINTS, ROUTES } from "../constants";
+import { API_ENDPOINTS, GROUP_ROLES, ROUTES } from "../constants";
 import type {
   BaseComponentProps,
   DocumentsResponse,
@@ -85,19 +85,53 @@ const Documents = ({ className = "" }: DocumentsProps) => {
   );
   const groups = useMemo(() => groupsData?.groups ?? [], [groupsData]);
 
-  const groupOptions = useMemo((): GroupOption[] => {
-    return groups.map((group) => ({
-      value: group.uuid,
-      label: group.name,
-    }));
-  }, [groups]);
-
   const groupNameByUUID = useMemo(() => {
     return groups.reduce<Record<string, string>>((acc, group) => {
       acc[group.uuid] = group.name;
       return acc;
     }, {});
   }, [groups]);
+
+  const editableGroupUUIDs = useMemo(() => {
+    return new Set(
+      groups
+        .filter(
+          (group) =>
+            group.role === GROUP_ROLES.AUTHOR ||
+            group.role === GROUP_ROLES.COAUTHOR,
+        )
+        .map((group) => group.uuid),
+    );
+  }, [groups]);
+
+  const allGroupOptions = useMemo((): GroupOption[] => {
+    return groups.map((group) => ({
+      value: group.uuid,
+      label: group.name,
+    }));
+  }, [groups]);
+
+  const editableGroupOptions = useMemo((): GroupOption[] => {
+    return groups
+      .filter((group) => editableGroupUUIDs.has(group.uuid))
+      .map((group) => ({
+        value: group.uuid,
+        label: group.name,
+      }));
+  }, [editableGroupUUIDs, groups]);
+
+  const documentPermissions = useMemo(() => {
+    return documents.reduce<
+      Record<string, { canEdit: boolean; canDelete: boolean }>
+    >((acc, document) => {
+      const canManage = editableGroupUUIDs.has(document.group_uuid);
+      acc[document.uuid] = {
+        canEdit: canManage,
+        canDelete: canManage,
+      };
+      return acc;
+    }, {});
+  }, [documents, editableGroupUUIDs]);
 
   const filteredDocuments = useMemo(() => {
     return documents.filter((document) => {
@@ -120,8 +154,16 @@ const Documents = ({ className = "" }: DocumentsProps) => {
   };
 
   const isLoading = documentsLoading || groupsLoading;
+  const hasEditableGroups = editableGroupOptions.length > 0;
 
   const handleOpenCreate = () => {
+    if (!hasEditableGroups) {
+      setSnackbar({
+        message: t("documents.noEditableGroups"),
+        severity: "info",
+      });
+      return;
+    }
     resetCreate();
     setIsCreateOpen(true);
   };
@@ -174,6 +216,13 @@ const Documents = ({ className = "" }: DocumentsProps) => {
   };
 
   const handleRequestDelete = (document: DocumentItem) => {
+    if (!documentPermissions[document.uuid]?.canDelete) {
+      setSnackbar({
+        message: t("documents.deleteForbidden"),
+        severity: "warning",
+      });
+      return;
+    }
     if (deletingDocument && deleteTarget?.uuid === document.uuid) {
       return;
     }
@@ -188,6 +237,15 @@ const Documents = ({ className = "" }: DocumentsProps) => {
 
   const handleConfirmDelete = async () => {
     if (!deleteTarget) {
+      return;
+    }
+
+    if (!documentPermissions[deleteTarget.uuid]?.canDelete) {
+      setSnackbar({
+        message: t("documents.deleteForbidden"),
+        severity: "warning",
+      });
+      handleCloseDelete();
       return;
     }
 
@@ -256,21 +314,21 @@ const Documents = ({ className = "" }: DocumentsProps) => {
               variant="contained"
               startIcon={<AddIcon />}
               onClick={handleOpenCreate}
-              disabled={groups.length === 0}
+              disabled={!hasEditableGroups}
               sx={{ alignSelf: { xs: "stretch", sm: "flex-start" } }}
             >
               {t("documents.createButton")}
             </Button>
-            {groups.length === 0 && !groupsLoading && (
+            {!hasEditableGroups && !groupsLoading && (
               <Alert severity="info" sx={{ flex: 1 }}>
-                {t("documents.noGroupsHint")}
+                {t("documents.noEditableGroups")}
               </Alert>
             )}
           </Stack>
 
           <DocumentFilters
             filters={filters}
-            groupOptions={groupOptions}
+            groupOptions={allGroupOptions}
             onGroupChange={handleGroupChange}
             onSearchChange={handleSearchChange}
             filterGroupLabel={t("documents.filterGroup")}
@@ -302,6 +360,7 @@ const Documents = ({ className = "" }: DocumentsProps) => {
             groupUnknownLabel={t("documents.groupUnknown")}
             editLabel={t("documents.editLabel")}
             deleteLabel={t("documents.deleteLabel")}
+            permissionsByDocument={documentPermissions}
             onDocumentDelete={handleRequestDelete}
           />
         </Stack>
@@ -316,7 +375,7 @@ const Documents = ({ className = "" }: DocumentsProps) => {
         namePlaceholder={t("documents.namePlaceholder")}
         nameHelperText={t("documents.nameHelper")}
         groupLabel={t("documents.groupLabel")}
-        groupOptions={groupOptions}
+        groupOptions={editableGroupOptions}
         loading={creatingDocument}
         errorMessage={createErrorMessage}
         onClose={handleCloseCreate}

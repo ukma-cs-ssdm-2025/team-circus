@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Alert, Button, Snackbar, Stack, Typography } from "@mui/material";
 import type { AlertColor } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
@@ -15,13 +15,15 @@ import {
 } from "../components";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useApi, useMutation } from "../hooks";
-import { API_ENDPOINTS, ROUTES } from "../constants";
+import { API_ENDPOINTS, GROUP_ROLES, ROUTES } from "../constants";
+import { GroupMembersDialog, useGroupMembers } from "../modules/groups";
 import type {
   BaseComponentProps,
   GroupsResponse,
   GroupItem as GroupItemType,
   CreateGroupPayload,
   UpdateGroupPayload,
+  GroupRole,
 } from "../types";
 
 type GroupsProps = BaseComponentProps;
@@ -34,10 +36,12 @@ const Groups = ({ className = "" }: GroupsProps) => {
     group?: GroupItemType;
   } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<GroupItemType | null>(null);
+  const [membersTarget, setMembersTarget] = useState<GroupItemType | null>(null);
   const [snackbar, setSnackbar] = useState<{
     message: string;
     severity: AlertColor;
   } | null>(null);
+
   const { data, loading, error, refetch } = useApi<GroupsResponse>(
     API_ENDPOINTS.GROUPS.BASE,
   );
@@ -81,6 +85,23 @@ const Groups = ({ className = "" }: GroupsProps) => {
     reset: resetDelete,
   } = useMutation<unknown, void>(deleteEndpoint, "DELETE");
 
+  const {
+    members,
+    loading: membersLoading,
+    error: membersError,
+    mutating: membersMutating,
+    addMember,
+    updateMemberRole,
+    removeMember,
+    reset: resetMembers,
+  } = useGroupMembers(membersTarget?.uuid ?? null);
+
+  useEffect(() => {
+    if (!membersTarget) {
+      resetMembers();
+    }
+  }, [membersTarget, resetMembers]);
+
   const handleOpenGroupDocuments = (groupUUID: string) => {
     navigate({
       pathname: ROUTES.DOCUMENTS,
@@ -102,6 +123,21 @@ const Groups = ({ className = "" }: GroupsProps) => {
     setFormState(null);
     resetCreate();
     resetUpdate();
+  };
+
+  const handleOpenMembers = (group: GroupItemType) => {
+    if (group.role !== GROUP_ROLES.AUTHOR) {
+      setSnackbar({
+        message: t("groups.membersForbidden"),
+        severity: "warning",
+      });
+      return;
+    }
+    setMembersTarget(group);
+  };
+
+  const handleCloseMembers = () => {
+    setMembersTarget(null);
   };
 
   const handleDeleteRequest = (group: GroupItemType) => {
@@ -179,6 +215,61 @@ const Groups = ({ className = "" }: GroupsProps) => {
     setSnackbar(null);
   };
 
+  const extractErrorMessage = (error: unknown, fallback: string) => {
+    if (error instanceof Error && error.message) {
+      return error.message;
+    }
+    return fallback;
+  };
+
+  const handleAddMember = async (userUUID: string, role: GroupRole) => {
+    try {
+      await addMember(userUUID, role);
+      setSnackbar({
+        message: t("groups.membersAddSuccess"),
+        severity: "success",
+      });
+    } catch (error) {
+      const message = extractErrorMessage(error, t("groups.membersAddError"));
+      setSnackbar({ message, severity: "error" });
+      throw error instanceof Error ? error : new Error(message);
+    }
+  };
+
+  const handleUpdateMemberRole = async (userUUID: string, role: GroupRole) => {
+    try {
+      await updateMemberRole(userUUID, role);
+      setSnackbar({
+        message: t("groups.membersUpdateSuccess"),
+        severity: "success",
+      });
+    } catch (error) {
+      const message = extractErrorMessage(
+        error,
+        t("groups.membersUpdateError"),
+      );
+      setSnackbar({ message, severity: "error" });
+      throw error instanceof Error ? error : new Error(message);
+    }
+  };
+
+  const handleRemoveMember = async (userUUID: string) => {
+    try {
+      await removeMember(userUUID);
+      setSnackbar({
+        message: t("groups.membersRemoveSuccess"),
+        severity: "success",
+      });
+    } catch (error) {
+      const message = extractErrorMessage(
+        error,
+        t("groups.membersRemoveError"),
+      );
+      setSnackbar({ message, severity: "error" });
+      throw error instanceof Error ? error : new Error(message);
+    }
+  };
+
   const isFormOpen = Boolean(formState);
   const isCreateMode = formState?.mode === "create";
   const formGroup = formState?.group;
@@ -200,6 +291,24 @@ const Groups = ({ className = "" }: GroupsProps) => {
   const deleteDescription = deleteTarget
     ? deleteDescriptionTemplate.replace("{name}", deleteTarget.name)
     : deleteDescriptionTemplate.replace("{name}", "");
+
+  const roleNames = useMemo(
+    () => ({
+      [GROUP_ROLES.AUTHOR]: t("groups.role.author"),
+      [GROUP_ROLES.COAUTHOR]: t("groups.role.coauthor"),
+      [GROUP_ROLES.REVIEWER]: t("groups.role.reviewer"),
+    }),
+    [t],
+  );
+
+  const canManageMembers = (group: GroupItemType) =>
+    group.role === GROUP_ROLES.AUTHOR;
+  const canEditGroup = (group: GroupItemType) =>
+    group.role === GROUP_ROLES.AUTHOR;
+  const canDeleteGroup = (group: GroupItemType) =>
+    group.role === GROUP_ROLES.AUTHOR;
+
+  const membersErrorMessage = membersError ?? null;
 
   return (
     <CenteredContent className={className}>
@@ -245,6 +354,13 @@ const Groups = ({ className = "" }: GroupsProps) => {
               createdAtLabel={t("groups.createdAt")}
               editLabel={t("groups.editLabel")}
               deleteLabel={t("groups.deleteLabel")}
+              onGroupManageMembers={handleOpenMembers}
+              manageMembersLabel={t("groups.manageMembersButton")}
+              roleLabel={t("groups.roleLabel")}
+              roleNames={roleNames}
+              canManageMembers={canManageMembers}
+              canEditGroup={canEditGroup}
+              canDeleteGroup={canDeleteGroup}
             />
           )}
         </Stack>
@@ -299,6 +415,19 @@ const Groups = ({ className = "" }: GroupsProps) => {
           </Alert>
         ) : undefined}
       </Snackbar>
+
+      <GroupMembersDialog
+        open={Boolean(membersTarget)}
+        group={membersTarget}
+        members={membersTarget ? members : []}
+        loading={membersLoading && Boolean(membersTarget)}
+        mutating={membersMutating}
+        error={membersErrorMessage}
+        onClose={handleCloseMembers}
+        onAddMember={handleAddMember}
+        onUpdateMemberRole={handleUpdateMemberRole}
+        onRemoveMember={handleRemoveMember}
+      />
     </CenteredContent>
   );
 };

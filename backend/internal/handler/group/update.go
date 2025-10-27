@@ -14,7 +14,7 @@ import (
 )
 
 type updateGroupService interface {
-	Update(ctx context.Context, uuid uuid.UUID, name string) (*domain.Group, error)
+	Update(ctx context.Context, userUUID, groupUUID uuid.UUID, name string) (*domain.Group, error)
 }
 
 // NewUpdateGroupHandler updates a group by UUID
@@ -32,6 +32,18 @@ type updateGroupService interface {
 // @Router /groups/{uuid} [put]
 func NewUpdateGroupHandler(service updateGroupService, logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		userUUIDValue, exists := c.Get("user_uid")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "user context missing"})
+			return
+		}
+
+		userUUID, ok := userUUIDValue.(uuid.UUID)
+		if !ok {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid user context"})
+			return
+		}
+
 		uuidParam := c.Param("uuid")
 		parsedUUID, err := uuid.Parse(uuidParam)
 		if err != nil {
@@ -56,10 +68,14 @@ func NewUpdateGroupHandler(service updateGroupService, logger *zap.Logger) gin.H
 			return
 		}
 
-		group, err := service.Update(c, parsedUUID, req.Name)
+		group, err := service.Update(c, userUUID, parsedUUID, req.Name)
 		if errors.Is(err, domain.ErrGroupNotFound) {
 			logger.Warn("group not found", zap.String("uuid", uuidParam))
 			c.JSON(http.StatusNotFound, gin.H{"error": "group not found"})
+			return
+		}
+		if errors.Is(err, domain.ErrForbidden) {
+			c.JSON(http.StatusForbidden, gin.H{"error": "access forbidden"})
 			return
 		}
 		if errors.Is(err, domain.ErrInternal) {

@@ -8,15 +8,28 @@ import (
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 )
 
-func (s *DocumentService) Update(ctx context.Context, uuid uuid.UUID, name, content string) (*domain.Document, error) {
-	document, err := s.repo.Update(ctx, uuid, name, content)
+func (s *DocumentService) Update(ctx context.Context, userUUID, documentUUID uuid.UUID, name, content string) (*domain.Document, error) {
+	current, err := s.repo.GetByUUID(ctx, documentUUID)
+	if err != nil {
+		return nil, fmt.Errorf("document service: update get document: %w", err)
+	}
+
+	if current == nil {
+		return nil, domain.ErrDocumentNotFound
+	}
+
+	if err := s.ensureCanEditDocuments(ctx, current.GroupUUID, userUUID); err != nil {
+		return nil, err
+	}
+
+	updated, err := s.repo.Update(ctx, documentUUID, name, content)
 	if err != nil {
 		return nil, fmt.Errorf("document service: update: %w", err)
 	}
 
-	if document == nil {
+	if updated == nil {
 		return nil, domain.ErrDocumentNotFound
 	}
 
-	return document, nil
+	return updated, nil
 }

@@ -114,6 +114,35 @@ const translations = {
     "groups.deleteConfirmDescription":
       'Ви впевнені, що хочете видалити групу "{name}"?',
     "groups.deleteConfirmAccept": "Видалити",
+    "groups.manageMembersButton": "Керувати учасниками",
+    "groups.membersTitle": 'Учасники групи "{name}"',
+    "groups.membersTitleFallback": "Учасники групи",
+    "groups.membersSubtitle":
+      "Додайте авторів та оглядачів, щоб працювати разом.",
+    "groups.membersEmpty": "У цій групі ще немає учасників.",
+    "groups.membersAddUser": "Додати користувача",
+    "groups.membersAddUserPlaceholder": "Оберіть користувача зі списку",
+    "groups.membersRoleLabel": "Роль",
+    "groups.membersAddButton": "Додати",
+    "groups.membersAddValidation":
+      "Оберіть користувача, якого хочете додати.",
+    "groups.membersUsersError":
+      "Не вдалося завантажити список користувачів.",
+    "groups.membersActionError":
+      "Не вдалося виконати дію. Спробуйте ще раз.",
+    "groups.membersRemoveTooltip": "Видалити з групи",
+    "groups.membersAddSuccess": "Користувача додано до групи.",
+    "groups.membersAddError": "Не вдалося додати користувача.",
+    "groups.membersUpdateSuccess": "Роль учасника оновлено.",
+    "groups.membersUpdateError": "Не вдалося оновити роль учасника.",
+    "groups.membersRemoveSuccess": "Учасника видалено з групи.",
+    "groups.membersRemoveError": "Не вдалося видалити учасника.",
+    "groups.membersForbidden":
+      "Лише автор групи може керувати учасниками.",
+    "groups.roleLabel": "Роль",
+    "groups.role.author": "Автор",
+    "groups.role.coauthor": "Співавтор",
+    "groups.role.reviewer": "Оглядач",
 
     // Documents page
     "documents.title": "Документи",
@@ -151,6 +180,10 @@ const translations = {
     "documents.deleteConfirmAccept": "Видалити",
     "documents.deleteSuccess": "Документ успішно видалено.",
     "documents.deleteError": "Не вдалося видалити документ.",
+    "documents.noEditableGroups":
+      "Немає груп, де ви можете створювати документи.",
+    "documents.deleteForbidden":
+      "У вас немає прав видаляти цей документ.",
 
     // Document editor page
     "documentEditor.subtitle":
@@ -173,6 +206,8 @@ const translations = {
     "documentEditor.backToList": "Повернутися до документів",
     "documentEditor.loadError": "Не вдалося завантажити документ.",
     "documentEditor.notFound": "Документ не знайдено або він був видалений.",
+    "documentEditor.readOnlyNotice":
+      "Ви маєте права лише на перегляд цього документа.",
   },
   en: {
     // Header
@@ -255,6 +290,31 @@ const translations = {
     "groups.deleteConfirmDescription":
       'Are you sure you want to delete the group "{name}"?',
     "groups.deleteConfirmAccept": "Delete",
+    "groups.manageMembersButton": "Manage members",
+    "groups.membersTitle": 'Members of "{name}"',
+    "groups.membersTitleFallback": "Group members",
+    "groups.membersSubtitle":
+      "Add collaborators to work together on documents.",
+    "groups.membersEmpty": "This group has no members yet.",
+    "groups.membersAddUser": "Add user",
+    "groups.membersAddUserPlaceholder": "Select a user from the list",
+    "groups.membersRoleLabel": "Role",
+    "groups.membersAddButton": "Add",
+    "groups.membersAddValidation": "Select a user to add to the group.",
+    "groups.membersUsersError": "Failed to load users list.",
+    "groups.membersActionError": "Action failed. Please try again.",
+    "groups.membersRemoveTooltip": "Remove from group",
+    "groups.membersAddSuccess": "User added to the group.",
+    "groups.membersAddError": "Failed to add user to the group.",
+    "groups.membersUpdateSuccess": "Member role updated.",
+    "groups.membersUpdateError": "Failed to update member role.",
+    "groups.membersRemoveSuccess": "Member removed from the group.",
+    "groups.membersRemoveError": "Failed to remove member from the group.",
+    "groups.membersForbidden": "Only the group author can manage members.",
+    "groups.roleLabel": "Role",
+    "groups.role.author": "Author",
+    "groups.role.coauthor": "Co-author",
+    "groups.role.reviewer": "Reviewer",
 
     // Documents page
     "documents.title": "Documents",
@@ -291,6 +351,9 @@ const translations = {
     "documents.deleteConfirmAccept": "Delete",
     "documents.deleteSuccess": "Document deleted successfully.",
     "documents.deleteError": "Failed to delete document.",
+    "documents.noEditableGroups":
+      "No groups are available where you can create documents.",
+    "documents.deleteForbidden": "You cannot delete this document.",
 
     // Document editor page
     "documentEditor.subtitle":
@@ -313,6 +376,8 @@ const translations = {
     "documentEditor.loadError": "Failed to load the document.",
     "documentEditor.notFound":
       "The document was not found or has been removed.",
+    "documentEditor.readOnlyNotice":
+      "You only have view access to this document.",
   },
 };
 

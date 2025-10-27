@@ -47,6 +47,7 @@ func (a *App) setupRouter() *gin.Engine {
 
 	userRepo := userrepo.NewUserRepository(a.DB)
 	userService := userservice.NewUserService(userRepo)
+	groupMemberService := groupservice.NewGroupMemberService(groupRepo, userRepo)
 
 	regRepo := regrepo.NewRegRepository(a.DB)
 	regService := regservice.NewRegService(regRepo, a.cfg.HashingCost.HashingCost)
@@ -72,6 +73,14 @@ func (a *App) setupRouter() *gin.Engine {
 			groups.GET("", grouphandler.NewGetAllGroupsHandler(groupService, a.l))
 			groups.PUT("/:uuid", grouphandler.NewUpdateGroupHandler(groupService, a.l))
 			groups.DELETE("/:uuid", grouphandler.NewDeleteGroupHandler(groupService, a.l))
+
+			members := groups.Group("/:uuid/members")
+			{
+				members.GET("", grouphandler.NewListGroupMembersHandler(groupMemberService, a.l))
+				members.POST("", grouphandler.NewAddGroupMemberHandler(groupMemberService, a.l))
+				members.PUT("/:user_uuid", grouphandler.NewUpdateGroupMemberHandler(groupMemberService, a.l))
+				members.DELETE("/:user_uuid", grouphandler.NewRemoveGroupMemberHandler(groupMemberService, a.l))
+			}
 		}
 
 		documents := protected.Group("/documents")

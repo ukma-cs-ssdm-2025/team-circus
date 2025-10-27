@@ -9,8 +9,21 @@ import (
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 )
 
-func (s *GroupService) Delete(ctx context.Context, uuid uuid.UUID) error {
-	err := s.repo.Delete(ctx, uuid)
+func (s *GroupService) Delete(ctx context.Context, userUUID, groupUUID uuid.UUID) error {
+	group, err := s.repo.GetByUUID(ctx, groupUUID)
+	if err != nil {
+		return fmt.Errorf("group service: delete get group: %w", err)
+	}
+
+	if group == nil {
+		return domain.ErrGroupNotFound
+	}
+
+	if group.AuthorUUID != userUUID {
+		return domain.ErrForbidden
+	}
+
+	err = s.repo.Delete(ctx, groupUUID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return domain.ErrGroupNotFound

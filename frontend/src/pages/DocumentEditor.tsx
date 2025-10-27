@@ -14,7 +14,7 @@ import remarkGfm from 'remark-gfm';
 import { ErrorAlert, LoadingSpinner } from '../components';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useApi, useMutation } from '../hooks';
-import { API_ENDPOINTS, ROUTES } from '../constants';
+import { API_ENDPOINTS, GROUP_ROLES, ROUTES } from '../constants';
 import type { BaseComponentProps, DocumentItem, GroupsResponse } from '../types';
 
 type UpdateDocumentPayload = {
@@ -152,11 +152,27 @@ const DocumentEditor = ({ className = '' }: DocumentEditorProps) => {
     return group?.name ?? '';
   }, [documentGroupUUID, groupsData?.groups]);
 
+  const canEditDocument = useMemo(() => {
+    if (!documentGroupUUID) {
+      return true;
+    }
+
+    const group = groupsData?.groups?.find(candidate => candidate.uuid === documentGroupUUID);
+    if (!group || !group.role) {
+      return true;
+    }
+
+    return group.role === GROUP_ROLES.AUTHOR || group.role === GROUP_ROLES.COAUTHOR;
+  }, [documentGroupUUID, groupsData?.groups]);
+
   const isNameValid = name.trim().length > 0;
   const isDirty = lastSaved !== null && (lastSaved.name !== name || lastSaved.content !== content);
-  const isSaveDisabled = !isNameValid || !isDirty || saving || !documentId;
+  const isSaveDisabled = !canEditDocument || !isNameValid || !isDirty || saving || !documentId;
 
   const handleNameChange = (event: ChangeEvent<HTMLInputElement>) => {
+    if (!canEditDocument) {
+      return;
+    }
     if (saveStatus !== 'idle') {
       setSaveStatus('idle');
     }
@@ -164,6 +180,9 @@ const DocumentEditor = ({ className = '' }: DocumentEditorProps) => {
   };
 
   const handleContentChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    if (!canEditDocument) {
+      return;
+    }
     if (saveStatus !== 'idle') {
       setSaveStatus('idle');
     }
@@ -171,7 +190,7 @@ const DocumentEditor = ({ className = '' }: DocumentEditorProps) => {
   };
 
   const handleSave = async () => {
-    if (isSaveDisabled || !documentId) {
+    if (isSaveDisabled || !documentId || !canEditDocument) {
       return;
     }
 
@@ -229,11 +248,11 @@ const DocumentEditor = ({ className = '' }: DocumentEditorProps) => {
         justifyContent="space-between"
         alignItems={{ xs: 'flex-start', sm: 'center' }}
       >
-        <Stack direction="row" spacing={2} alignItems="center">
-          <Button variant="outlined" onClick={() => navigate(ROUTES.DOCUMENTS)}>
-            {t('documentEditor.backToList')}
-          </Button>
-          <Chip
+      <Stack direction="row" spacing={2} alignItems="center">
+        <Button variant="outlined" onClick={() => navigate(ROUTES.DOCUMENTS)}>
+          {t('documentEditor.backToList')}
+        </Button>
+        <Chip
             label={groupName || t('documents.groupUnknown')}
             color="primary"
             sx={{ fontWeight: 600 }}
@@ -243,6 +262,10 @@ const DocumentEditor = ({ className = '' }: DocumentEditorProps) => {
           {saving ? t('documentEditor.savingButton') : t('documentEditor.saveButton')}
         </Button>
       </Stack>
+
+      {!canEditDocument && (
+        <Alert severity="info">{t('documentEditor.readOnlyNotice')}</Alert>
+      )}
 
       {documentError && (
         <ErrorAlert
@@ -303,6 +326,7 @@ const DocumentEditor = ({ className = '' }: DocumentEditorProps) => {
               error={!isNameValid}
               helperText={!isNameValid ? t('documentEditor.nameRequired') : undefined}
               FormHelperTextProps={{ sx: { minHeight: 0, mt: isNameValid ? 0 : 0.5 } }}
+              InputProps={{ readOnly: !canEditDocument }}
               sx={{
                 '& .MuiOutlinedInput-root': {
                   borderRadius: 1.5,
@@ -321,6 +345,7 @@ const DocumentEditor = ({ className = '' }: DocumentEditorProps) => {
               fullWidth
               multiline
               minRows={16}
+              InputProps={{ readOnly: !canEditDocument }}
               sx={{
                 flex: 1,
                 '& .MuiOutlinedInput-root': {

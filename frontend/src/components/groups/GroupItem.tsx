@@ -10,7 +10,10 @@ import {
 } from "@mui/material";
 import type { MouseEvent } from "react";
 import { formatDate } from "../../utils";
-import type { GroupItem as GroupItemType } from "../../types/entities";
+import type {
+  GroupItem as GroupItemType,
+  GroupRole,
+} from "../../types/entities";
 
 interface GroupItemProps {
   group: GroupItemType;
@@ -21,6 +24,10 @@ interface GroupItemProps {
   onDelete?: (group: GroupItemType) => void;
   editLabel?: string;
   deleteLabel?: string;
+  onManageMembers?: (group: GroupItemType) => void;
+  manageMembersLabel?: string;
+  roleLabel?: string;
+  roleNames?: Partial<Record<GroupRole, string>>;
 }
 
 const GroupItem = ({
@@ -32,8 +39,12 @@ const GroupItem = ({
   onDelete,
   editLabel,
   deleteLabel,
+  onManageMembers,
+  manageMembersLabel,
+  roleLabel,
+  roleNames,
 }: GroupItemProps) => {
-  const hasActions = Boolean(onEdit || onDelete);
+  const hasActions = Boolean(onEdit || onDelete || onManageMembers);
 
   const handleEditClick = (event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
@@ -43,6 +54,11 @@ const GroupItem = ({
   const handleDeleteClick = (event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
     onDelete?.(group);
+  };
+
+  const handleManageMembersClick = (event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    onManageMembers?.(group);
   };
 
   return (
@@ -64,9 +80,16 @@ const GroupItem = ({
                 </Typography>
               }
               secondary={
-                <Typography variant="body2" color="text.secondary">
-                  {`${createdAtLabel}: ${formatDate(group.created_at)}`}
-                </Typography>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <Typography variant="body2" color="text.secondary">
+                    {`${createdAtLabel}: ${formatDate(group.created_at)}`}
+                  </Typography>
+                  {roleLabel && group.role && (
+                    <Typography variant="caption" color="primary">
+                      {`${roleLabel}: ${roleNames?.[group.role] ?? group.role}`}
+                    </Typography>
+                  )}
+                </Stack>
               }
             />
           </ListItemButton>
@@ -77,6 +100,11 @@ const GroupItem = ({
               spacing={1}
               sx={{ justifyContent: "flex-end" }}
             >
+              {onManageMembers && (
+                <Button size="small" color="info" onClick={handleManageMembersClick}>
+                  {manageMembersLabel}
+                </Button>
+              )}
               {onEdit && (
                 <Button size="small" onClick={handleEditClick}>
                   {editLabel}

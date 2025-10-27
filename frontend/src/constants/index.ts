@@ -17,7 +17,7 @@ export const API_ENDPOINTS = {
   },
   GROUPS: {
     BASE: '/groups',
-    MEMBERS: '/groups/members',
+    MEMBERS: '/groups/:uuid/members',
   },
 } as const;
 
@@ -51,6 +51,12 @@ export const THEME = {
 export const USER_ROLES = {
   ADMIN: 'admin',
   USER: 'user',
+} as const;
+
+export const GROUP_ROLES = {
+  AUTHOR: 'author',
+  COAUTHOR: 'coauthor',
+  REVIEWER: 'reviewer',
 } as const;
 
 // Document permissions
