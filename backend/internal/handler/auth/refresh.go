@@ -121,7 +121,7 @@ func NewRefreshTokenHandler(userRepo userRepository, logger *zap.Logger) gin.Han
 			return
 		}
 
-		c.SetSameSite(http.SameSiteLaxMode)
+		c.SetSameSite(http.SameSiteNoneMode)
 		c.SetCookie("accessToken", accessTokenString, int(time.Until(accessTokenExpTime).Seconds()), "/", "", true, true)
 		c.SetCookie("refreshToken", refreshTokenString, int(time.Until(claims.ExpiresAt.Time).Seconds()), "/", "", true, true)
 
