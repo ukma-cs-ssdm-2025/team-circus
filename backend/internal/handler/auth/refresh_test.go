@@ -88,14 +88,14 @@ func TestNewRefreshTokenHandler(t *testing.T) {
 		assert.True(t, newAccessCookie.HttpOnly)
 		assert.Equal(t, "/", newAccessCookie.Path)
 		assert.True(t, newAccessCookie.Secure)
-		assert.Equal(t, http.SameSiteLaxMode, newAccessCookie.SameSite)
+		assert.Equal(t, http.SameSiteNoneMode, newAccessCookie.SameSite)
 
 		assert.NotNil(t, newRefreshCookie)
 		assert.NotEmpty(t, newRefreshCookie.Value)
 		assert.True(t, newRefreshCookie.HttpOnly)
 		assert.Equal(t, "/", newRefreshCookie.Path)
 		assert.True(t, newRefreshCookie.Secure)
-		assert.Equal(t, http.SameSiteLaxMode, newRefreshCookie.SameSite)
+		assert.Equal(t, http.SameSiteNoneMode, newRefreshCookie.SameSite)
 
 		repo.AssertExpectations(t)
 	})
