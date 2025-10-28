@@ -267,7 +267,13 @@ func TestNewUpdateDocumentHandler(t *testing.T) {
 		mockService, handler := setup(t)
 
 		documentUUID := uuid.New()
-		mockService.On("Update", mock.Anything, documentUUID, "Updated Document", "Updated content").Return(nil, errors.New("database connection failed"))
+		mockService.On(
+			"Update",
+			mock.Anything,
+			documentUUID,
+			"Updated Document",
+			"Updated content",
+		).Return(nil, errors.New("database connection failed"))
 
 		requestBody := requests.UpdateDocumentRequest{
 			Name:    "Updated Document",
@@ -299,4 +305,3 @@ func TestNewUpdateDocumentHandler(t *testing.T) {
 		mockService.AssertExpectations(t)
 	})
 }
-

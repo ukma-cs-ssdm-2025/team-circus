@@ -37,6 +37,7 @@ func TestNewLogOutHandler(t *testing.T) {
 
 		var accessTokenCookie, refreshTokenCookie *http.Cookie
 		for _, cookie := range cookies {
+			//nolint:staticcheck // single condition is clearer here
 			if cookie.Name == "accessToken" {
 				accessTokenCookie = cookie
 			} else if cookie.Name == "refreshToken" {
@@ -52,4 +53,3 @@ func TestNewLogOutHandler(t *testing.T) {
 		assert.Equal(t, -1, refreshTokenCookie.MaxAge)
 	})
 }
-

@@ -211,4 +211,3 @@ func TestNewCreateGroupHandler(t *testing.T) {
 		mockService.AssertExpectations(t)
 	})
 }
-

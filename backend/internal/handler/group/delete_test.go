@@ -175,4 +175,3 @@ func TestNewDeleteGroupHandler(t *testing.T) {
 		mockService.AssertExpectations(t)
 	})
 }
-

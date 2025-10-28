@@ -290,4 +290,3 @@ func TestNewUpdateGroupHandler(t *testing.T) {
 		mockService.AssertExpectations(t)
 	})
 }
-

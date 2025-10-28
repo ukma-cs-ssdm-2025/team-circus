@@ -175,4 +175,3 @@ func TestNewDeleteUserHandler(t *testing.T) {
 		mockService.AssertExpectations(t)
 	})
 }
-

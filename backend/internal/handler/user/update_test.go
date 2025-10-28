@@ -24,7 +24,12 @@ type mockUpdateUserService struct {
 	mock.Mock
 }
 
-func (m *mockUpdateUserService) Update(ctx context.Context, uuid uuid.UUID, login string, email string, password string) (*domain.User, error) {
+func (m *mockUpdateUserService) Update(
+	ctx context.Context,
+	uuid uuid.UUID,
+	login string,
+	email string,
+	password string) (*domain.User, error) {
 	args := m.Called(ctx, uuid, login, email, password)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -268,7 +273,12 @@ func TestNewUpdateUserHandler(t *testing.T) {
 		mockService, handler := setup(t)
 
 		userUUID := uuid.New()
-		mockService.On("Update", mock.Anything, userUUID, "updateduser", "updated@example.com", "newpassword123").Return(nil, domain.ErrUserNotFound)
+		mockService.On(
+			"Update",
+			mock.Anything,
+			userUUID,
+			"updateduser",
+			"updated@example.com", "newpassword123").Return(nil, domain.ErrUserNotFound)
 
 		requestBody := requests.UpdateUserRequest{
 			Login:    "updateduser",
@@ -306,7 +316,13 @@ func TestNewUpdateUserHandler(t *testing.T) {
 		mockService, handler := setup(t)
 
 		userUUID := uuid.New()
-		mockService.On("Update", mock.Anything, userUUID, "updateduser", "updated@example.com", "newpassword123").Return(nil, domain.ErrInternal)
+		mockService.On(
+			"Update",
+			mock.Anything,
+			userUUID,
+			"updateduser",
+			"updated@example.com",
+			"newpassword123").Return(nil, domain.ErrInternal)
 
 		requestBody := requests.UpdateUserRequest{
 			Login:    "updateduser",
@@ -344,7 +360,14 @@ func TestNewUpdateUserHandler(t *testing.T) {
 		mockService, handler := setup(t)
 
 		userUUID := uuid.New()
-		mockService.On("Update", mock.Anything, userUUID, "updateduser", "updated@example.com", "newpassword123").Return(nil, errors.New("database connection failed"))
+		mockService.On(
+			"Update",
+			mock.Anything,
+			userUUID,
+			"updateduser",
+			"updated@example.com",
+			"newpassword123",
+		).Return(nil, errors.New("database connection failed"))
 
 		requestBody := requests.UpdateUserRequest{
 			Login:    "updateduser",
@@ -377,4 +400,3 @@ func TestNewUpdateUserHandler(t *testing.T) {
 		mockService.AssertExpectations(t)
 	})
 }
-

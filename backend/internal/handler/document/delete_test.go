@@ -175,4 +175,3 @@ func TestNewDeleteDocumentHandler(t *testing.T) {
 		mockService.AssertExpectations(t)
 	})
 }
-

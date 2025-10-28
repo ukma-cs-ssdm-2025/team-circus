@@ -489,4 +489,3 @@ func TestNewGetAllGroupsHandler(t *testing.T) {
 		mockService.AssertExpectations(t)
 	})
 }
-
