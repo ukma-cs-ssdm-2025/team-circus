@@ -44,7 +44,7 @@ func NewRegHandler(service regService, logger *zap.Logger) gin.HandlerFunc {
 			return
 		}
 
-		user, err := service.Register(c, req.Login, req.Email, req.Password)
+		user, err := service.Register(c.Request.Context(), req.Login, req.Email, req.Password)
 		if errors.Is(err, domain.ErrInternal) {
 			logger.Error("failed to register",
 				zap.Error(err),

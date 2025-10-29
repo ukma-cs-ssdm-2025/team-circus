@@ -58,7 +58,7 @@ func NewGetDocumentHandler(service getDocumentService, logger *zap.Logger) gin.H
 			return
 		}
 
-		document, err := service.GetByUUIDForUser(c, parsedUUID, userUUID)
+		document, err := service.GetByUUIDForUser(c.Request.Context(), parsedUUID, userUUID)
 		if errors.Is(err, domain.ErrDocumentNotFound) {
 			logger.Warn("document not found", zap.String("uuid", uuidParam))
 			c.JSON(http.StatusNotFound, gin.H{"error": "document not found"})
@@ -109,7 +109,7 @@ func NewGetAllDocumentsHandler(service getAllDocumentsService, logger *zap.Logge
 			return
 		}
 
-		documents, err := service.GetAllForUser(c, userUUID)
+		documents, err := service.GetAllForUser(c.Request.Context(), userUUID)
 		if errors.Is(err, domain.ErrInternal) {
 			logger.Error("failed to get documents", zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get documents"})

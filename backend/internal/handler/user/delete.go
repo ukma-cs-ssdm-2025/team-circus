@@ -40,7 +40,7 @@ func NewDeleteUserHandler(service deleteUserService, logger *zap.Logger) gin.Han
 			return
 		}
 
-		err = service.Delete(c, parsedUUID)
+		err = service.Delete(c.Request.Context(), parsedUUID)
 		if errors.Is(err, domain.ErrUserNotFound) {
 			logger.Warn("user not found", zap.String("uuid", uuidParam))
 			c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})

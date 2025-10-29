@@ -57,7 +57,7 @@ func NewGetGroupHandler(service getGroupService, logger *zap.Logger) gin.Handler
 			return
 		}
 
-		group, err := service.GetByUUIDForUser(c, parsedUUID, userUUID)
+		group, err := service.GetByUUIDForUser(c.Request.Context(), parsedUUID, userUUID)
 		if errors.Is(err, domain.ErrGroupNotFound) {
 			logger.Warn("group not found", zap.String("uuid", uuidParam))
 			c.JSON(http.StatusNotFound, gin.H{"error": "group not found"})
@@ -107,7 +107,7 @@ func NewGetAllGroupsHandler(service getAllGroupsService, logger *zap.Logger) gin
 			return
 		}
 
-		groups, err := service.GetAllForUser(c, userUUID)
+		groups, err := service.GetAllForUser(c.Request.Context(), userUUID)
 		if errors.Is(err, domain.ErrInternal) {
 			logger.Error("failed to get groups", zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get groups"})

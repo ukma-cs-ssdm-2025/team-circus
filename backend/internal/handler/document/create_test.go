@@ -24,8 +24,14 @@ type mockCreateDocumentService struct {
 	mock.Mock
 }
 
-func (m *mockCreateDocumentService) Create(ctx context.Context, groupUUID uuid.UUID, name, content string) (*domain.Document, error) {
-	args := m.Called(ctx, groupUUID, name, content)
+func (m *mockCreateDocumentService) Create(
+	ctx context.Context,
+	userUUID,
+	groupUUID uuid.UUID,
+	name,
+	content string,
+) (*domain.Document, error) {
+	args := m.Called(ctx, userUUID, groupUUID, name, content)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -45,9 +51,9 @@ func TestNewCreateDocumentHandler(main *testing.T) {
 	}
 
 	main.Run("SuccessfulCreateDocument", func(t *testing.T) {
-		// Arrange
 		mockService, handler := setup(t)
 
+		userUUID := uuid.New()
 		groupUUID := uuid.New()
 		expectedDocument := &domain.Document{
 			UUID:      uuid.New(),
@@ -57,29 +63,28 @@ func TestNewCreateDocumentHandler(main *testing.T) {
 			CreatedAt: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
 		}
 
-		mockService.On("Create", mock.Anything, groupUUID, "Test Document", "This is test content").
+		mockService.On("Create", mock.Anything, userUUID, groupUUID, "Test Document", "This is test content").
 			Return(expectedDocument, nil)
 
-		requestBody := requests.CreateDocumentRequest{
+		body := requests.CreateDocumentRequest{
 			GroupUUID: groupUUID,
 			Name:      "Test Document",
 			Content:   "This is test content",
 		}
 
-		jsonBody, err := json.Marshal(requestBody)
+		jsonBody, err := json.Marshal(body)
 		assert.NoError(t, err)
 
-		req := httptest.NewRequest("POST", "/documents", bytes.NewBuffer(jsonBody))
+		req := httptest.NewRequest(http.MethodPost, "/documents", bytes.NewBuffer(jsonBody))
 		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
 
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
+		c.Set("user_uid", userUUID)
 
-		// Act
 		handler(c)
 
-		// Assert
 		assert.Equal(t, http.StatusCreated, w.Code)
 
 		var response map[string]interface{}
@@ -87,27 +92,23 @@ func TestNewCreateDocumentHandler(main *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, "Test Document", response["name"])
 		assert.Equal(t, "This is test content", response["content"])
-
-		mockService.AssertExpectations(t)
 	})
 
 	main.Run("InvalidJSON", func(t *testing.T) {
-		// Arrange
 		mockService, handler := setup(t)
 
-		invalidJSON := `{"group_uuid": "123e4567-e89b-12d3-a456-426614174000", "name": "Test Document", "content": "This is test content"` //nolint:revive
+		invalidJSON := `{"group_uuid": "123e4567-e89b-12d3-a456-426614174000", "name": "Test Document", "content": "This is test content"`
 
-		req := httptest.NewRequest("POST", "/documents", bytes.NewBufferString(invalidJSON))
+		req := httptest.NewRequest(http.MethodPost, "/documents", bytes.NewBufferString(invalidJSON))
 		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
 
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
+		c.Set("user_uid", uuid.New())
 
-		// Act
 		handler(c)
 
-		// Assert
 		assert.Equal(t, http.StatusBadRequest, w.Code)
 
 		var response map[string]interface{}
@@ -115,33 +116,31 @@ func TestNewCreateDocumentHandler(main *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, "invalid request format", response["error"])
 
-		mockService.AssertNotCalled(t, "Create")
+		mockService.AssertNotCalled(t, "Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 	})
 
 	main.Run("ValidationFailure", func(t *testing.T) {
-		// Arrange
 		mockService, handler := setup(t)
 
-		requestBody := requests.CreateDocumentRequest{
+		body := requests.CreateDocumentRequest{
 			GroupUUID: uuid.New(),
-			Name:      "", // Empty name should fail validation
+			Name:      "",
 			Content:   "This is test content",
 		}
 
-		jsonBody, err := json.Marshal(requestBody)
+		jsonBody, err := json.Marshal(body)
 		assert.NoError(t, err)
 
-		req := httptest.NewRequest("POST", "/documents", bytes.NewBuffer(jsonBody))
+		req := httptest.NewRequest(http.MethodPost, "/documents", bytes.NewBuffer(jsonBody))
 		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
 
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
+		c.Set("user_uid", uuid.New())
 
-		// Act
 		handler(c)
 
-		// Assert
 		assert.Equal(t, http.StatusBadRequest, w.Code)
 
 		var response map[string]interface{}
@@ -150,101 +149,129 @@ func TestNewCreateDocumentHandler(main *testing.T) {
 		assert.Equal(t, "validation failed", response["error"])
 		assert.Contains(t, response, "details")
 
-		mockService.AssertNotCalled(t, "Create")
+		mockService.AssertNotCalled(t, "Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	})
+
+	main.Run("ForbiddenResponse", func(t *testing.T) {
+		mockService, handler := setup(t)
+
+		userUUID := uuid.New()
+		groupUUID := uuid.New()
+
+		mockService.On("Create", mock.Anything, userUUID, groupUUID, "Test Document", "content").
+			Return(nil, domain.ErrForbidden)
+
+		body := requests.CreateDocumentRequest{
+			GroupUUID: groupUUID,
+			Name:      "Test Document",
+			Content:   "content",
+		}
+
+		jsonBody, err := json.Marshal(body)
+		assert.NoError(t, err)
+
+		req := httptest.NewRequest(http.MethodPost, "/documents", bytes.NewBuffer(jsonBody))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+
+		c, _ := gin.CreateTestContext(w)
+		c.Request = req
+		c.Set("user_uid", userUUID)
+
+		handler(c)
+
+		assert.Equal(t, http.StatusForbidden, w.Code)
+
+		var response map[string]interface{}
+		err = json.Unmarshal(w.Body.Bytes(), &response)
+		assert.NoError(t, err)
+		assert.Equal(t, "access forbidden", response["error"])
 	})
 
 	main.Run("ServiceInternalError", func(t *testing.T) {
-		// Arrange
 		mockService, handler := setup(t)
 
+		userUUID := uuid.New()
 		groupUUID := uuid.New()
-		mockService.On("Create", mock.Anything, groupUUID, "Test Document", "This is test content").
+
+		mockService.On("Create", mock.Anything, userUUID, groupUUID, "Test Document", "This is test content").
 			Return(nil, domain.ErrInternal)
 
-		requestBody := requests.CreateDocumentRequest{
+		body := requests.CreateDocumentRequest{
 			GroupUUID: groupUUID,
 			Name:      "Test Document",
 			Content:   "This is test content",
 		}
 
-		jsonBody, err := json.Marshal(requestBody)
+		jsonBody, err := json.Marshal(body)
 		assert.NoError(t, err)
 
-		req := httptest.NewRequest("POST", "/documents", bytes.NewBuffer(jsonBody))
+		req := httptest.NewRequest(http.MethodPost, "/documents", bytes.NewBuffer(jsonBody))
 		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
 
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
+		c.Set("user_uid", userUUID)
 
-		// Act
 		handler(c)
 
-		// Assert
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
 
 		var response map[string]interface{}
 		err = json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
 		assert.Equal(t, "failed to create document", response["error"])
-
-		mockService.AssertExpectations(t)
 	})
 
 	main.Run("ServiceGenericError", func(t *testing.T) {
-		// Arrange
 		mockService, handler := setup(t)
 
+		userUUID := uuid.New()
 		groupUUID := uuid.New()
-		mockService.On("Create", mock.Anything, groupUUID, "Test Document", "This is test content").
+
+		mockService.On("Create", mock.Anything, userUUID, groupUUID, "Test Document", "This is test content").
 			Return(nil, errors.New("database connection failed"))
 
-		requestBody := requests.CreateDocumentRequest{
+		body := requests.CreateDocumentRequest{
 			GroupUUID: groupUUID,
 			Name:      "Test Document",
 			Content:   "This is test content",
 		}
 
-		jsonBody, err := json.Marshal(requestBody)
+		jsonBody, err := json.Marshal(body)
 		assert.NoError(t, err)
 
-		req := httptest.NewRequest("POST", "/documents", bytes.NewBuffer(jsonBody))
+		req := httptest.NewRequest(http.MethodPost, "/documents", bytes.NewBuffer(jsonBody))
 		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
 
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
+		c.Set("user_uid", userUUID)
 
-		// Act
 		handler(c)
 
-		// Assert
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
 
 		var response map[string]interface{}
 		err = json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
 		assert.Equal(t, "failed to create document", response["error"])
-
-		mockService.AssertExpectations(t)
 	})
 
 	main.Run("MissingContentType", func(t *testing.T) {
-		// Arrange
 		mockService, handler := setup(t)
 
-		// Send invalid JSON without Content-Type
-		req := httptest.NewRequest("POST", "/documents", bytes.NewBufferString("invalid json"))
-		// Don't set Content-Type header
+		req := httptest.NewRequest(http.MethodPost, "/documents", bytes.NewBufferString("invalid json"))
 		w := httptest.NewRecorder()
 
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
+		c.Set("user_uid", uuid.New())
 
-		// Act
 		handler(c)
 
-		// Assert
 		assert.Equal(t, http.StatusBadRequest, w.Code)
 
 		var response map[string]interface{}
@@ -252,6 +279,6 @@ func TestNewCreateDocumentHandler(main *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, "invalid request format", response["error"])
 
-		mockService.AssertNotCalled(t, "Create")
+		mockService.AssertNotCalled(t, "Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 	})
 }

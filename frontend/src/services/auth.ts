@@ -1,36 +1,60 @@
 // Note: We use direct fetch calls instead of apiClient to avoid circular dependencies
+import { getApiUrl } from '../config/env';
+import { HttpError, isRecord } from './httpError';
 import { API_ENDPOINTS } from '../constants';
 import type { LoginRequest, RegisterRequest, AuthUser } from '../types/auth';
 
 class AuthService {
   private async requestWithCredentials<T>(
     endpoint: string,
-    options: RequestInit = {}
-  ): Promise<T> {
-    const response = await fetch(`${API_ENDPOINTS.BASE_URL}${endpoint}`, {
-      ...options,
-      credentials: 'include', // Important for cookies
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-    });
+    options: RequestInit = {},
+  ): Promise<T | undefined> {
+    try {
+      const { headers: customHeaders, ...restOptions } = options;
+      const headers = new Headers(customHeaders as HeadersInit | undefined);
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      if (!headers.has('Accept')) {
+        headers.set('Accept', 'application/json');
+      }
+
+      const hasStringBody =
+        typeof restOptions.body === 'string' && restOptions.body.length > 0;
+      if (hasStringBody && !headers.has('Content-Type')) {
+        headers.set('Content-Type', 'application/json');
+      }
+
+      const response = await fetch(getApiUrl(endpoint), {
+        ...restOptions,
+        credentials: 'include', // Important for cookies
+        headers,
+      });
+
+      if (!response.ok) {
+        const { message, details, code } =
+          await this.parseErrorResponse(response);
+        throw new HttpError(message, response.status, details, code);
+      }
+
+      if (response.status === 204) {
+        return undefined;
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (contentType?.includes('application/json')) {
+        const data = (await response.json()) as T;
+        return data;
+      }
+
+      return undefined;
+    } catch (error) {
+      if (error instanceof HttpError) {
+        throw error;
+      }
+      if (error instanceof Error) {
+        throw new HttpError(error.message, 0);
+      }
+      throw new HttpError('Unknown error', 0);
     }
-
-    if (response.status === 204) {
-      return undefined as T;
-    }
-
-    const contentType = response.headers.get('content-type');
-    if (contentType?.includes('application/json')) {
-      return response.json() as Promise<T>;
-    }
-
-    return undefined as T;
   }
 
   async login(credentials: LoginRequest): Promise<void> {
@@ -50,6 +74,10 @@ class AuthService {
       method: 'POST',
       body: JSON.stringify(userData),
     });
+
+    if (!response) {
+      throw new HttpError('Empty response from registration endpoint', 0);
+    }
 
     return {
       uuid: response.uuid,
@@ -75,6 +103,40 @@ class AuthService {
     await this.requestWithCredentials(API_ENDPOINTS.AUTH.LOGOUT, {
       method: 'POST',
     });
+  }
+
+  private async parseErrorResponse(
+    response: Response,
+  ): Promise<{ message: string; details?: unknown; code?: string }> {
+    const fallbackMessage = `Request failed with status ${response.status}`;
+    const contentType = response.headers.get('content-type') ?? '';
+
+    if (contentType.includes('application/json')) {
+      try {
+        const json = await response.json();
+        if (isRecord(json)) {
+          const message =
+            typeof json.error === 'string'
+              ? json.error
+              : typeof json.message === 'string'
+                ? json.message
+                : fallbackMessage;
+          const code = typeof json.code === 'string' ? json.code : undefined;
+          return { message, details: json, code };
+        }
+        return { message: fallbackMessage, details: json };
+      } catch {
+        return { message: fallbackMessage };
+      }
+    }
+
+    try {
+      const text = await response.text();
+      const message = text.trim() || response.statusText || fallbackMessage;
+      return { message, details: text };
+    } catch {
+      return { message: fallbackMessage };
+    }
   }
 }
 

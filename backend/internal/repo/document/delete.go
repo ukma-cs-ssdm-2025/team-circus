@@ -10,10 +10,16 @@ import (
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 )
 
-func (r *DocumentRepository) Delete(ctx context.Context, uuid uuid.UUID) error {
-	query := `DELETE FROM documents WHERE uuid = $1`
+func (r *DocumentRepository) Delete(ctx context.Context, userUUID, documentUUID uuid.UUID) error {
+	query := `
+        DELETE FROM documents d
+        USING user_groups ug
+        WHERE d.uuid = $2
+          AND ug.group_uuid = d.group_uuid
+          AND ug.user_uuid = $1
+          AND ug.role <> $3`
 
-	result, err := r.db.ExecContext(ctx, query, uuid)
+	result, err := r.db.ExecContext(ctx, query, userUUID, documentUUID, domain.GroupRoleReviewer)
 	if err != nil {
 		return errors.Join(domain.ErrInternal, fmt.Errorf("document repository: delete exec: %w", err))
 	}

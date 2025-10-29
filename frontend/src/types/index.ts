@@ -51,6 +51,7 @@ export interface ApiError {
   message: string;
   status: number;
   code?: string;
+  details?: unknown;
 }
 
 export interface PaginatedResponse<T> {
@@ -86,4 +87,4 @@ export interface ThemeContextType {
 }
 
 // Export entity types
-export * from './entities';
+export * from "./entities";
