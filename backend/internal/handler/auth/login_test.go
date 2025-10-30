@@ -47,7 +47,7 @@ func TestNewLogInHandler(t *testing.T) {
 
 	setup := func(t *testing.T) (*MockUserRepository, gin.HandlerFunc) {
 		mockRepo := new(MockUserRepository)
-		handler := auth.NewLogInHandler(mockRepo, zap.NewNop(), "test-secret-key")
+		handler := auth.NewLogInHandler(mockRepo, zap.NewNop(), "test-secret-key", 10, 4320)
 		t.Cleanup(func() {
 			mockRepo.AssertExpectations(t)
 		})

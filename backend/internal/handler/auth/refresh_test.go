@@ -50,7 +50,7 @@ func TestNewRefreshTokenHandler(t *testing.T) {
 
 	t.Run("Successful refresh", func(t *testing.T) {
 		repo := new(mockUserRepository)
-		handler := auth.NewRefreshTokenHandler(repo, zap.NewNop(), "test-secret-key")
+		handler := auth.NewRefreshTokenHandler(repo, zap.NewNop(), "test-secret-key", 10)
 
 		userID := uuid.New()
 		repo.On("GetByUUID", mock.Anything, userID).Return(&domain.User{UUID: userID}, nil)
@@ -101,7 +101,7 @@ func TestNewRefreshTokenHandler(t *testing.T) {
 	})
 
 	t.Run("Missing refresh cookie", func(t *testing.T) {
-		handler := auth.NewRefreshTokenHandler(new(mockUserRepository), zap.NewNop(), "test-secret-key")
+		handler := auth.NewRefreshTokenHandler(new(mockUserRepository), zap.NewNop(), "test-secret-key", 10)
 
 		req := httptest.NewRequest(http.MethodPost, "/auth/refresh", nil)
 		w := httptest.NewRecorder()
@@ -114,7 +114,7 @@ func TestNewRefreshTokenHandler(t *testing.T) {
 	})
 
 	t.Run("Invalid token format", func(t *testing.T) {
-		handler := auth.NewRefreshTokenHandler(new(mockUserRepository), zap.NewNop(), "test-secret-key")
+		handler := auth.NewRefreshTokenHandler(new(mockUserRepository), zap.NewNop(), "test-secret-key", 10)
 
 		req := httptest.NewRequest(http.MethodPost, "/auth/refresh", nil)
 		req.AddCookie(&http.Cookie{Name: "refreshToken", Value: "invalid"})
@@ -128,7 +128,7 @@ func TestNewRefreshTokenHandler(t *testing.T) {
 	})
 
 	t.Run("Expired token", func(t *testing.T) {
-		handler := auth.NewRefreshTokenHandler(new(mockUserRepository), zap.NewNop(), "test-secret-key")
+		handler := auth.NewRefreshTokenHandler(new(mockUserRepository), zap.NewNop(), "test-secret-key", 10)
 
 		refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
 			Subject:   uuid.NewString(),
@@ -150,7 +150,7 @@ func TestNewRefreshTokenHandler(t *testing.T) {
 
 	t.Run("Missing secret token", func(t *testing.T) {
 		os.Unsetenv("SECRET_TOKEN") //nolint:errcheck
-		handler := auth.NewRefreshTokenHandler(new(mockUserRepository), zap.NewNop(), "test-secret-key")
+		handler := auth.NewRefreshTokenHandler(new(mockUserRepository), zap.NewNop(), "test-secret-key", 10)
 
 		req := httptest.NewRequest(http.MethodPost, "/auth/refresh", nil)
 		req.AddCookie(&http.Cookie{Name: "refreshToken", Value: "anything"})

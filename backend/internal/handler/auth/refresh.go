@@ -23,7 +23,7 @@ import (
 // @Failure 401 {object} map[string]string "Invalid or expired refresh token"
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /auth/refresh [post]
-func NewRefreshTokenHandler(userRepo userRepository, logger *zap.Logger, secretToken string) gin.HandlerFunc {
+func NewRefreshTokenHandler(userRepo userRepository, logger *zap.Logger, secretToken string, accessDur int) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// var req requests.RefreshTokenRequest
 		// if err := c.ShouldBindJSON(&req); err != nil {
@@ -94,7 +94,7 @@ func NewRefreshTokenHandler(userRepo userRepository, logger *zap.Logger, secretT
 			return
 		}
 
-		accessTokenExpTime := time.Now().Add(10 * time.Minute)
+		accessTokenExpTime := time.Now().Add(time.Duration(accessDur) * time.Minute)
 		accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
 			Subject:   user.UUID.String(),
 			ExpiresAt: jwt.NewNumericDate(accessTokenExpTime),

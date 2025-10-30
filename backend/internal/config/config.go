@@ -36,11 +36,13 @@ type CORSConfig struct {
 }
 
 type Config struct {
-	DB          DBConfig
-	Srv         SrvConfig
-	CORS        CORSConfig
-	HashingCost int    `envconfig:"HASHING_COST" required:"true"`
-	SecretToken string `envconfig:"SECRET_TOKEN" required:"true"`
+	DB              DBConfig
+	Srv             SrvConfig
+	CORS            CORSConfig
+	HashingCost     int    `envconfig:"HASHING_COST" required:"true"`
+	SecretToken     string `envconfig:"SECRET_TOKEN" required:"true"`
+	AccessDuration  int    `envconfig:"ACCESS_DURATION" required:"true"`
+	RefreshDuration int    `envconfig:"REFRESH_DURATION" required:"true"`
 }
 
 func Load() (*Config, error) {

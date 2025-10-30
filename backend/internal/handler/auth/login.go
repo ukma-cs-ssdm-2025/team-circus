@@ -33,7 +33,7 @@ type userRepository interface {
 // @Failure 401 {object} map[string]string "Invalid credentials"
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /auth/login [post]
-func NewLogInHandler(userRepo userRepository, logger *zap.Logger, secretToken string) gin.HandlerFunc {
+func NewLogInHandler(userRepo userRepository, logger *zap.Logger, secretToken string, accessDur int, refreshDur int) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req requests.LogInRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
@@ -72,7 +72,7 @@ func NewLogInHandler(userRepo userRepository, logger *zap.Logger, secretToken st
 			return
 		}
 
-		accessExpTime := time.Now().Add(10 * time.Minute)
+		accessExpTime := time.Now().Add(time.Duration(accessDur) * time.Minute)
 		accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
 			Subject:   user.UUID.String(),
 			ExpiresAt: jwt.NewNumericDate(accessExpTime),
@@ -85,7 +85,7 @@ func NewLogInHandler(userRepo userRepository, logger *zap.Logger, secretToken st
 			return
 		}
 
-		refreshExpTime := time.Now().Add(30 * 24 * time.Hour)
+		refreshExpTime := time.Now().Add(time.Duration(refreshDur) * time.Minute)
 		refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
 			Subject:   user.UUID.String(),
 			ExpiresAt: jwt.NewNumericDate(refreshExpTime),
