@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -24,7 +23,7 @@ import (
 // @Failure 401 {object} map[string]string "Invalid or expired refresh token"
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /auth/refresh [post]
-func NewRefreshTokenHandler(userRepo userRepository, logger *zap.Logger) gin.HandlerFunc {
+func NewRefreshTokenHandler(userRepo userRepository, logger *zap.Logger, secretToken string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// var req requests.RefreshTokenRequest
 		// if err := c.ShouldBindJSON(&req); err != nil {
@@ -40,7 +39,6 @@ func NewRefreshTokenHandler(userRepo userRepository, logger *zap.Logger) gin.Han
 			return
 		}
 
-		secretToken := os.Getenv("SECRET_TOKEN")
 		if secretToken == "" {
 			logger.Error("server misconfiguration")
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "server misconfiguration"})

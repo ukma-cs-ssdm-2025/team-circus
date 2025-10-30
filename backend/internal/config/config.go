@@ -26,10 +26,6 @@ type SrvConfig struct {
 	Port string `envconfig:"API_PORT" required:"true"`
 }
 
-type HashCostConfig struct {
-	HashingCost int `envconfig:"HASHING_COST" required:"true"`
-}
-
 type CORSConfig struct {
 	AllowOrigins     []string `envconfig:"CORS_ALLOW_ORIGINS" required:"true"`
 	AllowMethods     []string `envconfig:"CORS_ALLOW_METHODS" required:"true"`
@@ -43,7 +39,8 @@ type Config struct {
 	DB          DBConfig
 	Srv         SrvConfig
 	CORS        CORSConfig
-	HashingCost HashCostConfig
+	HashingCost int    `envconfig:"HASHING_COST" required:"true"`
+	SecretToken string `envconfig:"SECRET_TOKEN" required:"true"`
 }
 
 func Load() (*Config, error) {

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -34,7 +33,7 @@ type userRepository interface {
 // @Failure 401 {object} map[string]string "Invalid credentials"
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /auth/login [post]
-func NewLogInHandler(userRepo userRepository, logger *zap.Logger) gin.HandlerFunc {
+func NewLogInHandler(userRepo userRepository, logger *zap.Logger, secretToken string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req requests.LogInRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
@@ -67,7 +66,6 @@ func NewLogInHandler(userRepo userRepository, logger *zap.Logger) gin.HandlerFun
 			return
 		}
 
-		secretToken := os.Getenv("SECRET_TOKEN")
 		if secretToken == "" {
 			logger.Error("server misconfiguration")
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "server misconfiguration"})

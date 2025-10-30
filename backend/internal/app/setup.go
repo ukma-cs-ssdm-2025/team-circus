@@ -49,19 +49,19 @@ func (a *App) setupRouter() *gin.Engine {
 	userService := userservice.NewUserService(userRepo)
 
 	regRepo := regrepo.NewRegRepository(a.DB)
-	regService := regservice.NewRegService(regRepo, a.cfg.HashingCost.HashingCost)
+	regService := regservice.NewRegService(regRepo, a.cfg.HashingCost)
 
 	apiV1 := router.Group("/api/v1")
 
 	public := apiV1.Group("")
 	{
 		public.POST("/signup", reghandler.NewRegHandler(regService, a.l))
-		public.POST("/auth/login", authhandler.NewLogInHandler(userRepo, a.l))
-		public.POST("/auth/refresh", authhandler.NewRefreshTokenHandler(userRepo, a.l))
+		public.POST("/auth/login", authhandler.NewLogInHandler(userRepo, a.l, a.cfg.SecretToken))
+		public.POST("/auth/refresh", authhandler.NewRefreshTokenHandler(userRepo, a.l, a.cfg.SecretToken))
 	}
 
 	protected := apiV1.Group("")
-	protected.Use(middleware.AuthMiddleware(userRepo))
+	protected.Use(middleware.AuthMiddleware(userRepo, a.cfg.SecretToken))
 	{
 		protected.POST("/auth/logout", authhandler.NewLogOutHandler(a.l))
 
