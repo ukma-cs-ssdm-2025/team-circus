@@ -56,7 +56,8 @@ func (a *App) setupRouter() *gin.Engine {
 	public := apiV1.Group("")
 	{
 		public.POST("/signup", reghandler.NewRegHandler(regService, a.l))
-		public.POST("/auth/login", authhandler.NewLogInHandler(userRepo, a.l, a.cfg.SecretToken, a.cfg.AccessDuration, a.cfg.RefreshDuration))
+		public.POST("/auth/login", authhandler.NewLogInHandler(userRepo, a.l,
+			a.cfg.SecretToken, a.cfg.AccessDuration, a.cfg.RefreshDuration))
 		public.POST("/auth/refresh", authhandler.NewRefreshTokenHandler(userRepo, a.l, a.cfg.SecretToken, a.cfg.AccessDuration))
 	}
 
