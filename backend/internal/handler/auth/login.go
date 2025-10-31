@@ -33,7 +33,7 @@ type userRepository interface {
 // @Failure 401 {object} map[string]string "Invalid credentials"
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /auth/login [post]
-func NewLogInHandler(userRepo userRepository, logger *zap.Logger, secretToken string, accessDur int, refreshDur int) gin.HandlerFunc {
+func NewLogInHandler(userRepo userRepository, logger *zap.Logger, secretToken string, accessDur, refreshDur int) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req requests.LogInRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
