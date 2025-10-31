@@ -7,6 +7,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 
@@ -47,12 +48,23 @@ func TestNewLogInHandler(t *testing.T) {
 
 	setup := func(t *testing.T) (*MockUserRepository, gin.HandlerFunc) {
 		mockRepo := new(MockUserRepository)
-		handler := auth.NewLogInHandler(mockRepo, zap.NewNop(), "test-secret-key", 10, 4320)
+		handler := auth.NewLogInHandler(mockRepo, zap.NewNop())
 		t.Cleanup(func() {
 			mockRepo.AssertExpectations(t)
 		})
 		return mockRepo, handler
 	}
+
+	// Set up environment variable for testing
+	originalSecret := os.Getenv("SECRET_TOKEN")
+	defer func() {
+		if originalSecret == "" {
+			os.Unsetenv("SECRET_TOKEN") //nolint:errcheck
+		} else {
+			os.Setenv("SECRET_TOKEN", originalSecret) //nolint:errcheck,gosec
+		}
+	}()
+	os.Setenv("SECRET_TOKEN", "test-secret-key") //nolint:errcheck,gosec
 
 	t.Run("SuccessfulLogin", func(t *testing.T) {
 		// Arrange
