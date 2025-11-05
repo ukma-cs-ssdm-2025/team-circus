@@ -85,13 +85,24 @@ func TestNewCreateDocumentHandler(main *testing.T) {
 		assertService  func(*testing.T, *mockCreateDocumentService)
 	}{
 		{
-			name:           "SuccessfulCreateDocument",
-			body:           requests.CreateDocumentRequest{GroupUUID: successfulGroupUUID, Name: "Test Document", Content: "This is test content"},
+			name: "SuccessfulCreateDocument",
+			body: requests.CreateDocumentRequest{
+				GroupUUID: successfulGroupUUID,
+				Name:      "Test Document",
+				Content:   "This is test content",
+			},
 			contentType:    "application/json",
 			userUUID:       successfulUserUUID,
 			expectedStatus: http.StatusCreated,
 			setupMock: func(mockService *mockCreateDocumentService) {
-				mockService.On("Create", mock.Anything, successfulUserUUID, successfulGroupUUID, "Test Document", "This is test content").
+				mockService.On(
+					"Create",
+					mock.Anything,
+					successfulUserUUID,
+					successfulGroupUUID,
+					"Test Document",
+					"This is test content",
+				).
 					Return(expectedDocument, nil)
 			},
 			assertResponse: func(t *testing.T, response map[string]interface{}) {
@@ -100,8 +111,9 @@ func TestNewCreateDocumentHandler(main *testing.T) {
 			},
 		},
 		{
-			name:           "InvalidJSON",
-			rawBody:        `{"group_uuid": "123e4567-e89b-12d3-a456-426614174000", "name": "Test Document", "content": "This is test content"`,
+			name: "InvalidJSON",
+			rawBody: `{"group_uuid": "123e4567-e89b-12d3-a456-426614174000", ` +
+				`"name": "Test Document", "content": "This is test content"`,
 			contentType:    "application/json",
 			userUUID:       invalidJSONUserUUID,
 			expectedStatus: http.StatusBadRequest,
@@ -113,8 +125,12 @@ func TestNewCreateDocumentHandler(main *testing.T) {
 			},
 		},
 		{
-			name:           "ValidationFailure",
-			body:           requests.CreateDocumentRequest{GroupUUID: uuid.New(), Name: "", Content: "This is test content"},
+			name: "ValidationFailure",
+			body: requests.CreateDocumentRequest{
+				GroupUUID: uuid.New(),
+				Name:      "",
+				Content:   "This is test content",
+			},
 			contentType:    "application/json",
 			userUUID:       validationUserUUID,
 			expectedStatus: http.StatusBadRequest,
@@ -127,13 +143,24 @@ func TestNewCreateDocumentHandler(main *testing.T) {
 			},
 		},
 		{
-			name:           "ForbiddenResponse",
-			body:           requests.CreateDocumentRequest{GroupUUID: forbiddenGroupUUID, Name: "Test Document", Content: "content"},
+			name: "ForbiddenResponse",
+			body: requests.CreateDocumentRequest{
+				GroupUUID: forbiddenGroupUUID,
+				Name:      "Test Document",
+				Content:   "content",
+			},
 			contentType:    "application/json",
 			userUUID:       forbiddenUserUUID,
 			expectedStatus: http.StatusForbidden,
 			setupMock: func(mockService *mockCreateDocumentService) {
-				mockService.On("Create", mock.Anything, forbiddenUserUUID, forbiddenGroupUUID, "Test Document", "content").
+				mockService.On(
+					"Create",
+					mock.Anything,
+					forbiddenUserUUID,
+					forbiddenGroupUUID,
+					"Test Document",
+					"content",
+				).
 					Return(nil, domain.ErrForbidden)
 			},
 			assertResponse: func(t *testing.T, response map[string]interface{}) {
@@ -141,13 +168,24 @@ func TestNewCreateDocumentHandler(main *testing.T) {
 			},
 		},
 		{
-			name:           "ServiceInternalError",
-			body:           requests.CreateDocumentRequest{GroupUUID: internalErrorGroupUUID, Name: "Test Document", Content: "This is test content"},
+			name: "ServiceInternalError",
+			body: requests.CreateDocumentRequest{
+				GroupUUID: internalErrorGroupUUID,
+				Name:      "Test Document",
+				Content:   "This is test content",
+			},
 			contentType:    "application/json",
 			userUUID:       internalErrorUserUUID,
 			expectedStatus: http.StatusInternalServerError,
 			setupMock: func(mockService *mockCreateDocumentService) {
-				mockService.On("Create", mock.Anything, internalErrorUserUUID, internalErrorGroupUUID, "Test Document", "This is test content").
+				mockService.On(
+					"Create",
+					mock.Anything,
+					internalErrorUserUUID,
+					internalErrorGroupUUID,
+					"Test Document",
+					"This is test content",
+				).
 					Return(nil, domain.ErrInternal)
 			},
 			assertResponse: func(t *testing.T, response map[string]interface{}) {
@@ -155,13 +193,24 @@ func TestNewCreateDocumentHandler(main *testing.T) {
 			},
 		},
 		{
-			name:           "ServiceGenericError",
-			body:           requests.CreateDocumentRequest{GroupUUID: genericErrorGroupUUID, Name: "Test Document", Content: "This is test content"},
+			name: "ServiceGenericError",
+			body: requests.CreateDocumentRequest{
+				GroupUUID: genericErrorGroupUUID,
+				Name:      "Test Document",
+				Content:   "This is test content",
+			},
 			contentType:    "application/json",
 			userUUID:       genericErrorUserUUID,
 			expectedStatus: http.StatusInternalServerError,
 			setupMock: func(mockService *mockCreateDocumentService) {
-				mockService.On("Create", mock.Anything, genericErrorUserUUID, genericErrorGroupUUID, "Test Document", "This is test content").
+				mockService.On(
+					"Create",
+					mock.Anything,
+					genericErrorUserUUID,
+					genericErrorGroupUUID,
+					"Test Document",
+					"This is test content",
+				).
 					Return(nil, errors.New("database connection failed"))
 			},
 			assertResponse: func(t *testing.T, response map[string]interface{}) {
