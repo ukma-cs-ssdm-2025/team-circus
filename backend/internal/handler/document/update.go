@@ -11,7 +11,6 @@ import (
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/document/requests"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/httpx"
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 )
 
 type updateDocumentService interface {
@@ -67,30 +66,7 @@ func NewUpdateDocumentHandler(service updateDocumentService, logger *zap.Logger)
 		}
 
 		document, err := service.Update(c.Request.Context(), userUUID, documentUUID, req.Name, req.Content)
-		if httpx.HandleError(
-			c,
-			logger,
-			err,
-			httpx.ResponseSpec{
-				Status:     http.StatusInternalServerError,
-				Message:    "failed to update document",
-				LogMessage: "failed to update document",
-				LogLevel:   zapcore.ErrorLevel,
-			},
-			httpx.RequestContextFields(c, zap.String("document_uuid", documentUUID.String())),
-			httpx.ResponseSpec{
-				Target:     domain.ErrDocumentNotFound,
-				Status:     http.StatusNotFound,
-				Message:    "document not found",
-				LogMessage: "document not found",
-				LogLevel:   zapcore.WarnLevel,
-			},
-			httpx.ResponseSpec{
-				Target:  domain.ErrForbidden,
-				Status:  http.StatusForbidden,
-				Message: "access forbidden",
-			},
-		) {
+		if handleDocumentOperationError(c, logger, err, documentUUID, "update") {
 			return
 		}
 

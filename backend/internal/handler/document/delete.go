@@ -6,11 +6,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/document/responses"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/httpx"
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 )
 
 type deleteDocumentService interface {
@@ -50,30 +48,7 @@ func NewDeleteDocumentHandler(service deleteDocumentService, logger *zap.Logger)
 		}
 
 		err := service.Delete(c.Request.Context(), userUUID, documentUUID)
-		if httpx.HandleError(
-			c,
-			logger,
-			err,
-			httpx.ResponseSpec{
-				Status:     http.StatusInternalServerError,
-				Message:    "failed to delete document",
-				LogMessage: "failed to delete document",
-				LogLevel:   zapcore.ErrorLevel,
-			},
-			httpx.RequestContextFields(c, zap.String("document_uuid", documentUUID.String())),
-			httpx.ResponseSpec{
-				Target:     domain.ErrDocumentNotFound,
-				Status:     http.StatusNotFound,
-				Message:    "document not found",
-				LogMessage: "document not found",
-				LogLevel:   zapcore.WarnLevel,
-			},
-			httpx.ResponseSpec{
-				Target:  domain.ErrForbidden,
-				Status:  http.StatusForbidden,
-				Message: "access forbidden",
-			},
-		) {
+		if handleDocumentOperationError(c, logger, err, documentUUID, "delete") {
 			return
 		}
 

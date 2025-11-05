@@ -54,30 +54,7 @@ func NewGetDocumentHandler(service getDocumentService, logger *zap.Logger) gin.H
 		}
 
 		document, err := service.GetByUUIDForUser(c.Request.Context(), documentUUID, userUUID)
-		if httpx.HandleError(
-			c,
-			logger,
-			err,
-			httpx.ResponseSpec{
-				Status:     http.StatusInternalServerError,
-				Message:    "failed to get document",
-				LogMessage: "failed to get document",
-				LogLevel:   zapcore.ErrorLevel,
-			},
-			httpx.RequestContextFields(c, zap.String("document_uuid", documentUUID.String())),
-			httpx.ResponseSpec{
-				Target:     domain.ErrDocumentNotFound,
-				Status:     http.StatusNotFound,
-				Message:    "document not found",
-				LogMessage: "document not found",
-				LogLevel:   zapcore.WarnLevel,
-			},
-			httpx.ResponseSpec{
-				Target:  domain.ErrForbidden,
-				Status:  http.StatusForbidden,
-				Message: "access forbidden",
-			},
-		) {
+		if handleDocumentOperationError(c, logger, err, documentUUID, "get") {
 			return
 		}
 
