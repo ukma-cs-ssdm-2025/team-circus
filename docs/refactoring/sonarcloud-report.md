@@ -13,9 +13,9 @@
 
 | Метрика             | До     | Після |
 |---------------------|--------|:-----:|
-| Reliability         | 2, C   |   –   |
-| Maintainability     | 33, A  |   –   |
-| Security Hotspots   | 7      |   –   |
+| Reliability         | 2, C   | 0, A  |
+| Maintainability     | 33, A  | 32, A |
+| Security Hotspots   | 7      |   -   |
 
 ### Застосовувались наступні патерни: 
 - **Replace Magic Number** – прибрано магічні числа, що стосувалися секретного ключа та термінів придатності JSON Web Token
