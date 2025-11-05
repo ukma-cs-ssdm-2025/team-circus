@@ -2,7 +2,6 @@ package document
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -10,7 +9,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/document/requests"
+	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/httpx"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 type createDocumentService interface {
@@ -33,14 +34,8 @@ type createDocumentService interface {
 // @Router /documents [post]
 func NewCreateDocumentHandler(service createDocumentService, logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userUUIDValue, exists := c.Get("user_uid")
-		if !exists {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "user context missing"})
-			return
-		}
-		userUUID, ok := userUUIDValue.(uuid.UUID)
+		userUUID, ok := httpx.ResolveUserUUID(c)
 		if !ok {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid user context"})
 			return
 		}
 		var req requests.CreateDocumentRequest
@@ -59,30 +54,28 @@ func NewCreateDocumentHandler(service createDocumentService, logger *zap.Logger)
 		}
 
 		document, err := service.Create(c.Request.Context(), userUUID, req.GroupUUID, req.Name, req.Content)
-		if errors.Is(err, domain.ErrForbidden) {
-			c.JSON(http.StatusForbidden, gin.H{"error": "access forbidden"})
-			return
-		}
-		if errors.Is(err, domain.ErrGroupNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "group not found"})
-			return
-		}
-		if errors.Is(err, domain.ErrInternal) {
-			logger.Error("failed to create document",
-				zap.Error(err),
-				zap.String("group_uuid", req.GroupUUID.String()),
-				zap.String("name", req.Name),
-			)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create document"})
-			return
-		}
-		if err != nil {
-			logger.Error("failed to create document",
-				zap.Error(err),
-				zap.String("group_uuid", req.GroupUUID.String()),
-				zap.String("name", req.Name),
-			)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create document"})
+		if httpx.HandleError(
+			c,
+			logger,
+			err,
+			httpx.ResponseSpec{
+				Status:     http.StatusInternalServerError,
+				Message:    "failed to create document",
+				LogMessage: "failed to create document",
+				LogLevel:   zapcore.ErrorLevel,
+			},
+			httpx.RequestContextFields(c, zap.String("group_uuid", req.GroupUUID.String()), zap.String("document_name", req.Name)),
+			httpx.ResponseSpec{
+				Target:  domain.ErrForbidden,
+				Status:  http.StatusForbidden,
+				Message: "access forbidden",
+			},
+			httpx.ResponseSpec{
+				Target:  domain.ErrGroupNotFound,
+				Status:  http.StatusNotFound,
+				Message: "group not found",
+			},
+		) {
 			return
 		}
 

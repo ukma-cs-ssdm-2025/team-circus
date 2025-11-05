@@ -2,6 +2,7 @@ package group
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 
@@ -45,6 +46,9 @@ func NewGroupMemberService(groupRepo groupRepository, userRepo userRepository) *
 func (s *GroupMemberService) ensureGroupMember(ctx context.Context, groupUUID, userUUID uuid.UUID) (*domain.GroupMember, error) {
 	group, err := s.groupRepo.GetByUUID(ctx, groupUUID)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, domain.ErrGroupNotFound
+		}
 		return nil, fmt.Errorf("group member service: ensure group: %w", err)
 	}
 	if group == nil {
@@ -53,6 +57,9 @@ func (s *GroupMemberService) ensureGroupMember(ctx context.Context, groupUUID, u
 
 	member, err := s.groupRepo.GetMember(ctx, groupUUID, userUUID)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, domain.ErrForbidden
+		}
 		return nil, fmt.Errorf("group member service: ensure membership: %w", err)
 	}
 	if member == nil {
@@ -185,8 +192,14 @@ func (s *GroupMemberService) RemoveMember(ctx context.Context, requesterUUID, gr
 		return domain.ErrUserNotFound
 	}
 
-	if member.Role == domain.GroupRoleAuthor && memberUUID != requesterUUID {
-		return domain.ErrForbidden
+	if member.Role == domain.GroupRoleAuthor {
+		authorsCount, countErr := s.groupRepo.CountMembersWithRole(ctx, groupUUID, domain.GroupRoleAuthor)
+		if countErr != nil {
+			return fmt.Errorf("group member service: remove member count authors: %w", countErr)
+		}
+		if authorsCount <= 1 {
+			return domain.ErrLastAuthor
+		}
 	}
 
 	if err := s.groupRepo.RemoveMember(ctx, groupUUID, memberUUID); err != nil {

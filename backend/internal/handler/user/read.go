@@ -2,15 +2,15 @@ package user
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
+	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/httpx"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/user/responses"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 type getUserService interface {
@@ -35,29 +35,37 @@ type getAllUsersService interface {
 // @Router /users/{uuid} [get]
 func NewGetUserHandler(service getUserService, logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		uuidParam := c.Param("uuid")
-		parsedUUID, err := uuid.Parse(uuidParam)
-		if err != nil {
-			err = fmt.Errorf("get user handler: failed to parse uuid: %v", err)
-			logger.Error("failed to parse uuid", zap.Error(err))
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid uuid format"})
+		userUUID, ok := httpx.ParseUUIDParam(
+			c,
+			logger,
+			"uuid",
+			"get user handler: failed to parse uuid",
+			httpx.RequestContextFields(c)...,
+		)
+		if !ok {
 			return
 		}
 
-		user, err := service.GetByUUID(c.Request.Context(), parsedUUID)
-		if errors.Is(err, domain.ErrUserNotFound) {
-			logger.Warn("user not found", zap.String("uuid", uuidParam))
-			c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
-			return
-		}
-		if errors.Is(err, domain.ErrInternal) {
-			logger.Error("failed to get user", zap.Error(err), zap.String("uuid", uuidParam))
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get user"})
-			return
-		}
-		if err != nil {
-			logger.Error("failed to get user", zap.Error(err), zap.String("uuid", uuidParam))
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get user"})
+		user, err := service.GetByUUID(c.Request.Context(), userUUID)
+		if httpx.HandleError(
+			c,
+			logger,
+			err,
+			httpx.ResponseSpec{
+				Status:     http.StatusInternalServerError,
+				Message:    "failed to get user",
+				LogMessage: "failed to get user",
+				LogLevel:   zapcore.ErrorLevel,
+			},
+			httpx.RequestContextFields(c, zap.String("user_uuid", userUUID.String())),
+			httpx.ResponseSpec{
+				Target:     domain.ErrUserNotFound,
+				Status:     http.StatusNotFound,
+				Message:    "user not found",
+				LogMessage: "user not found",
+				LogLevel:   zapcore.WarnLevel,
+			},
+		) {
 			return
 		}
 
@@ -79,14 +87,18 @@ func NewGetUserHandler(service getUserService, logger *zap.Logger) gin.HandlerFu
 func NewGetAllUsersHandler(service getAllUsersService, logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		users, err := service.GetAll(c.Request.Context())
-		if errors.Is(err, domain.ErrInternal) {
-			logger.Error("failed to get users", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get users"})
-			return
-		}
-		if err != nil {
-			logger.Error("failed to get users", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get users"})
+		if httpx.HandleError(
+			c,
+			logger,
+			err,
+			httpx.ResponseSpec{
+				Status:     http.StatusInternalServerError,
+				Message:    "failed to get users",
+				LogMessage: "failed to get users",
+				LogLevel:   zapcore.ErrorLevel,
+			},
+			httpx.RequestContextFields(c),
+		) {
 			return
 		}
 

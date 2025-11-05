@@ -306,7 +306,7 @@ func TestGroupMemberService_RemoveMember_ForbiddenForNonAuthorRequester(t *testi
 	require.ErrorIs(t, err, domain.ErrForbidden)
 }
 
-func TestGroupMemberService_RemoveMember_ForbiddenWhenRemovingAnotherAuthor(t *testing.T) {
+func TestGroupMemberService_RemoveMember_AllowRemovingAnotherAuthorWhenMultipleAuthors(t *testing.T) {
 	groupID := uuid.New()
 	requesterID := uuid.New()
 	otherAuthorID := uuid.New()
@@ -324,6 +324,10 @@ func TestGroupMemberService_RemoveMember_ForbiddenWhenRemovingAnotherAuthor(t *t
 			}
 			return nil, nil
 		},
+		countMembersWithRoleFn: func(ctx context.Context, gid uuid.UUID, role string) (int, error) {
+			require.Equal(t, domain.GroupRoleAuthor, role)
+			return 2, nil
+		},
 		removeMemberFn: func(ctx context.Context, gid, uid uuid.UUID) error {
 			removeCalled = true
 			return nil
@@ -333,8 +337,8 @@ func TestGroupMemberService_RemoveMember_ForbiddenWhenRemovingAnotherAuthor(t *t
 
 	err := service.RemoveMember(context.Background(), requesterID, groupID, otherAuthorID)
 
-	require.ErrorIs(t, err, domain.ErrForbidden)
-	require.False(t, removeCalled)
+	require.NoError(t, err)
+	require.True(t, removeCalled)
 }
 
 func TestGroupMemberService_RemoveMember_LastAuthorBlocked(t *testing.T) {
@@ -349,6 +353,10 @@ func TestGroupMemberService_RemoveMember_LastAuthorBlocked(t *testing.T) {
 				return &domain.GroupMember{GroupUUID: gid, UserUUID: uid, Role: domain.GroupRoleAuthor}, nil
 			}
 			return nil, nil
+		},
+		countMembersWithRoleFn: func(ctx context.Context, gid uuid.UUID, role string) (int, error) {
+			require.Equal(t, domain.GroupRoleAuthor, role)
+			return 1, nil
 		},
 		removeMemberFn: func(ctx context.Context, gid, uid uuid.UUID) error {
 			return domain.ErrLastAuthor
@@ -378,6 +386,10 @@ func TestGroupMemberService_RemoveMember_Success(t *testing.T) {
 				return &domain.GroupMember{GroupUUID: gid, UserUUID: uid, Role: domain.GroupRoleReviewer}, nil
 			}
 			return nil, nil
+		},
+		countMembersWithRoleFn: func(ctx context.Context, gid uuid.UUID, role string) (int, error) {
+			require.Equal(t, domain.GroupRoleAuthor, role)
+			return 2, nil
 		},
 		removeMemberFn: func(ctx context.Context, gid, uid uuid.UUID) error {
 			require.Equal(t, memberID, uid)

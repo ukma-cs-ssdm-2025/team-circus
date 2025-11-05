@@ -2,14 +2,15 @@ package reg
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
+	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/httpx"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/reg/requests"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 type regService interface {
@@ -45,22 +46,23 @@ func NewRegHandler(service regService, logger *zap.Logger) gin.HandlerFunc {
 		}
 
 		user, err := service.Register(c.Request.Context(), req.Login, req.Email, req.Password)
-		if errors.Is(err, domain.ErrInternal) {
-			logger.Error("failed to register",
-				zap.Error(err),
-				zap.String("login", req.Login),
-				zap.String("email", req.Email),
-			)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to register"})
-			return
-		}
-		if err != nil {
-			logger.Error("failed to register",
-				zap.Error(err),
-				zap.String("login", req.Login),
-				zap.String("email", req.Email),
-			)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to register"})
+		if httpx.HandleError(
+			c,
+			logger,
+			err,
+			httpx.ResponseSpec{
+				Status:     http.StatusInternalServerError,
+				Message:    "failed to register",
+				LogMessage: "failed to register",
+				LogLevel:   zapcore.ErrorLevel,
+			},
+			httpx.RequestContextFields(c),
+			httpx.ResponseSpec{
+				Target:  domain.ErrAlreadyExists,
+				Status:  http.StatusConflict,
+				Message: "user already exists",
+			},
+		) {
 			return
 		}
 

@@ -13,10 +13,19 @@ const LanguageContext = createContext<LanguageContextType | undefined>(
   undefined,
 );
 
+const SUPPORTED_LANGUAGES: readonly Language[] = ["uk", "en"];
+
+const isSupportedLanguage = (value: unknown): value is Language => {
+  return typeof value === "string" && (SUPPORTED_LANGUAGES as readonly string[]).includes(value);
+};
+
 const getStoredLanguage = (): Language => {
   try {
     const stored = localStorage.getItem("mcd_language");
-    return (stored as Language) || "uk";
+    if (isSupportedLanguage(stored)) {
+      return stored;
+    }
+    return "uk";
   } catch (error) {
     console.warn("Не вдалося завантажити мову з localStorage", error);
     return "uk";

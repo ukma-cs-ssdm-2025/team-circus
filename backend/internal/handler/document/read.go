@@ -2,15 +2,15 @@ package document
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/document/responses"
+	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/httpx"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 type getDocumentService interface {
@@ -37,45 +37,47 @@ type getAllDocumentsService interface {
 // @Router /documents/{uuid} [get]
 func NewGetDocumentHandler(service getDocumentService, logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userUUIDValue, exists := c.Get("user_uid")
-		if !exists {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "user context missing"})
-			return
-		}
-
-		userUUID, ok := userUUIDValue.(uuid.UUID)
+		userUUID, ok := httpx.ResolveUserUUID(c)
 		if !ok {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid user context"})
 			return
 		}
 
-		uuidParam := c.Param("uuid")
-		parsedUUID, err := uuid.Parse(uuidParam)
-		if err != nil {
-			err = fmt.Errorf("get document handler: failed to parse uuid: %v", err)
-			logger.Error("failed to parse uuid", zap.Error(err))
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid uuid format"})
+		documentUUID, ok := httpx.ParseUUIDParam(
+			c,
+			logger,
+			"uuid",
+			"get document handler: failed to parse uuid",
+			httpx.RequestContextFields(c)...,
+		)
+		if !ok {
 			return
 		}
 
-		document, err := service.GetByUUIDForUser(c.Request.Context(), parsedUUID, userUUID)
-		if errors.Is(err, domain.ErrDocumentNotFound) {
-			logger.Warn("document not found", zap.String("uuid", uuidParam))
-			c.JSON(http.StatusNotFound, gin.H{"error": "document not found"})
-			return
-		}
-		if errors.Is(err, domain.ErrForbidden) {
-			c.JSON(http.StatusForbidden, gin.H{"error": "access forbidden"})
-			return
-		}
-		if errors.Is(err, domain.ErrInternal) {
-			logger.Error("failed to get document", zap.Error(err), zap.String("uuid", uuidParam))
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get document"})
-			return
-		}
-		if err != nil {
-			logger.Error("failed to get document", zap.Error(err), zap.String("uuid", uuidParam))
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get document"})
+		document, err := service.GetByUUIDForUser(c.Request.Context(), documentUUID, userUUID)
+		if httpx.HandleError(
+			c,
+			logger,
+			err,
+			httpx.ResponseSpec{
+				Status:     http.StatusInternalServerError,
+				Message:    "failed to get document",
+				LogMessage: "failed to get document",
+				LogLevel:   zapcore.ErrorLevel,
+			},
+			httpx.RequestContextFields(c, zap.String("document_uuid", documentUUID.String())),
+			httpx.ResponseSpec{
+				Target:     domain.ErrDocumentNotFound,
+				Status:     http.StatusNotFound,
+				Message:    "document not found",
+				LogMessage: "document not found",
+				LogLevel:   zapcore.WarnLevel,
+			},
+			httpx.ResponseSpec{
+				Target:  domain.ErrForbidden,
+				Status:  http.StatusForbidden,
+				Message: "access forbidden",
+			},
+		) {
 			return
 		}
 
@@ -97,27 +99,24 @@ func NewGetDocumentHandler(service getDocumentService, logger *zap.Logger) gin.H
 // @Router /documents [get]
 func NewGetAllDocumentsHandler(service getAllDocumentsService, logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userUUIDValue, exists := c.Get("user_uid")
-		if !exists {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "user context missing"})
-			return
-		}
-
-		userUUID, ok := userUUIDValue.(uuid.UUID)
+		userUUID, ok := httpx.ResolveUserUUID(c)
 		if !ok {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid user context"})
 			return
 		}
 
 		documents, err := service.GetAllForUser(c.Request.Context(), userUUID)
-		if errors.Is(err, domain.ErrInternal) {
-			logger.Error("failed to get documents", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get documents"})
-			return
-		}
-		if err != nil {
-			logger.Error("failed to get documents", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get documents"})
+		if httpx.HandleError(
+			c,
+			logger,
+			err,
+			httpx.ResponseSpec{
+				Status:     http.StatusInternalServerError,
+				Message:    "failed to get documents",
+				LogMessage: "failed to get documents",
+				LogLevel:   zapcore.ErrorLevel,
+			},
+			httpx.RequestContextFields(c),
+		) {
 			return
 		}
 

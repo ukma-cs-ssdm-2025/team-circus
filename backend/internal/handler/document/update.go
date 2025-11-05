@@ -2,7 +2,6 @@ package document
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -10,7 +9,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/document/requests"
+	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/httpx"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 type updateDocumentService interface {
@@ -34,22 +35,19 @@ type updateDocumentService interface {
 // @Router /documents/{uuid} [put]
 func NewUpdateDocumentHandler(service updateDocumentService, logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userUUIDValue, exists := c.Get("user_uid")
-		if !exists {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "user context missing"})
-			return
-		}
-		userUUID, ok := userUUIDValue.(uuid.UUID)
+		userUUID, ok := httpx.ResolveUserUUID(c)
 		if !ok {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid user context"})
 			return
 		}
-		uuidParam := c.Param("uuid")
-		parsedUUID, err := uuid.Parse(uuidParam)
-		if err != nil {
-			err = fmt.Errorf("update document handler: failed to parse uuid: %v", err)
-			logger.Error("failed to parse uuid", zap.Error(err))
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid uuid format"})
+
+		documentUUID, ok := httpx.ParseUUIDParam(
+			c,
+			logger,
+			"uuid",
+			"update document handler: failed to parse uuid",
+			httpx.RequestContextFields(c)...,
+		)
+		if !ok {
 			return
 		}
 
@@ -68,30 +66,31 @@ func NewUpdateDocumentHandler(service updateDocumentService, logger *zap.Logger)
 			return
 		}
 
-		document, err := service.Update(c.Request.Context(), userUUID, parsedUUID, req.Name, req.Content)
-		if errors.Is(err, domain.ErrDocumentNotFound) {
-			logger.Warn("document not found", zap.String("uuid", uuidParam))
-			c.JSON(http.StatusNotFound, gin.H{"error": "document not found"})
-			return
-		}
-		if errors.Is(err, domain.ErrForbidden) {
-			c.JSON(http.StatusForbidden, gin.H{"error": "access forbidden"})
-			return
-		}
-		if errors.Is(err, domain.ErrInternal) {
-			logger.Error("failed to update document",
-				zap.Error(err),
-				zap.String("uuid", uuidParam),
-			)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update document"})
-			return
-		}
-		if err != nil {
-			logger.Error("failed to update document",
-				zap.Error(err),
-				zap.String("uuid", uuidParam),
-			)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update document"})
+		document, err := service.Update(c.Request.Context(), userUUID, documentUUID, req.Name, req.Content)
+		if httpx.HandleError(
+			c,
+			logger,
+			err,
+			httpx.ResponseSpec{
+				Status:     http.StatusInternalServerError,
+				Message:    "failed to update document",
+				LogMessage: "failed to update document",
+				LogLevel:   zapcore.ErrorLevel,
+			},
+			httpx.RequestContextFields(c, zap.String("document_uuid", documentUUID.String())),
+			httpx.ResponseSpec{
+				Target:     domain.ErrDocumentNotFound,
+				Status:     http.StatusNotFound,
+				Message:    "document not found",
+				LogMessage: "document not found",
+				LogLevel:   zapcore.WarnLevel,
+			},
+			httpx.ResponseSpec{
+				Target:  domain.ErrForbidden,
+				Status:  http.StatusForbidden,
+				Message: "access forbidden",
+			},
+		) {
 			return
 		}
 

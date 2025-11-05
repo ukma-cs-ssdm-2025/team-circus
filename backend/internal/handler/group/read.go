@@ -2,15 +2,15 @@ package group
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/group/responses"
+	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/httpx"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 type getGroupService interface {
@@ -37,43 +37,47 @@ type getAllGroupsService interface {
 // @Router /groups/{uuid} [get]
 func NewGetGroupHandler(service getGroupService, logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userUUIDValue, exists := c.Get("user_uid")
-		if !exists {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "user context missing"})
-			return
-		}
-		userUUID, ok := userUUIDValue.(uuid.UUID)
+		userUUID, ok := httpx.ResolveUserUUID(c)
 		if !ok {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid user context"})
 			return
 		}
 
-		uuidParam := c.Param("uuid")
-		parsedUUID, err := uuid.Parse(uuidParam)
-		if err != nil {
-			err = fmt.Errorf("get group handler: failed to parse uuid: %v", err)
-			logger.Error("failed to parse uuid", zap.Error(err))
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid uuid format"})
+		groupUUID, ok := httpx.ParseUUIDParam(
+			c,
+			logger,
+			"uuid",
+			"get group handler: failed to parse uuid",
+			httpx.RequestContextFields(c)...,
+		)
+		if !ok {
 			return
 		}
 
-		group, err := service.GetByUUIDForUser(c.Request.Context(), parsedUUID, userUUID)
-		if errors.Is(err, domain.ErrGroupNotFound) {
-			logger.Warn("group not found", zap.String("uuid", uuidParam))
-			c.JSON(http.StatusNotFound, gin.H{"error": "group not found"})
-			return
-		}
-		if errors.Is(err, domain.ErrForbidden) {
-			c.JSON(http.StatusForbidden, gin.H{"error": "access forbidden"})
-			return
-		}
-		if errors.Is(err, domain.ErrInternal) {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get group"})
-			return
-		}
-		if err != nil {
-			logger.Error("failed to get group", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get group"})
+		group, err := service.GetByUUIDForUser(c.Request.Context(), groupUUID, userUUID)
+		if httpx.HandleError(
+			c,
+			logger,
+			err,
+			httpx.ResponseSpec{
+				Status:     http.StatusInternalServerError,
+				Message:    "failed to get group",
+				LogMessage: "failed to get group",
+				LogLevel:   zapcore.ErrorLevel,
+			},
+			httpx.RequestContextFields(c, zap.String("group_uuid", groupUUID.String())),
+			httpx.ResponseSpec{
+				Target:     domain.ErrGroupNotFound,
+				Status:     http.StatusNotFound,
+				Message:    "group not found",
+				LogMessage: "group not found",
+				LogLevel:   zapcore.WarnLevel,
+			},
+			httpx.ResponseSpec{
+				Target:  domain.ErrForbidden,
+				Status:  http.StatusForbidden,
+				Message: "access forbidden",
+			},
+		) {
 			return
 		}
 
@@ -95,27 +99,24 @@ func NewGetGroupHandler(service getGroupService, logger *zap.Logger) gin.Handler
 // @Router /groups [get]
 func NewGetAllGroupsHandler(service getAllGroupsService, logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userUUIDValue, exists := c.Get("user_uid")
-		if !exists {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "user context missing"})
-			return
-		}
-
-		userUUID, ok := userUUIDValue.(uuid.UUID)
+		userUUID, ok := httpx.ResolveUserUUID(c)
 		if !ok {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid user context"})
 			return
 		}
 
 		groups, err := service.GetAllForUser(c.Request.Context(), userUUID)
-		if errors.Is(err, domain.ErrInternal) {
-			logger.Error("failed to get groups", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get groups"})
-			return
-		}
-		if err != nil {
-			logger.Error("failed to get groups", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get groups"})
+		if httpx.HandleError(
+			c,
+			logger,
+			err,
+			httpx.ResponseSpec{
+				Status:     http.StatusInternalServerError,
+				Message:    "failed to get groups",
+				LogMessage: "failed to get groups",
+				LogLevel:   zapcore.ErrorLevel,
+			},
+			httpx.RequestContextFields(c),
+		) {
 			return
 		}
 

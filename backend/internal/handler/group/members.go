@@ -2,7 +2,6 @@ package group
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -11,7 +10,9 @@ import (
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/group/requests"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/group/responses"
+	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/httpx"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 type listGroupMembersService interface {
@@ -64,23 +65,34 @@ func mapMembersToResponse(members []*domain.GroupMember) []responses.GroupMember
 // @Router /groups/{uuid}/members [get]
 func NewListGroupMembersHandler(service listGroupMembersService, logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userUUID, groupUUID, ok := resolveContextAndGroup(c)
+		userUUID, groupUUID, ok := resolveContextAndGroup(c, logger)
 		if !ok {
 			return
 		}
 
 		members, err := service.ListMembers(c.Request.Context(), userUUID, groupUUID)
-		if errors.Is(err, domain.ErrForbidden) {
-			c.JSON(http.StatusForbidden, gin.H{"error": "access forbidden"})
-			return
-		}
-		if errors.Is(err, domain.ErrGroupNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "group not found"})
-			return
-		}
-		if err != nil {
-			logger.Error("failed to list group members", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to list members"})
+		if httpx.HandleError(
+			c,
+			logger,
+			err,
+			httpx.ResponseSpec{
+				Status:     http.StatusInternalServerError,
+				Message:    "failed to list members",
+				LogMessage: "failed to list group members",
+				LogLevel:   zapcore.ErrorLevel,
+			},
+			httpx.RequestContextFields(c, zap.String("group_uuid", groupUUID.String())),
+			httpx.ResponseSpec{
+				Target:  domain.ErrForbidden,
+				Status:  http.StatusForbidden,
+				Message: "access forbidden",
+			},
+			httpx.ResponseSpec{
+				Target:  domain.ErrGroupNotFound,
+				Status:  http.StatusNotFound,
+				Message: "group not found",
+			},
+		) {
 			return
 		}
 
@@ -110,7 +122,7 @@ func NewListGroupMembersHandler(service listGroupMembersService, logger *zap.Log
 // @Router /groups/{uuid}/members [post]
 func NewAddGroupMemberHandler(service addGroupMemberService, logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userUUID, groupUUID, ok := resolveContextAndGroup(c)
+		userUUID, groupUUID, ok := resolveContextAndGroup(c, logger)
 		if !ok {
 			return
 		}
@@ -130,29 +142,48 @@ func NewAddGroupMemberHandler(service addGroupMemberService, logger *zap.Logger)
 		}
 
 		member, err := service.AddMember(c.Request.Context(), userUUID, groupUUID, req.UserUUID, req.Role)
-		if errors.Is(err, domain.ErrForbidden) {
-			c.JSON(http.StatusForbidden, gin.H{"error": "access forbidden"})
-			return
-		}
-		if errors.Is(err, domain.ErrUserNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
-			return
-		}
-		if errors.Is(err, domain.ErrSelfAddNotAllowed) {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "cannot add yourself"})
-			return
-		}
-		if errors.Is(err, domain.ErrAlreadyExists) {
-			c.JSON(http.StatusConflict, gin.H{"error": "member already exists"})
-			return
-		}
-		if errors.Is(err, domain.ErrInvalidRole) {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid role"})
-			return
-		}
-		if err != nil {
-			logger.Error("failed to add group member", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to add member"})
+		if httpx.HandleError(
+			c,
+			logger,
+			err,
+			httpx.ResponseSpec{
+				Status:     http.StatusInternalServerError,
+				Message:    "failed to add member",
+				LogMessage: "failed to add group member",
+				LogLevel:   zapcore.ErrorLevel,
+			},
+			httpx.RequestContextFields(c, zap.String("group_uuid", groupUUID.String()), zap.String("member_uuid", req.UserUUID.String())),
+			httpx.ResponseSpec{
+				Target:  domain.ErrForbidden,
+				Status:  http.StatusForbidden,
+				Message: "access forbidden",
+			},
+			httpx.ResponseSpec{
+				Target:  domain.ErrGroupNotFound,
+				Status:  http.StatusNotFound,
+				Message: "group not found",
+			},
+			httpx.ResponseSpec{
+				Target:  domain.ErrUserNotFound,
+				Status:  http.StatusNotFound,
+				Message: "user not found",
+			},
+			httpx.ResponseSpec{
+				Target:  domain.ErrSelfAddNotAllowed,
+				Status:  http.StatusBadRequest,
+				Message: "cannot add yourself",
+			},
+			httpx.ResponseSpec{
+				Target:  domain.ErrAlreadyExists,
+				Status:  http.StatusConflict,
+				Message: "member already exists",
+			},
+			httpx.ResponseSpec{
+				Target:  domain.ErrInvalidRole,
+				Status:  http.StatusBadRequest,
+				Message: "invalid role",
+			},
+		) {
 			return
 		}
 
@@ -179,17 +210,19 @@ func NewAddGroupMemberHandler(service addGroupMemberService, logger *zap.Logger)
 // @Router /groups/{uuid}/members/{user_uuid} [put]
 func NewUpdateGroupMemberHandler(service updateGroupMemberService, logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userUUID, groupUUID, ok := resolveContextAndGroup(c)
+		userUUID, groupUUID, ok := resolveContextAndGroup(c, logger)
 		if !ok {
 			return
 		}
 
-		memberUUIDParam := c.Param("user_uuid")
-		memberUUID, err := uuid.Parse(memberUUIDParam)
-		if err != nil {
-			err = fmt.Errorf("update member handler: failed to parse member uuid: %w", err)
-			logger.Error("failed to parse member uuid", zap.Error(err))
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid uuid format"})
+		memberUUID, ok := httpx.ParseUUIDParam(
+			c,
+			logger,
+			"user_uuid",
+			"update member handler: failed to parse member uuid",
+			httpx.RequestContextFields(c, zap.String("group_uuid", groupUUID.String()))...,
+		)
+		if !ok {
 			return
 		}
 
@@ -208,25 +241,43 @@ func NewUpdateGroupMemberHandler(service updateGroupMemberService, logger *zap.L
 		}
 
 		member, err := service.UpdateMemberRole(c.Request.Context(), userUUID, groupUUID, memberUUID, req.Role)
-		if errors.Is(err, domain.ErrForbidden) {
-			c.JSON(http.StatusForbidden, gin.H{"error": "access forbidden"})
-			return
-		}
-		if errors.Is(err, domain.ErrUserNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "member not found"})
-			return
-		}
-		if errors.Is(err, domain.ErrInvalidRole) {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid role"})
-			return
-		}
-		if errors.Is(err, domain.ErrLastAuthor) {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "cannot change the last author"})
-			return
-		}
-		if err != nil {
-			logger.Error("failed to update member role", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update member"})
+		if httpx.HandleError(
+			c,
+			logger,
+			err,
+			httpx.ResponseSpec{
+				Status:     http.StatusInternalServerError,
+				Message:    "failed to update member",
+				LogMessage: "failed to update member role",
+				LogLevel:   zapcore.ErrorLevel,
+			},
+			httpx.RequestContextFields(c, zap.String("group_uuid", groupUUID.String()), zap.String("member_uuid", memberUUID.String())),
+			httpx.ResponseSpec{
+				Target:  domain.ErrForbidden,
+				Status:  http.StatusForbidden,
+				Message: "access forbidden",
+			},
+			httpx.ResponseSpec{
+				Target:  domain.ErrGroupNotFound,
+				Status:  http.StatusNotFound,
+				Message: "group not found",
+			},
+			httpx.ResponseSpec{
+				Target:  domain.ErrUserNotFound,
+				Status:  http.StatusNotFound,
+				Message: "member not found",
+			},
+			httpx.ResponseSpec{
+				Target:  domain.ErrInvalidRole,
+				Status:  http.StatusBadRequest,
+				Message: "invalid role",
+			},
+			httpx.ResponseSpec{
+				Target:  domain.ErrLastAuthor,
+				Status:  http.StatusBadRequest,
+				Message: "cannot change the last author",
+			},
+		) {
 			return
 		}
 
@@ -252,36 +303,55 @@ func NewUpdateGroupMemberHandler(service updateGroupMemberService, logger *zap.L
 // @Router /groups/{uuid}/members/{user_uuid} [delete]
 func NewRemoveGroupMemberHandler(service removeGroupMemberService, logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userUUID, groupUUID, ok := resolveContextAndGroup(c)
+		userUUID, groupUUID, ok := resolveContextAndGroup(c, logger)
 		if !ok {
 			return
 		}
 
-		memberUUIDParam := c.Param("user_uuid")
-		memberUUID, err := uuid.Parse(memberUUIDParam)
-		if err != nil {
-			err = fmt.Errorf("remove member handler: failed to parse member uuid: %w", err)
-			logger.Error("failed to parse member uuid", zap.Error(err))
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid uuid format"})
+		memberUUID, ok := httpx.ParseUUIDParam(
+			c,
+			logger,
+			"user_uuid",
+			"remove member handler: failed to parse member uuid",
+			httpx.RequestContextFields(c, zap.String("group_uuid", groupUUID.String()))...,
+		)
+		if !ok {
 			return
 		}
 
-		err = service.RemoveMember(c.Request.Context(), userUUID, groupUUID, memberUUID)
-		if errors.Is(err, domain.ErrForbidden) {
-			c.JSON(http.StatusForbidden, gin.H{"error": "access forbidden"})
-			return
-		}
-		if errors.Is(err, domain.ErrUserNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "member not found"})
-			return
-		}
-		if errors.Is(err, domain.ErrLastAuthor) {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "cannot remove the last author"})
-			return
-		}
-		if err != nil {
-			logger.Error("failed to remove group member", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to remove member"})
+		err := service.RemoveMember(c.Request.Context(), userUUID, groupUUID, memberUUID)
+		if httpx.HandleError(
+			c,
+			logger,
+			err,
+			httpx.ResponseSpec{
+				Status:     http.StatusInternalServerError,
+				Message:    "failed to remove member",
+				LogMessage: "failed to remove group member",
+				LogLevel:   zapcore.ErrorLevel,
+			},
+			httpx.RequestContextFields(c, zap.String("group_uuid", groupUUID.String()), zap.String("member_uuid", memberUUID.String())),
+			httpx.ResponseSpec{
+				Target:  domain.ErrForbidden,
+				Status:  http.StatusForbidden,
+				Message: "access forbidden",
+			},
+			httpx.ResponseSpec{
+				Target:  domain.ErrGroupNotFound,
+				Status:  http.StatusNotFound,
+				Message: "group not found",
+			},
+			httpx.ResponseSpec{
+				Target:  domain.ErrUserNotFound,
+				Status:  http.StatusNotFound,
+				Message: "member not found",
+			},
+			httpx.ResponseSpec{
+				Target:  domain.ErrLastAuthor,
+				Status:  http.StatusBadRequest,
+				Message: "cannot remove the last author",
+			},
+		) {
 			return
 		}
 
@@ -289,23 +359,20 @@ func NewRemoveGroupMemberHandler(service removeGroupMemberService, logger *zap.L
 	}
 }
 
-func resolveContextAndGroup(c *gin.Context) (uuid.UUID, uuid.UUID, bool) {
-	userUUIDValue, exists := c.Get("user_uid")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "user context missing"})
-		return uuid.Nil, uuid.Nil, false
-	}
-
-	userUUID, ok := userUUIDValue.(uuid.UUID)
+func resolveContextAndGroup(c *gin.Context, logger *zap.Logger) (uuid.UUID, uuid.UUID, bool) {
+	userUUID, ok := httpx.ResolveUserUUID(c)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid user context"})
 		return uuid.Nil, uuid.Nil, false
 	}
 
-	groupUUIDParam := c.Param("uuid")
-	groupUUID, err := uuid.Parse(groupUUIDParam)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid uuid format"})
+	groupUUID, ok := httpx.ParseUUIDParam(
+		c,
+		logger,
+		"uuid",
+		"group handler: failed to parse group uuid",
+		httpx.RequestContextFields(c)...,
+	)
+	if !ok {
 		return uuid.Nil, uuid.Nil, false
 	}
 
