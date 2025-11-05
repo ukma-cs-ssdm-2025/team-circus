@@ -1,24 +1,24 @@
-# SonarCloud Результати
+# Звіт результатів SonarCloud
 
-## До: 
-![](sonar-before1.png)
+## До рефакторингу
+![SonarCloud metrics before initial cleanup](sonar-before1.png)
 
-### Трошки почистивши False Positive's, маємо наступне:
-![](sonar-before2.png)
+### Трохи почистивши False Positives, маємо наступне:
+![SonarCloud metrics after false positives cleanup](sonar-before2.png)
 
-## Після:
-![](sonar-after.png)
+## Після рефакторингу
+![SonarCloud metrics after refactoring](sonar-after.png)
 
 ## Обрані метрики:
-| Метрика           | До    | Після |
-| ----------------- | ----- | ----- |
-| Reliability       | 2, C  |   -   |
-| Maintainability   | 33, A |   -   |
-| Security Hotspots | 7     |   -   |
-| Duplications      | 6.9%  |   -   |
+
+| Метрика             | До     | Після |
+|---------------------|--------|:-----:|
+| Reliability         | 2, C   |   –   |
+| Maintainability     | 33, A  |   –   |
+| Security Hotspots   | 7      |   –   |
 
 ### Застосовувались наступні патерни: 
-- **Replace Magic Number** – прибрали магічні числа, що стосувались секретного ключа та термінів придатності JSON Web токенів
+- **Replace Magic Number** – прибрано магічні числа, що стосувалися секретного ключа та термінів придатності JSON Web Token
 
 ## Регресія:
 ![](image.png)
