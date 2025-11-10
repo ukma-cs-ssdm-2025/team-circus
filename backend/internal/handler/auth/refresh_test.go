@@ -52,7 +52,6 @@ func TestNewRefreshTokenHandler(t *testing.T) {
 		cookies := w.Result().Cookies()
 		assert.NotNil(t, testutil.CookieByName(cookies, "accessToken"))
 		assert.NotNil(t, testutil.CookieByName(cookies, "refreshToken"))
-
 	})
 
 	t.Run("FailureCases", func(t *testing.T) {

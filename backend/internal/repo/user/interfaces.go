@@ -9,7 +9,7 @@ import (
 
 // Repository describes the storage contract for users.
 //
-//go:generate go run github.com/golang/mock/mockgen -destination=../../mocks/mock_user_repository.go -package=mocks github.com/ukma-cs-ssdm-2025/team-circus/internal/repo/user Repository
+//go:generate go run github.com/golang/mock/mockgen -destination=../../mocks/mock_user_repository.go -package=mocks . Repository
 type Repository interface {
 	GetByUUID(ctx context.Context, uuid uuid.UUID) (*domain.User, error)
 	GetByLogin(ctx context.Context, login string) (*domain.User, error)

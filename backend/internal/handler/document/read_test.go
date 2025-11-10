@@ -120,9 +120,7 @@ func TestNewGetDocumentHandler(main *testing.T) {
 				setupMock: func(m *mockGetDocumentService, documentUUID, userUUID uuid.UUID) {
 					m.On("GetByUUIDForUser", mock.Anything, documentUUID, userUUID).Return(nil, domain.ErrDocumentNotFound)
 				},
-				buildContext: func(t *testing.T, documentUUID, userUUID uuid.UUID) (*gin.Context, *httptest.ResponseRecorder) {
-					return authedDocumentContext(t, documentUUID, userUUID)
-				},
+				buildContext:  authedDocumentContext,
 				expectedCode:  http.StatusNotFound,
 				expectedError: "document not found",
 				expectCall:    true,
@@ -132,9 +130,7 @@ func TestNewGetDocumentHandler(main *testing.T) {
 				setupMock: func(m *mockGetDocumentService, documentUUID, userUUID uuid.UUID) {
 					m.On("GetByUUIDForUser", mock.Anything, documentUUID, userUUID).Return(nil, domain.ErrInternal)
 				},
-				buildContext: func(t *testing.T, documentUUID, userUUID uuid.UUID) (*gin.Context, *httptest.ResponseRecorder) {
-					return authedDocumentContext(t, documentUUID, userUUID)
-				},
+				buildContext:  authedDocumentContext,
 				expectedCode:  http.StatusInternalServerError,
 				expectedError: "failed to get document",
 				expectCall:    true,
@@ -144,9 +140,7 @@ func TestNewGetDocumentHandler(main *testing.T) {
 				setupMock: func(m *mockGetDocumentService, documentUUID, userUUID uuid.UUID) {
 					m.On("GetByUUIDForUser", mock.Anything, documentUUID, userUUID).Return(nil, errors.New("database connection failed"))
 				},
-				buildContext: func(t *testing.T, documentUUID, userUUID uuid.UUID) (*gin.Context, *httptest.ResponseRecorder) {
-					return authedDocumentContext(t, documentUUID, userUUID)
-				},
+				buildContext:  authedDocumentContext,
 				expectedCode:  http.StatusInternalServerError,
 				expectedError: "failed to get document",
 				expectCall:    true,
@@ -156,9 +150,7 @@ func TestNewGetDocumentHandler(main *testing.T) {
 				setupMock: func(m *mockGetDocumentService, documentUUID, userUUID uuid.UUID) {
 					m.On("GetByUUIDForUser", mock.Anything, documentUUID, userUUID).Return(nil, domain.ErrForbidden)
 				},
-				buildContext: func(t *testing.T, documentUUID, userUUID uuid.UUID) (*gin.Context, *httptest.ResponseRecorder) {
-					return authedDocumentContext(t, documentUUID, userUUID)
-				},
+				buildContext:  authedDocumentContext,
 				expectedCode:  http.StatusForbidden,
 				expectedError: "access forbidden",
 				expectCall:    true,
