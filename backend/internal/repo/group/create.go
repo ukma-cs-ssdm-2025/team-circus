@@ -5,13 +5,14 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 )
 
 func (r *GroupRepository) Create(ctx context.Context, name string) (*domain.Group, error) {
 	query := `
-		INSERT INTO groups (name) 
-		VALUES ($1) 
+		INSERT INTO groups (name)
+		VALUES ($1)
 		RETURNING uuid, name, created_at`
 
 	var group domain.Group
@@ -25,4 +26,16 @@ func (r *GroupRepository) Create(ctx context.Context, name string) (*domain.Grou
 	}
 
 	return &group, nil
+}
+
+func (r *GroupRepository) AddMember(ctx context.Context, groupUUID, userUUID uuid.UUID, role string) error {
+	const query = `
+		INSERT INTO user_groups (user_uuid, group_uuid, role)
+		VALUES ($1, $2, $3)`
+
+	if _, err := r.db.ExecContext(ctx, query, userUUID, groupUUID, role); err != nil {
+		return errors.Join(domain.ErrInternal, fmt.Errorf("group repository: addMember: %w", err))
+	}
+
+	return nil
 }

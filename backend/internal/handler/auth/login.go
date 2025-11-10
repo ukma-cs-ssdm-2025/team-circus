@@ -44,7 +44,7 @@ func NewLogInHandler(userRepo userRepository, logger *zap.Logger) gin.HandlerFun
 			return
 		}
 
-		user, err := userRepo.GetByLogin(c, req.Login)
+		user, err := userRepo.GetByLogin(c.Request.Context(), req.Login)
 		if errors.Is(err, domain.ErrInternal) {
 			logger.Error("failed to log in", zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to log in"})

@@ -24,8 +24,8 @@ type mockCreateDocumentService struct {
 	mock.Mock
 }
 
-func (m *mockCreateDocumentService) Create(ctx context.Context, groupUUID uuid.UUID, name, content string) (*domain.Document, error) {
-	args := m.Called(ctx, groupUUID, name, content)
+func (m *mockCreateDocumentService) Create(ctx context.Context, userUUID, groupUUID uuid.UUID, name, content string) (*domain.Document, error) {
+	args := m.Called(ctx, userUUID, groupUUID, name, content)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -49,6 +49,7 @@ func TestNewCreateDocumentHandler(main *testing.T) {
 		mockService, handler := setup(t)
 
 		groupUUID := uuid.New()
+		userUUID := uuid.New()
 		expectedDocument := &domain.Document{
 			UUID:      uuid.New(),
 			GroupUUID: groupUUID,
@@ -57,7 +58,7 @@ func TestNewCreateDocumentHandler(main *testing.T) {
 			CreatedAt: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
 		}
 
-		mockService.On("Create", mock.Anything, groupUUID, "Test Document", "This is test content").
+		mockService.On("Create", mock.Anything, userUUID, groupUUID, "Test Document", "This is test content").
 			Return(expectedDocument, nil)
 
 		requestBody := requests.CreateDocumentRequest{
@@ -75,6 +76,7 @@ func TestNewCreateDocumentHandler(main *testing.T) {
 
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
+		c.Set("user_uid", userUUID)
 
 		// Act
 		handler(c)
@@ -91,11 +93,37 @@ func TestNewCreateDocumentHandler(main *testing.T) {
 		mockService.AssertExpectations(t)
 	})
 
+	main.Run("MissingUserContext", func(t *testing.T) {
+		mockService, handler := setup(t)
+
+		requestBody := requests.CreateDocumentRequest{
+			GroupUUID: uuid.New(),
+			Name:      "Test Document",
+			Content:   "This is test content",
+		}
+
+		jsonBody, err := json.Marshal(requestBody)
+		assert.NoError(t, err)
+
+		req := httptest.NewRequest("POST", "/documents", bytes.NewBuffer(jsonBody))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+
+		c, _ := gin.CreateTestContext(w)
+		c.Request = req
+
+		handler(c)
+
+		assert.Equal(t, http.StatusUnauthorized, w.Code)
+		mockService.AssertNotCalled(t, "Create")
+	})
+
 	main.Run("InvalidJSON", func(t *testing.T) {
 		// Arrange
 		mockService, handler := setup(t)
 
 		invalidJSON := `{"group_uuid": "123e4567-e89b-12d3-a456-426614174000", "name": "Test Document", "content": "This is test content"` //nolint:revive
+		userUUID := uuid.New()
 
 		req := httptest.NewRequest("POST", "/documents", bytes.NewBufferString(invalidJSON))
 		req.Header.Set("Content-Type", "application/json")
@@ -103,6 +131,7 @@ func TestNewCreateDocumentHandler(main *testing.T) {
 
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
+		c.Set("user_uid", userUUID)
 
 		// Act
 		handler(c)
@@ -122,6 +151,7 @@ func TestNewCreateDocumentHandler(main *testing.T) {
 		// Arrange
 		mockService, handler := setup(t)
 
+		userUUID := uuid.New()
 		requestBody := requests.CreateDocumentRequest{
 			GroupUUID: uuid.New(),
 			Name:      "", // Empty name should fail validation
@@ -137,6 +167,7 @@ func TestNewCreateDocumentHandler(main *testing.T) {
 
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
+		c.Set("user_uid", userUUID)
 
 		// Act
 		handler(c)
@@ -158,7 +189,8 @@ func TestNewCreateDocumentHandler(main *testing.T) {
 		mockService, handler := setup(t)
 
 		groupUUID := uuid.New()
-		mockService.On("Create", mock.Anything, groupUUID, "Test Document", "This is test content").
+		userUUID := uuid.New()
+		mockService.On("Create", mock.Anything, userUUID, groupUUID, "Test Document", "This is test content").
 			Return(nil, domain.ErrInternal)
 
 		requestBody := requests.CreateDocumentRequest{
@@ -176,6 +208,7 @@ func TestNewCreateDocumentHandler(main *testing.T) {
 
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
+		c.Set("user_uid", userUUID)
 
 		// Act
 		handler(c)
@@ -196,7 +229,8 @@ func TestNewCreateDocumentHandler(main *testing.T) {
 		mockService, handler := setup(t)
 
 		groupUUID := uuid.New()
-		mockService.On("Create", mock.Anything, groupUUID, "Test Document", "This is test content").
+		userUUID := uuid.New()
+		mockService.On("Create", mock.Anything, userUUID, groupUUID, "Test Document", "This is test content").
 			Return(nil, errors.New("database connection failed"))
 
 		requestBody := requests.CreateDocumentRequest{
@@ -214,6 +248,7 @@ func TestNewCreateDocumentHandler(main *testing.T) {
 
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
+		c.Set("user_uid", userUUID)
 
 		// Act
 		handler(c)
@@ -233,6 +268,8 @@ func TestNewCreateDocumentHandler(main *testing.T) {
 		// Arrange
 		mockService, handler := setup(t)
 
+		userUUID := uuid.New()
+
 		// Send invalid JSON without Content-Type
 		req := httptest.NewRequest("POST", "/documents", bytes.NewBufferString("invalid json"))
 		// Don't set Content-Type header
@@ -240,6 +277,7 @@ func TestNewCreateDocumentHandler(main *testing.T) {
 
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
+		c.Set("user_uid", userUUID)
 
 		// Act
 		handler(c)
