@@ -14,7 +14,7 @@ import (
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/document"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/document/requests"
-	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/testutil"
+	"github.com/ukma-cs-ssdm-2025/team-circus/internal/testutil"
 	"go.uber.org/zap"
 )
 

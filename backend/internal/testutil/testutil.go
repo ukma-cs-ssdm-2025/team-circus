@@ -62,6 +62,27 @@ func CookieByName(cookies []*http.Cookie, name string) *http.Cookie {
 	return nil
 }
 
+// PerformRequest executes a request against the provided router and returns the recorder.
+func PerformRequest(t *testing.T, router *gin.Engine, method, path string, body interface{}) *httptest.ResponseRecorder {
+	t.Helper()
+
+	var payload []byte
+	var err error
+	if body != nil {
+		payload, err = json.Marshal(body)
+		require.NoError(t, err)
+	}
+
+	req := httptest.NewRequest(method, path, bytes.NewReader(payload))
+	if body != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
+
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	return w
+}
+
 func buildContext(req *http.Request) (*gin.Context, *httptest.ResponseRecorder) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)

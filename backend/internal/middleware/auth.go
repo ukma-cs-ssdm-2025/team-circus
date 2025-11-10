@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -12,13 +11,10 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
+	userrepo "github.com/ukma-cs-ssdm-2025/team-circus/internal/repo/user"
 )
 
-type userRepository interface {
-	GetByUUID(ctx context.Context, uuid uuid.UUID) (*domain.User, error)
-}
-
-func AuthMiddleware(userRepo userRepository, secretToken string) gin.HandlerFunc {
+func AuthMiddleware(userRepo userrepo.Repository, secretToken string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tokenString, err := c.Cookie("accessToken")
 		if err != nil || tokenString == "" {

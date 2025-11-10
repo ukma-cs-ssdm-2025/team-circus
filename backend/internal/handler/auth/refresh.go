@@ -10,6 +10,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
+	userrepo "github.com/ukma-cs-ssdm-2025/team-circus/internal/repo/user"
 	"go.uber.org/zap"
 )
 
@@ -23,7 +24,7 @@ import (
 // @Failure 401 {object} map[string]string "Invalid or expired refresh token"
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /auth/refresh [post]
-func NewRefreshTokenHandler(userRepo userRepository, logger *zap.Logger, secretToken string, accessDur int) gin.HandlerFunc {
+func NewRefreshTokenHandler(userRepo userrepo.Repository, logger *zap.Logger, secretToken string, accessDur int) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// var req requests.RefreshTokenRequest
 		// if err := c.ShouldBindJSON(&req); err != nil {

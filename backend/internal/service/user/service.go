@@ -1,14 +1,12 @@
 package user
 
-import (
-	"github.com/ukma-cs-ssdm-2025/team-circus/internal/repo/user"
-)
+import "github.com/ukma-cs-ssdm-2025/team-circus/internal/repo/user"
 
 type UserService struct {
-	repo *user.UserRepository
+	repo user.Repository
 }
 
-func NewUserService(repo *user.UserRepository) *UserService {
+func NewUserService(repo user.Repository) *UserService {
 	return &UserService{
 		repo: repo,
 	}

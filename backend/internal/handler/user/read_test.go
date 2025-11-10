@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
-	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/testutil"
+	"github.com/ukma-cs-ssdm-2025/team-circus/internal/testutil"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/user"
 	"go.uber.org/zap"
 )

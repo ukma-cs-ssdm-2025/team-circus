@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -9,17 +8,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/google/uuid"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/auth/requests"
+	userrepo "github.com/ukma-cs-ssdm-2025/team-circus/internal/repo/user"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 )
-
-type userRepository interface {
-	GetByLogin(ctx context.Context, login string) (*domain.User, error)
-	GetByUUID(ctx context.Context, uuid uuid.UUID) (*domain.User, error)
-}
 
 // NewLogInHandler handles user login and saves JWT tokens in cookies.
 // @Summary User login
@@ -33,7 +27,7 @@ type userRepository interface {
 // @Failure 401 {object} map[string]string "Invalid credentials"
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /auth/login [post]
-func NewLogInHandler(userRepo userRepository, logger *zap.Logger, secretToken string, accessDur, refreshDur int) gin.HandlerFunc {
+func NewLogInHandler(userRepo userrepo.Repository, logger *zap.Logger, secretToken string, accessDur, refreshDur int) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req requests.LogInRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
@@ -43,7 +37,7 @@ func NewLogInHandler(userRepo userRepository, logger *zap.Logger, secretToken st
 			return
 		}
 
-		user, err := userRepo.GetByLogin(c, req.Login)
+		user, err := userRepo.GetByLogin(c.Request.Context(), req.Login)
 		if errors.Is(err, domain.ErrInternal) {
 			logger.Error("failed to log in", zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to log in"})

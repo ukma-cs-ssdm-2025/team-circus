@@ -1,7 +1,6 @@
 package auth_test
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -9,42 +8,32 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/auth"
-	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/testutil"
+	"github.com/ukma-cs-ssdm-2025/team-circus/internal/mocks"
+	"github.com/ukma-cs-ssdm-2025/team-circus/internal/testutil"
 	"go.uber.org/zap"
 )
 
-type mockUserRepository struct {
-	mock.Mock
-}
-
 const refreshEndpoint = "/auth/refresh"
-
-func (m *mockUserRepository) GetByLogin(ctx context.Context, login string) (*domain.User, error) {
-	panic("not implemented")
-}
-
-func (m *mockUserRepository) GetByUUID(ctx context.Context, id uuid.UUID) (*domain.User, error) {
-	args := m.Called(ctx, id)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*domain.User), args.Error(1) //nolint:errcheck
-}
 
 func TestNewRefreshTokenHandler(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	t.Run("Successful refresh", func(t *testing.T) {
-		repo := new(mockUserRepository)
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		repo := mocks.NewMockRepository(ctrl)
 		handler := auth.NewRefreshTokenHandler(repo, zap.NewNop(), "test-secret-key", 10)
 
 		userID := uuid.New()
-		repo.On("GetByUUID", mock.Anything, userID).Return(&domain.User{UUID: userID}, nil)
+		repo.EXPECT().
+			GetByUUID(gomock.Any(), userID).
+			Return(&domain.User{UUID: userID}, nil)
 
 		refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
 			Subject:   userID.String(),
@@ -64,7 +53,6 @@ func TestNewRefreshTokenHandler(t *testing.T) {
 		assert.NotNil(t, testutil.CookieByName(cookies, "accessToken"))
 		assert.NotNil(t, testutil.CookieByName(cookies, "refreshToken"))
 
-		repo.AssertExpectations(t)
 	})
 
 	t.Run("FailureCases", func(t *testing.T) {
@@ -74,7 +62,7 @@ func TestNewRefreshTokenHandler(t *testing.T) {
 			name         string
 			buildContext refreshContextGen
 			expectedCode int
-			setupHandler func() gin.HandlerFunc
+			setupHandler func(ctrl *gomock.Controller) gin.HandlerFunc
 		}{
 			{
 				name: "Missing refresh cookie",
@@ -116,22 +104,25 @@ func TestNewRefreshTokenHandler(t *testing.T) {
 					return c, w
 				},
 				expectedCode: http.StatusInternalServerError,
-				setupHandler: func() gin.HandlerFunc {
-					return auth.NewRefreshTokenHandler(new(mockUserRepository), zap.NewNop(), "", 10)
+				setupHandler: func(ctrl *gomock.Controller) gin.HandlerFunc {
+					return auth.NewRefreshTokenHandler(mocks.NewMockRepository(ctrl), zap.NewNop(), "", 10)
 				},
 			},
 		}
 
 		for _, tc := range cases {
 			t.Run(tc.name, func(t *testing.T) {
+				ctrl := gomock.NewController(t)
+				defer ctrl.Finish()
+
 				handlerFactory := tc.setupHandler
 				if handlerFactory == nil {
-					handlerFactory = func() gin.HandlerFunc {
-						return auth.NewRefreshTokenHandler(new(mockUserRepository), zap.NewNop(), "test-secret-key", 10)
+					handlerFactory = func(ctrl *gomock.Controller) gin.HandlerFunc {
+						return auth.NewRefreshTokenHandler(mocks.NewMockRepository(ctrl), zap.NewNop(), "test-secret-key", 10)
 					}
 				}
 
-				h := handlerFactory()
+				h := handlerFactory(ctrl)
 				c, w := tc.buildContext(t)
 
 				h(c)
