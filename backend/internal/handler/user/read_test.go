@@ -2,10 +2,9 @@ package user_test
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -14,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
+	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/testutil"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/user"
 	"go.uber.org/zap"
 )
@@ -33,6 +33,8 @@ func (m *mockGetUserService) GetByUUID(ctx context.Context, uuid uuid.UUID) (*do
 type MockGetAllUsersService struct {
 	mock.Mock
 }
+
+const usersEndpoint = "/users"
 
 func (m *MockGetAllUsersService) GetAll(ctx context.Context) ([]*domain.User, error) {
 	args := m.Called(ctx)
@@ -69,11 +71,7 @@ func TestNewGetUserHandler(t *testing.T) {
 
 		mockService.On("GetByUUID", mock.Anything, userUUID).Return(expectedUser, nil)
 
-		req := httptest.NewRequest("GET", "/users/"+userUUID.String(), nil)
-		w := httptest.NewRecorder()
-
-		c, _ := gin.CreateTestContext(w)
-		c.Request = req
+		c, w := testutil.NewRequestContext(t, http.MethodGet, fmt.Sprintf("%s/%s", usersEndpoint, userUUID))
 		c.Params = gin.Params{{Key: "uuid", Value: userUUID.String()}}
 
 		// Act
@@ -82,9 +80,7 @@ func TestNewGetUserHandler(t *testing.T) {
 		// Assert
 		assert.Equal(t, http.StatusOK, w.Code)
 
-		var response map[string]interface{}
-		err := json.Unmarshal(w.Body.Bytes(), &response)
-		assert.NoError(t, err)
+		response := testutil.DecodeResponse(t, w)
 		assert.Equal(t, "testuser", response["login"])
 		assert.Equal(t, "test@example.com", response["email"])
 
@@ -95,11 +91,7 @@ func TestNewGetUserHandler(t *testing.T) {
 		// Arrange
 		mockService, handler := setup(t)
 
-		req := httptest.NewRequest("GET", "/users/invalid-uuid", nil)
-		w := httptest.NewRecorder()
-
-		c, _ := gin.CreateTestContext(w)
-		c.Request = req
+		c, w := testutil.NewRequestContext(t, http.MethodGet, fmt.Sprintf("%s/%s", usersEndpoint, "invalid-uuid"))
 		c.Params = gin.Params{{Key: "uuid", Value: "invalid-uuid"}}
 
 		// Act
@@ -108,9 +100,7 @@ func TestNewGetUserHandler(t *testing.T) {
 		// Assert
 		assert.Equal(t, http.StatusBadRequest, w.Code)
 
-		var response map[string]interface{}
-		err := json.Unmarshal(w.Body.Bytes(), &response)
-		assert.NoError(t, err)
+		response := testutil.DecodeResponse(t, w)
 		assert.Equal(t, "invalid uuid format", response["error"])
 
 		mockService.AssertNotCalled(t, "GetByUUID")
@@ -123,11 +113,7 @@ func TestNewGetUserHandler(t *testing.T) {
 		userUUID := uuid.New()
 		mockService.On("GetByUUID", mock.Anything, userUUID).Return(nil, domain.ErrUserNotFound)
 
-		req := httptest.NewRequest("GET", "/users/"+userUUID.String(), nil)
-		w := httptest.NewRecorder()
-
-		c, _ := gin.CreateTestContext(w)
-		c.Request = req
+		c, w := testutil.NewRequestContext(t, http.MethodGet, fmt.Sprintf("%s/%s", usersEndpoint, userUUID))
 		c.Params = gin.Params{{Key: "uuid", Value: userUUID.String()}}
 
 		// Act
@@ -136,9 +122,7 @@ func TestNewGetUserHandler(t *testing.T) {
 		// Assert
 		assert.Equal(t, http.StatusNotFound, w.Code)
 
-		var response map[string]interface{}
-		err := json.Unmarshal(w.Body.Bytes(), &response)
-		assert.NoError(t, err)
+		response := testutil.DecodeResponse(t, w)
 		assert.Equal(t, "user not found", response["error"])
 
 		mockService.AssertExpectations(t)
@@ -151,11 +135,7 @@ func TestNewGetUserHandler(t *testing.T) {
 		userUUID := uuid.New()
 		mockService.On("GetByUUID", mock.Anything, userUUID).Return(nil, domain.ErrInternal)
 
-		req := httptest.NewRequest("GET", "/users/"+userUUID.String(), nil)
-		w := httptest.NewRecorder()
-
-		c, _ := gin.CreateTestContext(w)
-		c.Request = req
+		c, w := testutil.NewRequestContext(t, http.MethodGet, fmt.Sprintf("%s/%s", usersEndpoint, userUUID))
 		c.Params = gin.Params{{Key: "uuid", Value: userUUID.String()}}
 
 		// Act
@@ -164,9 +144,7 @@ func TestNewGetUserHandler(t *testing.T) {
 		// Assert
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
 
-		var response map[string]interface{}
-		err := json.Unmarshal(w.Body.Bytes(), &response)
-		assert.NoError(t, err)
+		response := testutil.DecodeResponse(t, w)
 		assert.Equal(t, "failed to get user", response["error"])
 
 		mockService.AssertExpectations(t)
@@ -179,11 +157,7 @@ func TestNewGetUserHandler(t *testing.T) {
 		userUUID := uuid.New()
 		mockService.On("GetByUUID", mock.Anything, userUUID).Return(nil, errors.New("database connection failed"))
 
-		req := httptest.NewRequest("GET", "/users/"+userUUID.String(), nil)
-		w := httptest.NewRecorder()
-
-		c, _ := gin.CreateTestContext(w)
-		c.Request = req
+		c, w := testutil.NewRequestContext(t, http.MethodGet, fmt.Sprintf("%s/%s", usersEndpoint, userUUID))
 		c.Params = gin.Params{{Key: "uuid", Value: userUUID.String()}}
 
 		// Act
@@ -192,9 +166,7 @@ func TestNewGetUserHandler(t *testing.T) {
 		// Assert
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
 
-		var response map[string]interface{}
-		err := json.Unmarshal(w.Body.Bytes(), &response)
-		assert.NoError(t, err)
+		response := testutil.DecodeResponse(t, w)
 		assert.Equal(t, "failed to get user", response["error"])
 
 		mockService.AssertExpectations(t)
@@ -235,11 +207,7 @@ func TestNewGetAllUsersHandler(t *testing.T) {
 		expectedUsers := []*domain.User{user1, user2}
 		mockService.On("GetAll", mock.Anything).Return(expectedUsers, nil)
 
-		req := httptest.NewRequest("GET", "/users", nil)
-		w := httptest.NewRecorder()
-
-		c, _ := gin.CreateTestContext(w)
-		c.Request = req
+		c, w := testutil.NewRequestContext(t, http.MethodGet, usersEndpoint)
 
 		// Act
 		handler(c)
@@ -247,9 +215,7 @@ func TestNewGetAllUsersHandler(t *testing.T) {
 		// Assert
 		assert.Equal(t, http.StatusOK, w.Code)
 
-		var response map[string]interface{}
-		err := json.Unmarshal(w.Body.Bytes(), &response)
-		assert.NoError(t, err)
+		response := testutil.DecodeResponse(t, w)
 		assert.Contains(t, response, "users")
 
 		users := response["users"].([]interface{}) //nolint:errcheck
@@ -267,11 +233,7 @@ func TestNewGetAllUsersHandler(t *testing.T) {
 		expectedUsers := []*domain.User{}
 		mockService.On("GetAll", mock.Anything).Return(expectedUsers, nil)
 
-		req := httptest.NewRequest("GET", "/users", nil)
-		w := httptest.NewRecorder()
-
-		c, _ := gin.CreateTestContext(w)
-		c.Request = req
+		c, w := testutil.NewRequestContext(t, http.MethodGet, usersEndpoint)
 
 		// Act
 		handler(c)
@@ -279,9 +241,7 @@ func TestNewGetAllUsersHandler(t *testing.T) {
 		// Assert
 		assert.Equal(t, http.StatusOK, w.Code)
 
-		var response map[string]interface{}
-		err := json.Unmarshal(w.Body.Bytes(), &response)
-		assert.NoError(t, err)
+		response := testutil.DecodeResponse(t, w)
 		assert.Contains(t, response, "users")
 
 		users := response["users"].([]interface{}) //nolint:errcheck
@@ -296,11 +256,7 @@ func TestNewGetAllUsersHandler(t *testing.T) {
 
 		mockService.On("GetAll", mock.Anything).Return(nil, domain.ErrInternal)
 
-		req := httptest.NewRequest("GET", "/users", nil)
-		w := httptest.NewRecorder()
-
-		c, _ := gin.CreateTestContext(w)
-		c.Request = req
+		c, w := testutil.NewRequestContext(t, http.MethodGet, usersEndpoint)
 
 		// Act
 		handler(c)
@@ -308,9 +264,7 @@ func TestNewGetAllUsersHandler(t *testing.T) {
 		// Assert
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
 
-		var response map[string]interface{}
-		err := json.Unmarshal(w.Body.Bytes(), &response)
-		assert.NoError(t, err)
+		response := testutil.DecodeResponse(t, w)
 		assert.Equal(t, "failed to get users", response["error"])
 
 		mockService.AssertExpectations(t)
@@ -322,11 +276,7 @@ func TestNewGetAllUsersHandler(t *testing.T) {
 
 		mockService.On("GetAll", mock.Anything).Return(nil, errors.New("database connection failed"))
 
-		req := httptest.NewRequest("GET", "/users", nil)
-		w := httptest.NewRecorder()
-
-		c, _ := gin.CreateTestContext(w)
-		c.Request = req
+		c, w := testutil.NewRequestContext(t, http.MethodGet, usersEndpoint)
 
 		// Act
 		handler(c)
@@ -334,9 +284,7 @@ func TestNewGetAllUsersHandler(t *testing.T) {
 		// Assert
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
 
-		var response map[string]interface{}
-		err := json.Unmarshal(w.Body.Bytes(), &response)
-		assert.NoError(t, err)
+		response := testutil.DecodeResponse(t, w)
 		assert.Equal(t, "failed to get users", response["error"])
 
 		mockService.AssertExpectations(t)

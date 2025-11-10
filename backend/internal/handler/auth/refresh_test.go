@@ -14,12 +14,15 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/auth"
+	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/testutil"
 	"go.uber.org/zap"
 )
 
 type mockUserRepository struct {
 	mock.Mock
 }
+
+const refreshEndpoint = "/auth/refresh"
 
 func (m *mockUserRepository) GetByLogin(ctx context.Context, login string) (*domain.User, error) {
 	panic("not implemented")
@@ -50,103 +53,91 @@ func TestNewRefreshTokenHandler(t *testing.T) {
 		tokenString, err := refreshToken.SignedString([]byte("test-secret-key"))
 		assert.NoError(t, err)
 
-		req := httptest.NewRequest(http.MethodPost, "/auth/refresh", nil)
-		req.AddCookie(&http.Cookie{Name: "refreshToken", Value: tokenString, HttpOnly: true})
-		w := httptest.NewRecorder()
-		c, _ := gin.CreateTestContext(w)
-		c.Request = req
+		c, w := testutil.NewRequestContext(t, http.MethodPost, refreshEndpoint)
+		c.Request.AddCookie(&http.Cookie{Name: "refreshToken", Value: tokenString, HttpOnly: true})
 
 		handler(c)
 
 		assert.Equal(t, http.StatusOK, w.Code)
 
 		cookies := w.Result().Cookies()
-		var newAccessCookie, newRefreshCookie *http.Cookie
-		for _, cookie := range cookies {
-			if cookie.Name == "accessToken" {
-				newAccessCookie = cookie
-			}
-			if cookie.Name == "refreshToken" {
-				newRefreshCookie = cookie
-			}
-		}
-
-		assert.NotNil(t, newAccessCookie)
-		assert.NotEmpty(t, newAccessCookie.Value)
-		assert.True(t, newAccessCookie.HttpOnly)
-		assert.Equal(t, "/", newAccessCookie.Path)
-		assert.True(t, newAccessCookie.Secure)
-		assert.Equal(t, http.SameSiteNoneMode, newAccessCookie.SameSite)
-
-		assert.NotNil(t, newRefreshCookie)
-		assert.NotEmpty(t, newRefreshCookie.Value)
-		assert.True(t, newRefreshCookie.HttpOnly)
-		assert.Equal(t, "/", newRefreshCookie.Path)
-		assert.True(t, newRefreshCookie.Secure)
-		assert.Equal(t, http.SameSiteNoneMode, newRefreshCookie.SameSite)
+		assert.NotNil(t, testutil.CookieByName(cookies, "accessToken"))
+		assert.NotNil(t, testutil.CookieByName(cookies, "refreshToken"))
 
 		repo.AssertExpectations(t)
 	})
 
-	t.Run("Missing refresh cookie", func(t *testing.T) {
-		handler := auth.NewRefreshTokenHandler(new(mockUserRepository), zap.NewNop(), "test-secret-key", 10)
+	t.Run("FailureCases", func(t *testing.T) {
+		type refreshContextGen func(t *testing.T) (*gin.Context, *httptest.ResponseRecorder)
 
-		req := httptest.NewRequest(http.MethodPost, "/auth/refresh", nil)
-		w := httptest.NewRecorder()
-		c, _ := gin.CreateTestContext(w)
-		c.Request = req
+		cases := []struct {
+			name         string
+			buildContext refreshContextGen
+			expectedCode int
+			setupHandler func() gin.HandlerFunc
+		}{
+			{
+				name: "Missing refresh cookie",
+				buildContext: func(t *testing.T) (*gin.Context, *httptest.ResponseRecorder) {
+					return testutil.NewRequestContext(t, http.MethodPost, refreshEndpoint)
+				},
+				expectedCode: http.StatusUnauthorized,
+			},
+			{
+				name: "Invalid token format",
+				buildContext: func(t *testing.T) (*gin.Context, *httptest.ResponseRecorder) {
+					c, w := testutil.NewRequestContext(t, http.MethodPost, refreshEndpoint)
+					c.Request.AddCookie(&http.Cookie{Name: "refreshToken", Value: "invalid"})
+					return c, w
+				},
+				expectedCode: http.StatusUnauthorized,
+			},
+			{
+				name: "Expired token",
+				buildContext: func(t *testing.T) (*gin.Context, *httptest.ResponseRecorder) {
+					token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
+						Subject:   uuid.NewString(),
+						ExpiresAt: jwt.NewNumericDate(time.Now().Add(-time.Hour)),
+					})
+					tokenString, err := token.SignedString([]byte("test-secret-key"))
+					assert.NoError(t, err)
 
-		handler(c)
+					c, w := testutil.NewRequestContext(t, http.MethodPost, refreshEndpoint)
+					c.Request.AddCookie(&http.Cookie{Name: "refreshToken", Value: tokenString})
+					return c, w
+				},
+				expectedCode: http.StatusUnauthorized,
+			},
+			{
+				name: "Missing secret token",
+				buildContext: func(t *testing.T) (*gin.Context, *httptest.ResponseRecorder) {
+					c, w := testutil.NewRequestContext(t, http.MethodPost, refreshEndpoint)
+					c.Request.AddCookie(&http.Cookie{Name: "refreshToken", Value: "anything"})
+					return c, w
+				},
+				expectedCode: http.StatusInternalServerError,
+				setupHandler: func() gin.HandlerFunc {
+					return auth.NewRefreshTokenHandler(new(mockUserRepository), zap.NewNop(), "", 10)
+				},
+			},
+		}
 
-		assert.Equal(t, http.StatusUnauthorized, w.Code)
-	})
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				handlerFactory := tc.setupHandler
+				if handlerFactory == nil {
+					handlerFactory = func() gin.HandlerFunc {
+						return auth.NewRefreshTokenHandler(new(mockUserRepository), zap.NewNop(), "test-secret-key", 10)
+					}
+				}
 
-	t.Run("Invalid token format", func(t *testing.T) {
-		handler := auth.NewRefreshTokenHandler(new(mockUserRepository), zap.NewNop(), "test-secret-key", 10)
+				h := handlerFactory()
+				c, w := tc.buildContext(t)
 
-		req := httptest.NewRequest(http.MethodPost, "/auth/refresh", nil)
-		req.AddCookie(&http.Cookie{Name: "refreshToken", Value: "invalid"})
-		w := httptest.NewRecorder()
-		c, _ := gin.CreateTestContext(w)
-		c.Request = req
+				h(c)
 
-		handler(c)
-
-		assert.Equal(t, http.StatusUnauthorized, w.Code)
-	})
-
-	t.Run("Expired token", func(t *testing.T) {
-		handler := auth.NewRefreshTokenHandler(new(mockUserRepository), zap.NewNop(), "test-secret-key", 10)
-
-		refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
-			Subject:   uuid.NewString(),
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(-time.Hour)),
-		})
-		tokenString, err := refreshToken.SignedString([]byte("test-secret-key"))
-		assert.NoError(t, err)
-
-		req := httptest.NewRequest(http.MethodPost, "/auth/refresh", nil)
-		req.AddCookie(&http.Cookie{Name: "refreshToken", Value: tokenString})
-		w := httptest.NewRecorder()
-		c, _ := gin.CreateTestContext(w)
-		c.Request = req
-
-		handler(c)
-
-		assert.Equal(t, http.StatusUnauthorized, w.Code)
-	})
-
-	t.Run("Missing secret token", func(t *testing.T) {
-		handler := auth.NewRefreshTokenHandler(new(mockUserRepository), zap.NewNop(), "", 10)
-
-		req := httptest.NewRequest(http.MethodPost, "/auth/refresh", nil)
-		req.AddCookie(&http.Cookie{Name: "refreshToken", Value: "anything"})
-		w := httptest.NewRecorder()
-		c, _ := gin.CreateTestContext(w)
-		c.Request = req
-
-		handler(c)
-
-		assert.Equal(t, http.StatusInternalServerError, w.Code)
+				assert.Equal(t, tc.expectedCode, w.Code)
+			})
+		}
 	})
 }

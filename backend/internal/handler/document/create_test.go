@@ -1,12 +1,9 @@
 package document_test
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -17,6 +14,7 @@ import (
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/document"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/document/requests"
+	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/testutil"
 	"go.uber.org/zap"
 )
 
@@ -31,6 +29,8 @@ func (m *mockCreateDocumentService) Create(ctx context.Context, groupUUID uuid.U
 	}
 	return args.Get(0).(*domain.Document), args.Error(1) //nolint:errcheck
 }
+
+const documentCreateEndpoint = "/documents"
 
 func TestNewCreateDocumentHandler(main *testing.T) {
 	gin.SetMode(gin.TestMode)
@@ -66,15 +66,7 @@ func TestNewCreateDocumentHandler(main *testing.T) {
 			Content:   "This is test content",
 		}
 
-		jsonBody, err := json.Marshal(requestBody)
-		assert.NoError(t, err)
-
-		req := httptest.NewRequest("POST", "/documents", bytes.NewBuffer(jsonBody))
-		req.Header.Set("Content-Type", "application/json")
-		w := httptest.NewRecorder()
-
-		c, _ := gin.CreateTestContext(w)
-		c.Request = req
+		c, w := testutil.NewJSONContext(t, http.MethodPost, documentCreateEndpoint, requestBody)
 
 		// Act
 		handler(c)
@@ -82,9 +74,7 @@ func TestNewCreateDocumentHandler(main *testing.T) {
 		// Assert
 		assert.Equal(t, http.StatusCreated, w.Code)
 
-		var response map[string]interface{}
-		err = json.Unmarshal(w.Body.Bytes(), &response)
-		assert.NoError(t, err)
+		response := testutil.DecodeResponse(t, w)
 		assert.Equal(t, "Test Document", response["name"])
 		assert.Equal(t, "This is test content", response["content"])
 
@@ -97,12 +87,7 @@ func TestNewCreateDocumentHandler(main *testing.T) {
 
 		invalidJSON := `{"group_uuid": "123e4567-e89b-12d3-a456-426614174000", "name": "Test Document", "content": "This is test content"` //nolint:revive
 
-		req := httptest.NewRequest("POST", "/documents", bytes.NewBufferString(invalidJSON))
-		req.Header.Set("Content-Type", "application/json")
-		w := httptest.NewRecorder()
-
-		c, _ := gin.CreateTestContext(w)
-		c.Request = req
+		c, w := testutil.NewRawContext(t, http.MethodPost, documentCreateEndpoint, []byte(invalidJSON), "application/json")
 
 		// Act
 		handler(c)
@@ -110,9 +95,7 @@ func TestNewCreateDocumentHandler(main *testing.T) {
 		// Assert
 		assert.Equal(t, http.StatusBadRequest, w.Code)
 
-		var response map[string]interface{}
-		err := json.Unmarshal(w.Body.Bytes(), &response)
-		assert.NoError(t, err)
+		response := testutil.DecodeResponse(t, w)
 		assert.Equal(t, "invalid request format", response["error"])
 
 		mockService.AssertNotCalled(t, "Create")
@@ -128,15 +111,7 @@ func TestNewCreateDocumentHandler(main *testing.T) {
 			Content:   "This is test content",
 		}
 
-		jsonBody, err := json.Marshal(requestBody)
-		assert.NoError(t, err)
-
-		req := httptest.NewRequest("POST", "/documents", bytes.NewBuffer(jsonBody))
-		req.Header.Set("Content-Type", "application/json")
-		w := httptest.NewRecorder()
-
-		c, _ := gin.CreateTestContext(w)
-		c.Request = req
+		c, w := testutil.NewJSONContext(t, http.MethodPost, documentCreateEndpoint, requestBody)
 
 		// Act
 		handler(c)
@@ -144,9 +119,7 @@ func TestNewCreateDocumentHandler(main *testing.T) {
 		// Assert
 		assert.Equal(t, http.StatusBadRequest, w.Code)
 
-		var response map[string]interface{}
-		err = json.Unmarshal(w.Body.Bytes(), &response)
-		assert.NoError(t, err)
+		response := testutil.DecodeResponse(t, w)
 		assert.Equal(t, "validation failed", response["error"])
 		assert.Contains(t, response, "details")
 
@@ -167,15 +140,7 @@ func TestNewCreateDocumentHandler(main *testing.T) {
 			Content:   "This is test content",
 		}
 
-		jsonBody, err := json.Marshal(requestBody)
-		assert.NoError(t, err)
-
-		req := httptest.NewRequest("POST", "/documents", bytes.NewBuffer(jsonBody))
-		req.Header.Set("Content-Type", "application/json")
-		w := httptest.NewRecorder()
-
-		c, _ := gin.CreateTestContext(w)
-		c.Request = req
+		c, w := testutil.NewJSONContext(t, http.MethodPost, documentCreateEndpoint, requestBody)
 
 		// Act
 		handler(c)
@@ -183,9 +148,7 @@ func TestNewCreateDocumentHandler(main *testing.T) {
 		// Assert
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
 
-		var response map[string]interface{}
-		err = json.Unmarshal(w.Body.Bytes(), &response)
-		assert.NoError(t, err)
+		response := testutil.DecodeResponse(t, w)
 		assert.Equal(t, "failed to create document", response["error"])
 
 		mockService.AssertExpectations(t)
@@ -205,15 +168,7 @@ func TestNewCreateDocumentHandler(main *testing.T) {
 			Content:   "This is test content",
 		}
 
-		jsonBody, err := json.Marshal(requestBody)
-		assert.NoError(t, err)
-
-		req := httptest.NewRequest("POST", "/documents", bytes.NewBuffer(jsonBody))
-		req.Header.Set("Content-Type", "application/json")
-		w := httptest.NewRecorder()
-
-		c, _ := gin.CreateTestContext(w)
-		c.Request = req
+		c, w := testutil.NewJSONContext(t, http.MethodPost, documentCreateEndpoint, requestBody)
 
 		// Act
 		handler(c)
@@ -221,9 +176,7 @@ func TestNewCreateDocumentHandler(main *testing.T) {
 		// Assert
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
 
-		var response map[string]interface{}
-		err = json.Unmarshal(w.Body.Bytes(), &response)
-		assert.NoError(t, err)
+		response := testutil.DecodeResponse(t, w)
 		assert.Equal(t, "failed to create document", response["error"])
 
 		mockService.AssertExpectations(t)
@@ -233,13 +186,7 @@ func TestNewCreateDocumentHandler(main *testing.T) {
 		// Arrange
 		mockService, handler := setup(t)
 
-		// Send invalid JSON without Content-Type
-		req := httptest.NewRequest("POST", "/documents", bytes.NewBufferString("invalid json"))
-		// Don't set Content-Type header
-		w := httptest.NewRecorder()
-
-		c, _ := gin.CreateTestContext(w)
-		c.Request = req
+		c, w := testutil.NewRawContext(t, http.MethodPost, documentCreateEndpoint, []byte("invalid json"), "")
 
 		// Act
 		handler(c)
@@ -247,9 +194,7 @@ func TestNewCreateDocumentHandler(main *testing.T) {
 		// Assert
 		assert.Equal(t, http.StatusBadRequest, w.Code)
 
-		var response map[string]interface{}
-		err := json.Unmarshal(w.Body.Bytes(), &response)
-		assert.NoError(t, err)
+		response := testutil.DecodeResponse(t, w)
 		assert.Equal(t, "invalid request format", response["error"])
 
 		mockService.AssertNotCalled(t, "Create")

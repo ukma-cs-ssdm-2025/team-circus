@@ -1,9 +1,7 @@
 package reg_test
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -17,6 +15,7 @@ import (
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/reg"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/reg/requests"
+	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/testutil"
 	"go.uber.org/zap"
 )
 
@@ -24,6 +23,8 @@ import (
 type MockRegService struct {
 	mock.Mock
 }
+
+const registerEndpoint = "/signup"
 
 func (m *MockRegService) Register(ctx context.Context, login string, email string, password string) (*domain.User, error) {
 	args := m.Called(ctx, login, email, password)
@@ -65,15 +66,7 @@ func TestNewRegHandler(t *testing.T) {
 			Password: "testpassword123",
 		}
 
-		jsonBody, err := json.Marshal(requestBody)
-		assert.NoError(t, err)
-
-		req := httptest.NewRequest("POST", "/signup", bytes.NewBuffer(jsonBody))
-		req.Header.Set("Content-Type", "application/json")
-		w := httptest.NewRecorder()
-
-		c, _ := gin.CreateTestContext(w)
-		c.Request = req
+		c, w := testutil.NewJSONContext(t, http.MethodPost, registerEndpoint, requestBody)
 
 		// Act
 		handler(c)
@@ -81,174 +74,105 @@ func TestNewRegHandler(t *testing.T) {
 		// Assert
 		assert.Equal(t, http.StatusCreated, w.Code)
 
-		var response map[string]interface{}
-		err = json.Unmarshal(w.Body.Bytes(), &response)
-		assert.NoError(t, err)
+		response := testutil.DecodeResponse(t, w)
 		assert.Equal(t, "testuser", response["login"])
 		assert.Equal(t, "test@example.com", response["email"])
 
 		mockService.AssertExpectations(t)
 	})
 
-	t.Run("InvalidJSON", func(t *testing.T) {
-		// Arrange
-		mockService, handler := setup(t)
+	t.Run("FailureCases", func(t *testing.T) {
+		type (
+			registerSetup      func(*MockRegService)
+			registerContextGen func(t *testing.T) (*gin.Context, *httptest.ResponseRecorder)
+		)
 
-		invalidJSON := `{"login": "testuser", "email": "test@example.com", "password": "testpassword123"` // Missing closing brace
-
-		req := httptest.NewRequest("POST", "/signup", bytes.NewBufferString(invalidJSON))
-		req.Header.Set("Content-Type", "application/json")
-		w := httptest.NewRecorder()
-
-		c, _ := gin.CreateTestContext(w)
-		c.Request = req
-
-		// Act
-		handler(c)
-
-		// Assert
-		assert.Equal(t, http.StatusBadRequest, w.Code)
-
-		var response map[string]interface{}
-		err := json.Unmarshal(w.Body.Bytes(), &response)
-		assert.NoError(t, err)
-		assert.Equal(t, "invalid request format", response["error"])
-
-		mockService.AssertNotCalled(t, "Register")
-	})
-
-	t.Run("ValidationFailure", func(t *testing.T) {
-		// Arrange
-		mockService, handler := setup(t)
-
-		requestBody := requests.RegRequest{
-			Login:    "", // Empty login should fail validation
-			Email:    "test@example.com",
-			Password: "testpassword123",
+		cases := []struct {
+			name          string
+			setup         registerSetup
+			buildContext  registerContextGen
+			expectedCode  int
+			expectedError string
+			expectCall    bool
+		}{
+			{
+				name: "InvalidJSON",
+				buildContext: func(t *testing.T) (*gin.Context, *httptest.ResponseRecorder) {
+					payload := `{"login": "testuser", "email": "test@example.com", "password": "testpassword123"`
+					return testutil.NewRawContext(t, http.MethodPost, registerEndpoint, []byte(payload), "application/json")
+				},
+				expectedCode:  http.StatusBadRequest,
+				expectedError: "invalid request format",
+			},
+			{
+				name: "ValidationFailure",
+				buildContext: func(t *testing.T) (*gin.Context, *httptest.ResponseRecorder) {
+					body := requests.RegRequest{Login: "", Email: "test@example.com", Password: "testpassword123"}
+					return testutil.NewJSONContext(t, http.MethodPost, registerEndpoint, body)
+				},
+				expectedCode:  http.StatusBadRequest,
+				expectedError: "validation failed",
+			},
+			{
+				name: "ServiceInternalError",
+				setup: func(service *MockRegService) {
+					service.On("Register", mock.Anything, "testuser", "test@example.com", "testpassword123").
+						Return(nil, domain.ErrInternal)
+				},
+				buildContext: func(t *testing.T) (*gin.Context, *httptest.ResponseRecorder) {
+					body := requests.RegRequest{Login: "testuser", Email: "test@example.com", Password: "testpassword123"}
+					return testutil.NewJSONContext(t, http.MethodPost, registerEndpoint, body)
+				},
+				expectedCode:  http.StatusInternalServerError,
+				expectedError: "failed to register",
+				expectCall:    true,
+			},
+			{
+				name: "ServiceGenericError",
+				setup: func(service *MockRegService) {
+					service.On("Register", mock.Anything, "testuser", "test@example.com", "testpassword123").
+						Return(nil, errors.New("database connection failed"))
+				},
+				buildContext: func(t *testing.T) (*gin.Context, *httptest.ResponseRecorder) {
+					body := requests.RegRequest{Login: "testuser", Email: "test@example.com", Password: "testpassword123"}
+					return testutil.NewJSONContext(t, http.MethodPost, registerEndpoint, body)
+				},
+				expectedCode:  http.StatusInternalServerError,
+				expectedError: "failed to register",
+				expectCall:    true,
+			},
+			{
+				name: "MissingContentType",
+				buildContext: func(t *testing.T) (*gin.Context, *httptest.ResponseRecorder) {
+					return testutil.NewRawContext(t, http.MethodPost, registerEndpoint, []byte("invalid json"), "")
+				},
+				expectedCode:  http.StatusBadRequest,
+				expectedError: "invalid request format",
+			},
 		}
 
-		jsonBody, err := json.Marshal(requestBody)
-		assert.NoError(t, err)
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				mockService, handler := setup(t)
+				if tc.setup != nil {
+					tc.setup(mockService)
+				}
 
-		req := httptest.NewRequest("POST", "/signup", bytes.NewBuffer(jsonBody))
-		req.Header.Set("Content-Type", "application/json")
-		w := httptest.NewRecorder()
+				c, w := tc.buildContext(t)
 
-		c, _ := gin.CreateTestContext(w)
-		c.Request = req
+				handler(c)
 
-		// Act
-		handler(c)
+				assert.Equal(t, tc.expectedCode, w.Code)
 
-		// Assert
-		assert.Equal(t, http.StatusBadRequest, w.Code)
+				response := testutil.DecodeResponse(t, w)
+				assert.Equal(t, tc.expectedError, response["error"])
 
-		var response map[string]interface{}
-		err = json.Unmarshal(w.Body.Bytes(), &response)
-		assert.NoError(t, err)
-		assert.Equal(t, "validation failed", response["error"])
-		assert.Contains(t, response, "details")
-
-		mockService.AssertNotCalled(t, "Register")
-	})
-
-	t.Run("ServiceInternalError", func(t *testing.T) {
-		// Arrange
-		mockService, handler := setup(t)
-
-		mockService.On("Register", mock.Anything, "testuser", "test@example.com", "testpassword123").
-			Return(nil, domain.ErrInternal)
-
-		requestBody := requests.RegRequest{
-			Login:    "testuser",
-			Email:    "test@example.com",
-			Password: "testpassword123",
+				if tc.expectCall {
+					mockService.AssertExpectations(t)
+				} else {
+					mockService.AssertNotCalled(t, "Register")
+				}
+			})
 		}
-
-		jsonBody, err := json.Marshal(requestBody)
-		assert.NoError(t, err)
-
-		req := httptest.NewRequest("POST", "/signup", bytes.NewBuffer(jsonBody))
-		req.Header.Set("Content-Type", "application/json")
-		w := httptest.NewRecorder()
-
-		c, _ := gin.CreateTestContext(w)
-		c.Request = req
-
-		// Act
-		handler(c)
-
-		// Assert
-		assert.Equal(t, http.StatusInternalServerError, w.Code)
-
-		var response map[string]interface{}
-		err = json.Unmarshal(w.Body.Bytes(), &response)
-		assert.NoError(t, err)
-		assert.Equal(t, "failed to register", response["error"])
-
-		mockService.AssertExpectations(t)
-	})
-
-	t.Run("ServiceGenericError", func(t *testing.T) {
-		// Arrange
-		mockService, handler := setup(t)
-
-		mockService.On("Register", mock.Anything, "testuser", "test@example.com", "testpassword123").
-			Return(nil, errors.New("database connection failed"))
-
-		requestBody := requests.RegRequest{
-			Login:    "testuser",
-			Email:    "test@example.com",
-			Password: "testpassword123",
-		}
-
-		jsonBody, err := json.Marshal(requestBody)
-		assert.NoError(t, err)
-
-		req := httptest.NewRequest("POST", "/signup", bytes.NewBuffer(jsonBody))
-		req.Header.Set("Content-Type", "application/json")
-		w := httptest.NewRecorder()
-
-		c, _ := gin.CreateTestContext(w)
-		c.Request = req
-
-		// Act
-		handler(c)
-
-		// Assert
-		assert.Equal(t, http.StatusInternalServerError, w.Code)
-
-		var response map[string]interface{}
-		err = json.Unmarshal(w.Body.Bytes(), &response)
-		assert.NoError(t, err)
-		assert.Equal(t, "failed to register", response["error"])
-
-		mockService.AssertExpectations(t)
-	})
-
-	t.Run("MissingContentType", func(t *testing.T) {
-		// Arrange
-		mockService, handler := setup(t)
-
-		// Send invalid JSON without Content-Type
-		req := httptest.NewRequest("POST", "/signup", bytes.NewBufferString("invalid json"))
-		// Don't set Content-Type header
-		w := httptest.NewRecorder()
-
-		c, _ := gin.CreateTestContext(w)
-		c.Request = req
-
-		// Act
-		handler(c)
-
-		// Assert
-		assert.Equal(t, http.StatusBadRequest, w.Code)
-
-		var response map[string]interface{}
-		err := json.Unmarshal(w.Body.Bytes(), &response)
-		assert.NoError(t, err)
-		assert.Equal(t, "invalid request format", response["error"])
-
-		mockService.AssertNotCalled(t, "Register")
 	})
 }

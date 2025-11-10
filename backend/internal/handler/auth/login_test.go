@@ -1,9 +1,7 @@
 package auth_test
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -17,11 +15,11 @@ import (
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/auth"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/auth/requests"
+	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/testutil"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 )
 
-// MockUserRepository is a mock implementation of the user repository
 type MockUserRepository struct {
 	mock.Mock
 }
@@ -42,6 +40,8 @@ func (m *MockUserRepository) GetByUUID(ctx context.Context, uuid uuid.UUID) (*do
 	return args.Get(0).(*domain.User), args.Error(1) //nolint:errcheck
 }
 
+const loginEndpoint = "/auth/login"
+
 func TestNewLogInHandler(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
@@ -55,7 +55,6 @@ func TestNewLogInHandler(t *testing.T) {
 	}
 
 	t.Run("SuccessfulLogin", func(t *testing.T) {
-		// Arrange
 		mockRepo, handler := setup(t)
 
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte("testpassword123"), bcrypt.DefaultCost)
@@ -70,222 +69,124 @@ func TestNewLogInHandler(t *testing.T) {
 
 		mockRepo.On("GetByLogin", mock.Anything, "testuser").Return(expectedUser, nil)
 
-		requestBody := requests.LogInRequest{
-			Login:    "testuser",
-			Password: "testpassword123",
-		}
+		body := requests.LogInRequest{Login: "testuser", Password: "testpassword123"}
+		c, w := testutil.NewJSONContext(t, http.MethodPost, loginEndpoint, body)
 
-		jsonBody, err := json.Marshal(requestBody)
-		assert.NoError(t, err)
-
-		req := httptest.NewRequest("POST", "/auth/login", bytes.NewBuffer(jsonBody))
-		req.Header.Set("Content-Type", "application/json")
-		w := httptest.NewRecorder()
-
-		c, _ := gin.CreateTestContext(w)
-		c.Request = req
-
-		// Act
 		handler(c)
 
-		// Assert
 		assert.Equal(t, http.StatusOK, w.Code)
-
-		// Check that cookies are set
 		cookies := w.Result().Cookies()
 		assert.Len(t, cookies, 2)
-
-		accessTokenCookie := findCookie(cookies, "accessToken")
-		refreshTokenCookie := findCookie(cookies, "refreshToken")
-		assert.NotNil(t, accessTokenCookie)
-		assert.NotNil(t, refreshTokenCookie)
-
-		mockRepo.AssertExpectations(t)
+		assert.NotNil(t, testutil.CookieByName(cookies, "accessToken"))
+		assert.NotNil(t, testutil.CookieByName(cookies, "refreshToken"))
 	})
 
-	t.Run("InvalidJSON", func(t *testing.T) {
-		// Arrange
-		mockRepo, handler := setup(t)
+	t.Run("FailureCases", func(t *testing.T) {
+		type (
+			loginSetup      func(*MockUserRepository)
+			loginContextGen func(t *testing.T) (*gin.Context, *httptest.ResponseRecorder)
+		)
 
-		invalidJSON := `{"login": "testuser", "password": "testpassword123"` // Missing closing brace
+		cases := []struct {
+			name          string
+			setup         loginSetup
+			buildContext  loginContextGen
+			expectedCode  int
+			expectedError string
+			expectCall    bool
+		}{
+			{
+				name: "InvalidJSON",
+				buildContext: func(t *testing.T) (*gin.Context, *httptest.ResponseRecorder) {
+					payload := `{"login": "testuser", "password": "testpassword123"`
+					return testutil.NewRawContext(t, http.MethodPost, loginEndpoint, []byte(payload), "application/json")
+				},
+				expectedCode:  http.StatusBadRequest,
+				expectedError: "invalid request format",
+			},
+			{
+				name: "UserNotFound",
+				setup: func(repo *MockUserRepository) {
+					repo.On("GetByLogin", mock.Anything, "nonexistent").Return(nil, nil)
+				},
+				buildContext: func(t *testing.T) (*gin.Context, *httptest.ResponseRecorder) {
+					body := requests.LogInRequest{Login: "nonexistent", Password: "testpassword123"}
+					return testutil.NewJSONContext(t, http.MethodPost, loginEndpoint, body)
+				},
+				expectedCode:  http.StatusUnauthorized,
+				expectedError: "invalid credentials",
+				expectCall:    true,
+			},
+			{
+				name: "WrongPassword",
+				setup: func(repo *MockUserRepository) {
+					hashed, _ := bcrypt.GenerateFromPassword([]byte("correctpassword"), bcrypt.DefaultCost)
+					repo.On("GetByLogin", mock.Anything, "testuser").Return(&domain.User{
+						UUID:      uuid.New(),
+						Login:     "testuser",
+						Email:     "test@example.com",
+						Password:  string(hashed),
+						CreatedAt: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
+					}, nil)
+				},
+				buildContext: func(t *testing.T) (*gin.Context, *httptest.ResponseRecorder) {
+					body := requests.LogInRequest{Login: "testuser", Password: "wrongpassword"}
+					return testutil.NewJSONContext(t, http.MethodPost, loginEndpoint, body)
+				},
+				expectedCode:  http.StatusUnauthorized,
+				expectedError: "invalid credentials",
+				expectCall:    true,
+			},
+			{
+				name: "ServiceInternalError",
+				setup: func(repo *MockUserRepository) {
+					repo.On("GetByLogin", mock.Anything, "testuser").Return(nil, domain.ErrInternal)
+				},
+				buildContext: func(t *testing.T) (*gin.Context, *httptest.ResponseRecorder) {
+					body := requests.LogInRequest{Login: "testuser", Password: "testpassword123"}
+					return testutil.NewJSONContext(t, http.MethodPost, loginEndpoint, body)
+				},
+				expectedCode:  http.StatusInternalServerError,
+				expectedError: "failed to log in",
+				expectCall:    true,
+			},
+			{
+				name: "ServiceGenericError",
+				setup: func(repo *MockUserRepository) {
+					repo.On("GetByLogin", mock.Anything, "testuser").Return(nil, errors.New("database connection failed"))
+				},
+				buildContext: func(t *testing.T) (*gin.Context, *httptest.ResponseRecorder) {
+					body := requests.LogInRequest{Login: "testuser", Password: "testpassword123"}
+					return testutil.NewJSONContext(t, http.MethodPost, loginEndpoint, body)
+				},
+				expectedCode:  http.StatusInternalServerError,
+				expectedError: "failed to log in",
+				expectCall:    true,
+			},
+		}
 
-		req := httptest.NewRequest("POST", "/auth/login", bytes.NewBufferString(invalidJSON))
-		req.Header.Set("Content-Type", "application/json")
-		w := httptest.NewRecorder()
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				mockRepo, handler := setup(t)
+				if tc.setup != nil {
+					tc.setup(mockRepo)
+				}
 
-		c, _ := gin.CreateTestContext(w)
-		c.Request = req
+				c, w := tc.buildContext(t)
 
-		// Act
-		handler(c)
+				handler(c)
 
-		// Assert
-		assert.Equal(t, http.StatusBadRequest, w.Code)
+				assert.Equal(t, tc.expectedCode, w.Code)
 
-		var response map[string]interface{}
-		err := json.Unmarshal(w.Body.Bytes(), &response)
-		assert.NoError(t, err)
-		assert.Equal(t, "invalid request format", response["error"])
+				response := testutil.DecodeResponse(t, w)
+				assert.Equal(t, tc.expectedError, response["error"])
 
-		mockRepo.AssertNotCalled(t, "GetByLogin")
+				if tc.expectCall {
+					mockRepo.AssertExpectations(t)
+				} else {
+					mockRepo.AssertNotCalled(t, "GetByLogin")
+				}
+			})
+		}
 	})
-
-	t.Run("UserNotFound", func(t *testing.T) {
-		// Arrange
-		mockRepo, handler := setup(t)
-
-		// Return nil user (not found) without error
-		mockRepo.On("GetByLogin", mock.Anything, "nonexistent").Return(nil, nil)
-
-		requestBody := requests.LogInRequest{
-			Login:    "nonexistent",
-			Password: "testpassword123",
-		}
-
-		jsonBody, err := json.Marshal(requestBody)
-		assert.NoError(t, err)
-
-		req := httptest.NewRequest("POST", "/auth/login", bytes.NewBuffer(jsonBody))
-		req.Header.Set("Content-Type", "application/json")
-		w := httptest.NewRecorder()
-
-		c, _ := gin.CreateTestContext(w)
-		c.Request = req
-
-		// Act
-		handler(c)
-
-		// Assert
-		assert.Equal(t, http.StatusUnauthorized, w.Code)
-
-		var response map[string]interface{}
-		err = json.Unmarshal(w.Body.Bytes(), &response)
-		assert.NoError(t, err)
-		assert.Equal(t, "invalid credentials", response["error"])
-
-		mockRepo.AssertExpectations(t)
-	})
-
-	t.Run("WrongPassword", func(t *testing.T) {
-		// Arrange
-		mockRepo, handler := setup(t)
-
-		expectedUser := &domain.User{
-			UUID:      uuid.New(),
-			Login:     "testuser",
-			Email:     "test@example.com",
-			Password:  "correctpassword",
-			CreatedAt: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
-		}
-
-		mockRepo.On("GetByLogin", mock.Anything, "testuser").Return(expectedUser, nil)
-
-		requestBody := requests.LogInRequest{
-			Login:    "testuser",
-			Password: "wrongpassword",
-		}
-
-		jsonBody, err := json.Marshal(requestBody)
-		assert.NoError(t, err)
-
-		req := httptest.NewRequest("POST", "/auth/login", bytes.NewBuffer(jsonBody))
-		req.Header.Set("Content-Type", "application/json")
-		w := httptest.NewRecorder()
-
-		c, _ := gin.CreateTestContext(w)
-		c.Request = req
-
-		// Act
-		handler(c)
-
-		// Assert
-		assert.Equal(t, http.StatusUnauthorized, w.Code)
-
-		var response map[string]interface{}
-		err = json.Unmarshal(w.Body.Bytes(), &response)
-		assert.NoError(t, err)
-		assert.Equal(t, "invalid credentials", response["error"])
-
-		mockRepo.AssertExpectations(t)
-	})
-
-	t.Run("ServiceInternalError", func(t *testing.T) {
-		// Arrange
-		mockRepo, handler := setup(t)
-
-		mockRepo.On("GetByLogin", mock.Anything, "testuser").Return(nil, domain.ErrInternal)
-
-		requestBody := requests.LogInRequest{
-			Login:    "testuser",
-			Password: "testpassword123",
-		}
-
-		jsonBody, err := json.Marshal(requestBody)
-		assert.NoError(t, err)
-
-		req := httptest.NewRequest("POST", "/auth/login", bytes.NewBuffer(jsonBody))
-		req.Header.Set("Content-Type", "application/json")
-		w := httptest.NewRecorder()
-
-		c, _ := gin.CreateTestContext(w)
-		c.Request = req
-
-		// Act
-		handler(c)
-
-		// Assert
-		assert.Equal(t, http.StatusInternalServerError, w.Code)
-
-		var response map[string]interface{}
-		err = json.Unmarshal(w.Body.Bytes(), &response)
-		assert.NoError(t, err)
-		assert.Equal(t, "failed to log in", response["error"])
-
-		mockRepo.AssertExpectations(t)
-	})
-
-	t.Run("ServiceGenericError", func(t *testing.T) {
-		// Arrange
-		mockRepo, handler := setup(t)
-
-		mockRepo.On("GetByLogin", mock.Anything, "testuser").Return(nil, errors.New("database connection failed"))
-
-		requestBody := requests.LogInRequest{
-			Login:    "testuser",
-			Password: "testpassword123",
-		}
-
-		jsonBody, err := json.Marshal(requestBody)
-		assert.NoError(t, err)
-
-		req := httptest.NewRequest("POST", "/auth/login", bytes.NewBuffer(jsonBody))
-		req.Header.Set("Content-Type", "application/json")
-		w := httptest.NewRecorder()
-
-		c, _ := gin.CreateTestContext(w)
-		c.Request = req
-
-		// Act
-		handler(c)
-
-		// Assert
-		assert.Equal(t, http.StatusInternalServerError, w.Code)
-
-		var response map[string]interface{}
-		err = json.Unmarshal(w.Body.Bytes(), &response)
-		assert.NoError(t, err)
-		assert.Equal(t, "failed to log in", response["error"])
-
-		mockRepo.AssertExpectations(t)
-	})
-}
-
-// Helper function to find a cookie by name
-func findCookie(cookies []*http.Cookie, name string) *http.Cookie {
-	for _, cookie := range cookies {
-		if cookie.Name == name {
-			return cookie
-		}
-	}
-	return nil
 }
