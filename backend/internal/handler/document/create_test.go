@@ -24,7 +24,11 @@ type mockCreateDocumentService struct {
 	mock.Mock
 }
 
-func (m *mockCreateDocumentService) Create(ctx context.Context, userUUID, groupUUID uuid.UUID, name, content string) (*domain.Document, error) {
+func (m *mockCreateDocumentService) Create(
+	ctx context.Context,
+	userUUID, groupUUID uuid.UUID,
+	name, content string,
+) (*domain.Document, error) {
 	args := m.Called(ctx, userUUID, groupUUID, name, content)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
