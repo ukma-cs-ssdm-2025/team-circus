@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 
 tasks:
   default:
@@ -9,27 +9,27 @@ tasks:
   dev:
     desc: Run development server
     cmds:
-      - npm run dev
+      - bun run dev
 
   build:
     desc: Build for production
     cmds:
-      - npm run build
+      - bun run build
 
   preview:
     desc: Preview production build
     cmds:
-      - npm run preview
+      - bun run preview
 
   lint:
     desc: Run linter
     cmds:
-      - npm run lint
+      - bun run lint
 
   install:
     desc: Install dependencies
     cmds:
-      - npm install
+      - bun install
 
   clean:
     desc: Clean build artifacts
@@ -40,14 +40,14 @@ tasks:
   deps:update:
     desc: Update dependencies
     cmds:
-      - npm update
+      - bun update
 
   deps:audit:
     desc: Audit dependencies for vulnerabilities
     cmds:
-      - npm audit
+      - bun audit
 
   deps:fix:
     desc: Fix dependency vulnerabilities
     cmds:
-      - npm audit fix
+      - bun audit --fix
