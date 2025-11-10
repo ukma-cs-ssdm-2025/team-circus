@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/user"
+	userrepo "github.com/ukma-cs-ssdm-2025/team-circus/internal/repo/user"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/testutil"
 	"go.uber.org/zap"
 )
@@ -36,8 +37,10 @@ type MockGetAllUsersService struct {
 
 const usersEndpoint = "/users"
 
-func (m *MockGetAllUsersService) GetAll(ctx context.Context) ([]*domain.User, error) {
-	args := m.Called(ctx)
+var defaultUserPageParams = userrepo.PageParams{Limit: userrepo.DefaultPageLimit, Offset: 0}
+
+func (m *MockGetAllUsersService) GetAll(ctx context.Context, params userrepo.PageParams) ([]*domain.User, error) {
+	args := m.Called(ctx, params)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -205,9 +208,14 @@ func TestNewGetAllUsersHandler(t *testing.T) {
 		}
 
 		expectedUsers := []*domain.User{user1, user2}
-		mockService.On("GetAll", mock.Anything).Return(expectedUsers, nil)
+		expectedParams := userrepo.PageParams{Limit: 25, Offset: 10}
+		mockService.On("GetAll", mock.Anything, expectedParams.Normalize()).Return(expectedUsers, nil)
 
 		c, w := testutil.NewRequestContext(t, http.MethodGet, usersEndpoint)
+		q := c.Request.URL.Query()
+		q.Set("limit", "25")
+		q.Set("offset", "10")
+		c.Request.URL.RawQuery = q.Encode()
 
 		// Act
 		handler(c)
@@ -224,6 +232,26 @@ func TestNewGetAllUsersHandler(t *testing.T) {
 		assert.Equal(t, "user2", users[1].(map[string]interface{})["login"]) //nolint:errcheck
 
 		mockService.AssertExpectations(t)
+		meta, ok := response["meta"].(map[string]interface{})
+		assert.True(t, ok)
+		assert.Equal(t, float64(25), meta["limit"])
+		assert.Equal(t, float64(10), meta["offset"])
+
+		mockService.AssertExpectations(t)
+	})
+
+	t.Run("InvalidPagination", func(t *testing.T) {
+		mockService, handler := setup(t)
+
+		c, w := testutil.NewRequestContext(t, http.MethodGet, usersEndpoint)
+		q := c.Request.URL.Query()
+		q.Set("limit", "abc")
+		c.Request.URL.RawQuery = q.Encode()
+
+		handler(c)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+		mockService.AssertNotCalled(t, "GetAll")
 	})
 
 	t.Run("EmptyUsersList", func(t *testing.T) {
@@ -231,7 +259,7 @@ func TestNewGetAllUsersHandler(t *testing.T) {
 		mockService, handler := setup(t)
 
 		expectedUsers := []*domain.User{}
-		mockService.On("GetAll", mock.Anything).Return(expectedUsers, nil)
+		mockService.On("GetAll", mock.Anything, defaultUserPageParams).Return(expectedUsers, nil)
 
 		c, w := testutil.NewRequestContext(t, http.MethodGet, usersEndpoint)
 
@@ -254,7 +282,7 @@ func TestNewGetAllUsersHandler(t *testing.T) {
 		// Arrange
 		mockService, handler := setup(t)
 
-		mockService.On("GetAll", mock.Anything).Return(nil, domain.ErrInternal)
+		mockService.On("GetAll", mock.Anything, defaultUserPageParams).Return(nil, domain.ErrInternal)
 
 		c, w := testutil.NewRequestContext(t, http.MethodGet, usersEndpoint)
 
@@ -274,7 +302,7 @@ func TestNewGetAllUsersHandler(t *testing.T) {
 		// Arrange
 		mockService, handler := setup(t)
 
-		mockService.On("GetAll", mock.Anything).Return(nil, errors.New("database connection failed"))
+		mockService.On("GetAll", mock.Anything, defaultUserPageParams).Return(nil, errors.New("database connection failed"))
 
 		c, w := testutil.NewRequestContext(t, http.MethodGet, usersEndpoint)
 

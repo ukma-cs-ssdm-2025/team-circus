@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
+	userrepo "github.com/ukma-cs-ssdm-2025/team-circus/internal/repo/user"
 )
 
 func (s *UserService) GetByUUID(ctx context.Context, uuid uuid.UUID) (*domain.User, error) {
@@ -21,8 +22,10 @@ func (s *UserService) GetByUUID(ctx context.Context, uuid uuid.UUID) (*domain.Us
 	return user, nil
 }
 
-func (s *UserService) GetAll(ctx context.Context) ([]*domain.User, error) {
-	users, err := s.repo.GetAll(ctx)
+func (s *UserService) GetAll(ctx context.Context, params userrepo.PageParams) ([]*domain.User, error) {
+	params = params.Normalize()
+
+	users, err := s.repo.GetAll(ctx, params)
 	if err != nil {
 		return nil, fmt.Errorf("user service: getAll: %w", err)
 	}

@@ -104,6 +104,8 @@ definitions:
     type: object
   responses.GetAllUsersResponse:
     properties:
+      meta:
+        $ref: '#/definitions/responses.PageMeta'
       users:
         items:
           $ref: '#/definitions/responses.GetUserResponse'
@@ -141,6 +143,13 @@ definitions:
         type: string
       uuid:
         type: string
+    type: object
+  responses.PageMeta:
+    properties:
+      limit:
+        type: integer
+      offset:
+        type: integer
     type: object
   responses.RegResponse:
     properties:
@@ -676,6 +685,15 @@ paths:
       consumes:
       - application/json
       description: Retrieve a list of all users
+      parameters:
+      - description: Max users per page (1-100, defaults to 50)
+        in: query
+        name: limit
+        type: integer
+      - description: Offset to start listing from (defaults to 0)
+        in: query
+        name: offset
+        type: integer
       produces:
       - application/json
       responses:
@@ -683,6 +701,11 @@ paths:
           description: Users retrieved successfully
           schema:
             $ref: '#/definitions/responses.GetAllUsersResponse'
+        "400":
+          description: Invalid pagination parameters
+          schema:
+            additionalProperties: true
+            type: object
         "500":
           description: Internal server error
           schema:

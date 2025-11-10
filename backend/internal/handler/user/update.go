@@ -10,11 +10,12 @@ import (
 	"github.com/google/uuid"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/user/requests"
+	userrepo "github.com/ukma-cs-ssdm-2025/team-circus/internal/repo/user"
 	"go.uber.org/zap"
 )
 
 type updateUserService interface {
-	Update(ctx context.Context, uuid uuid.UUID, login string, email string, password string) (*domain.User, error)
+	Update(ctx context.Context, uuid uuid.UUID, params userrepo.UpdateUserParams) (*domain.User, error)
 }
 
 // NewUpdateUserHandler updates a user by UUID
@@ -56,7 +57,13 @@ func NewUpdateUserHandler(service updateUserService, logger *zap.Logger) gin.Han
 			return
 		}
 
-		user, err := service.Update(c, parsedUUID, req.Login, req.Email, req.Password)
+		params := userrepo.UpdateUserParams{
+			Login:    req.Login,
+			Email:    req.Email,
+			Password: req.Password,
+		}
+
+		user, err := service.Update(c, parsedUUID, params)
 		if errors.Is(err, domain.ErrUserNotFound) {
 			logger.Warn("user not found", zap.String("uuid", uuidParam))
 			c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})

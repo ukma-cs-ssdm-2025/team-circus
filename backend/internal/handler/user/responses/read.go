@@ -15,4 +15,10 @@ type GetUserResponse struct {
 
 type GetAllUsersResponse struct {
 	Users []GetUserResponse `json:"users"`
+	Meta  PageMeta          `json:"meta"`
+}
+
+type PageMeta struct {
+	Limit  int `json:"limit"`
+	Offset int `json:"offset"`
 }

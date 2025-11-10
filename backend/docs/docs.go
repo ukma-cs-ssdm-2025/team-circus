@@ -728,11 +728,32 @@ const docTemplate = `{
                     "users"
                 ],
                 "summary": "Get all users",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Max users per page (1-100, defaults to 50)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset to start listing from (defaults to 0)",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Users retrieved successfully",
                         "schema": {
                             "$ref": "#/definitions/responses.GetAllUsersResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid pagination parameters",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
                         }
                     },
                     "500": {
@@ -1074,6 +1095,9 @@ const docTemplate = `{
         "responses.GetAllUsersResponse": {
             "type": "object",
             "properties": {
+                "meta": {
+                    "$ref": "#/definitions/responses.PageMeta"
+                },
                 "users": {
                     "type": "array",
                     "items": {
@@ -1130,6 +1154,17 @@ const docTemplate = `{
                 },
                 "uuid": {
                     "type": "string"
+                }
+            }
+        },
+        "responses.PageMeta": {
+            "type": "object",
+            "properties": {
+                "limit": {
+                    "type": "integer"
+                },
+                "offset": {
+                    "type": "integer"
                 }
             }
         },

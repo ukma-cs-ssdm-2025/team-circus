@@ -11,6 +11,7 @@ import (
 	gomock "github.com/golang/mock/gomock"
 	uuid "github.com/google/uuid"
 	domain "github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
+	user "github.com/ukma-cs-ssdm-2025/team-circus/internal/repo/user"
 )
 
 // MockRepository is a mock of Repository interface.
@@ -51,18 +52,18 @@ func (mr *MockRepositoryMockRecorder) Delete(arg0, arg1 interface{}) *gomock.Cal
 }
 
 // GetAll mocks base method.
-func (m *MockRepository) GetAll(arg0 context.Context) ([]*domain.User, error) {
+func (m *MockRepository) GetAll(arg0 context.Context, arg1 user.PageParams) ([]*domain.User, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAll", arg0)
+	ret := m.ctrl.Call(m, "GetAll", arg0, arg1)
 	ret0, _ := ret[0].([]*domain.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetAll indicates an expected call of GetAll.
-func (mr *MockRepositoryMockRecorder) GetAll(arg0 interface{}) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) GetAll(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAll", reflect.TypeOf((*MockRepository)(nil).GetAll), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAll", reflect.TypeOf((*MockRepository)(nil).GetAll), arg0, arg1)
 }
 
 // GetByLogin mocks base method.
@@ -96,16 +97,16 @@ func (mr *MockRepositoryMockRecorder) GetByUUID(arg0, arg1 interface{}) *gomock.
 }
 
 // Update mocks base method.
-func (m *MockRepository) Update(arg0 context.Context, arg1 uuid.UUID, arg2, arg3, arg4 string) (*domain.User, error) {
+func (m *MockRepository) Update(arg0 context.Context, arg1 uuid.UUID, arg2 user.UpdateUserParams) (*domain.User, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Update", arg0, arg1, arg2, arg3, arg4)
+	ret := m.ctrl.Call(m, "Update", arg0, arg1, arg2)
 	ret0, _ := ret[0].(*domain.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Update indicates an expected call of Update.
-func (mr *MockRepositoryMockRecorder) Update(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) Update(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockRepository)(nil).Update), arg0, arg1, arg2, arg3, arg4)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockRepository)(nil).Update), arg0, arg1, arg2)
 }

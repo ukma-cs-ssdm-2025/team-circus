@@ -12,8 +12,8 @@ import (
 
 func (r *UserRepository) GetByUUID(ctx context.Context, uuid uuid.UUID) (*domain.User, error) {
 	query := `
-		SELECT uuid, login, email, hashed_password, created_at 
-		FROM users 
+		SELECT uuid, login, email, hashed_password, created_at
+		FROM users
 		WHERE uuid = $1`
 
 	var user domain.User
@@ -36,8 +36,8 @@ func (r *UserRepository) GetByUUID(ctx context.Context, uuid uuid.UUID) (*domain
 
 func (r *UserRepository) GetByLogin(ctx context.Context, login string) (*domain.User, error) {
 	query := `
-    SELECT uuid, login, email, hashed_password, created_at 
-    FROM users 
+    SELECT uuid, login, email, hashed_password, created_at
+    FROM users
     WHERE login = $1`
 
 	var user domain.User
@@ -58,13 +58,16 @@ func (r *UserRepository) GetByLogin(ctx context.Context, login string) (*domain.
 	return &user, nil
 }
 
-func (r *UserRepository) GetAll(ctx context.Context) ([]*domain.User, error) {
-	query := `
-		SELECT uuid, login, email, hashed_password, created_at 
-		FROM users 
-		ORDER BY created_at DESC`
+func (r *UserRepository) GetAll(ctx context.Context, params PageParams) ([]*domain.User, error) {
+	params = params.Normalize()
 
-	rows, err := r.db.QueryContext(ctx, query)
+	query := `
+		SELECT uuid, login, email, hashed_password, created_at
+		FROM users
+		ORDER BY created_at DESC
+		LIMIT $1 OFFSET $2`
+
+	rows, err := r.db.QueryContext(ctx, query, params.Limit, params.Offset)
 	if err != nil {
 		return nil, errors.Join(domain.ErrInternal, fmt.Errorf("user repository: getAll query: %w", err))
 	}

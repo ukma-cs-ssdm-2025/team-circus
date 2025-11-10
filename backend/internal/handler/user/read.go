@@ -5,11 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/user/responses"
+	userrepo "github.com/ukma-cs-ssdm-2025/team-circus/internal/repo/user"
 	"go.uber.org/zap"
 )
 
@@ -18,7 +20,7 @@ type getUserService interface {
 }
 
 type getAllUsersService interface {
-	GetAll(ctx context.Context) ([]*domain.User, error)
+	GetAll(ctx context.Context, params userrepo.PageParams) ([]*domain.User, error)
 }
 
 // NewGetUserHandler retrieves a user by UUID
@@ -73,12 +75,22 @@ func NewGetUserHandler(service getUserService, logger *zap.Logger) gin.HandlerFu
 // @Tags users
 // @Accept json
 // @Produce json
+// @Param limit query int false "Max users per page (1-100, defaults to 50)"
+// @Param offset query int false "Offset to start listing from (defaults to 0)"
 // @Success 200 {object} responses.GetAllUsersResponse "Users retrieved successfully"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Failure 400 {object} map[string]interface{} "Invalid pagination parameters"
 // @Router /users [get]
 func NewGetAllUsersHandler(service getAllUsersService, logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		users, err := service.GetAll(c)
+		pageParams, err := parsePageParams(c)
+		if err != nil {
+			logger.Warn("invalid pagination params", zap.Error(err))
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		users, err := service.GetAll(c, pageParams)
 		if errors.Is(err, domain.ErrInternal) {
 			logger.Error("failed to get users", zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get users"})
@@ -92,8 +104,37 @@ func NewGetAllUsersHandler(service getAllUsersService, logger *zap.Logger) gin.H
 
 		response := responses.GetAllUsersResponse{
 			Users: mapUsersToGetAllResponse(users),
+			Meta: responses.PageMeta{
+				Limit:  pageParams.Limit,
+				Offset: pageParams.Offset,
+			},
 		}
 
 		c.JSON(http.StatusOK, response)
 	}
+}
+
+func parsePageParams(c *gin.Context) (userrepo.PageParams, error) {
+	params := userrepo.PageParams{
+		Limit:  userrepo.DefaultPageLimit,
+		Offset: 0,
+	}
+
+	if limitStr := c.Query("limit"); limitStr != "" {
+		limit, err := strconv.Atoi(limitStr)
+		if err != nil || limit <= 0 {
+			return params, errors.New("invalid limit value")
+		}
+		params.Limit = limit
+	}
+
+	if offsetStr := c.Query("offset"); offsetStr != "" {
+		offset, err := strconv.Atoi(offsetStr)
+		if err != nil || offset < 0 {
+			return params, errors.New("invalid offset value")
+		}
+		params.Offset = offset
+	}
+
+	return params.Normalize(), nil
 }
