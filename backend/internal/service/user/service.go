@@ -5,11 +5,13 @@ import (
 )
 
 type UserService struct {
-	repo *user.UserRepository
+	repo        *user.UserRepository
+	hashingCost int
 }
 
-func NewUserService(repo *user.UserRepository) *UserService {
+func NewUserService(repo *user.UserRepository, hashingCost int) *UserService {
 	return &UserService{
-		repo: repo,
+		repo:        repo,
+		hashingCost: hashingCost,
 	}
 }
