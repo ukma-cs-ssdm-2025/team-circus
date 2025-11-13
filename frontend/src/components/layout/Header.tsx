@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import {
   AppBar,
   Toolbar,
@@ -86,8 +86,8 @@ const Header = ({ className = '', onToggleSidebar }: HeaderProps) => {
 
           <Typography
             variant="h5"
-            component="a"
-            href={ROUTES.HOME}
+            component={RouterLink}
+            to={ROUTES.HOME}
             sx={{
               fontWeight: 700,
               textDecoration: 'none',
