@@ -1,6 +1,7 @@
 import { getApiUrl } from '../config/env';
 import { authService } from './auth';
 import type { ApiResponse } from '../types';
+import { HttpError, isRecord } from './httpError';
 
 // Enhanced API Client with automatic token refresh
 class ApiClient {
@@ -13,10 +14,10 @@ class ApiClient {
 
   private async requestWithAuth<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
   ): Promise<ApiResponse<T>> {
     const url = getApiUrl(endpoint);
-    
+
     const defaultHeaders = {
       'Content-Type': 'application/json',
     };
@@ -41,13 +42,17 @@ class ApiClient {
           return this.requestWithAuth<T>(endpoint, options);
         } else {
           // Refresh failed, user needs to login again
-          throw new Error('Authentication expired. Please login again.');
+          throw new HttpError(
+            'Authentication expired. Please login again.',
+            401,
+          );
         }
       }
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+        const { message, details, code } =
+          await this.parseErrorResponse(response);
+        throw new HttpError(message, response.status, details, code);
       }
 
       let parsed: unknown;
@@ -65,12 +70,14 @@ class ApiClient {
       const parsedObject = isObject(parsed) ? parsed : null;
       const hasData = parsedObject !== null && 'data' in parsedObject;
       const data = hasData ? (parsedObject.data as T) : (parsed as T);
-      const success = parsedObject !== null && 'success' in parsedObject
-        ? Boolean(parsedObject.success)
-        : response.ok;
-      const message = parsedObject !== null && typeof parsedObject.message === 'string'
-        ? parsedObject.message
-        : undefined;
+      const success =
+        parsedObject !== null && 'success' in parsedObject
+          ? Boolean(parsedObject.success)
+          : response.ok;
+      const message =
+        parsedObject !== null && typeof parsedObject.message === 'string'
+          ? parsedObject.message
+          : undefined;
 
       return {
         data,
@@ -78,8 +85,14 @@ class ApiClient {
         message,
       } satisfies ApiResponse<T>;
     } catch (error) {
-      console.error('API request failed:', error);
-      throw error;
+      const normalized =
+        error instanceof HttpError
+          ? error
+          : error instanceof Error
+            ? new HttpError(error.message, 0)
+            : new HttpError('Unknown error', 0);
+      console.error('API request failed:', normalized);
+      throw normalized;
     }
   }
 
@@ -103,7 +116,10 @@ class ApiClient {
   }
 
   // GET request
-  async get<T>(endpoint: string, options?: RequestInit): Promise<ApiResponse<T>> {
+  async get<T>(
+    endpoint: string,
+    options?: RequestInit,
+  ): Promise<ApiResponse<T>> {
     return this.requestWithAuth<T>(endpoint, {
       method: 'GET',
       ...options,
@@ -114,7 +130,7 @@ class ApiClient {
   async post<T, P = unknown>(
     endpoint: string,
     data?: P,
-    options?: RequestInit
+    options?: RequestInit,
   ): Promise<ApiResponse<T>> {
     return this.requestWithAuth<T>(endpoint, {
       method: 'POST',
@@ -127,7 +143,7 @@ class ApiClient {
   async put<T, P = unknown>(
     endpoint: string,
     data?: P,
-    options?: RequestInit
+    options?: RequestInit,
   ): Promise<ApiResponse<T>> {
     return this.requestWithAuth<T>(endpoint, {
       method: 'PUT',
@@ -137,11 +153,48 @@ class ApiClient {
   }
 
   // DELETE request
-  async delete<T>(endpoint: string, options?: RequestInit): Promise<ApiResponse<T>> {
+  async delete<T>(
+    endpoint: string,
+    options?: RequestInit,
+  ): Promise<ApiResponse<T>> {
     return this.requestWithAuth<T>(endpoint, {
       method: 'DELETE',
       ...options,
     });
+  }
+
+  private async parseErrorResponse(
+    response: Response,
+  ): Promise<{ message: string; details?: unknown; code?: string }> {
+    const fallbackMessage = `Request failed with status ${response.status}`;
+    const contentType = response.headers.get('content-type') ?? '';
+
+    if (contentType.includes('application/json')) {
+      try {
+        const json = await response.json();
+        if (isRecord(json)) {
+          const message =
+            typeof json.error === 'string'
+              ? json.error
+              : typeof json.message === 'string'
+                ? json.message
+                : fallbackMessage;
+          const code = typeof json.code === 'string' ? json.code : undefined;
+          return { message, details: json, code };
+        }
+        return { message: fallbackMessage, details: json };
+      } catch {
+        return { message: fallbackMessage };
+      }
+    }
+
+    try {
+      const text = await response.text();
+      const message = text.trim() || response.statusText || fallbackMessage;
+      return { message, details: text };
+    } catch {
+      return { message: fallbackMessage };
+    }
   }
 }
 

@@ -7,25 +7,31 @@ import (
 
 func mapGroupToCreateResponse(group *domain.Group) responses.CreateGroupResponse {
 	return responses.CreateGroupResponse{
-		UUID:      group.UUID,
-		Name:      group.Name,
-		CreatedAt: group.CreatedAt,
+		UUID:       group.UUID,
+		Name:       group.Name,
+		CreatedAt:  group.CreatedAt,
+		AuthorUUID: group.AuthorUUID,
+		Role:       group.Role,
 	}
 }
 
 func mapGroupToGetResponse(group *domain.Group) responses.GetGroupResponse {
 	return responses.GetGroupResponse{
-		UUID:      group.UUID,
-		Name:      group.Name,
-		CreatedAt: group.CreatedAt,
+		UUID:       group.UUID,
+		Name:       group.Name,
+		CreatedAt:  group.CreatedAt,
+		AuthorUUID: group.AuthorUUID,
+		Role:       group.Role,
 	}
 }
 
 func mapGroupToUpdateResponse(group *domain.Group) responses.UpdateGroupResponse {
 	return responses.UpdateGroupResponse{
-		UUID:      group.UUID,
-		Name:      group.Name,
-		CreatedAt: group.CreatedAt,
+		UUID:       group.UUID,
+		Name:       group.Name,
+		CreatedAt:  group.CreatedAt,
+		AuthorUUID: group.AuthorUUID,
+		Role:       group.Role,
 	}
 }
 

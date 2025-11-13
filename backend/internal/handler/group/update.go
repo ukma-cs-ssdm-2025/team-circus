@@ -2,7 +2,6 @@ package group
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -10,11 +9,13 @@ import (
 	"github.com/google/uuid"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/group/requests"
+	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/httpx"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 type updateGroupService interface {
-	Update(ctx context.Context, uuid uuid.UUID, name string) (*domain.Group, error)
+	Update(ctx context.Context, userUUID, groupUUID uuid.UUID, name string) (*domain.Group, error)
 }
 
 // NewUpdateGroupHandler updates a group by UUID
@@ -32,12 +33,19 @@ type updateGroupService interface {
 // @Router /groups/{uuid} [put]
 func NewUpdateGroupHandler(service updateGroupService, logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		uuidParam := c.Param("uuid")
-		parsedUUID, err := uuid.Parse(uuidParam)
-		if err != nil {
-			err = fmt.Errorf("update group handler: failed to parse uuid: %v", err)
-			logger.Error("failed to parse uuid", zap.Error(err))
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid uuid format"})
+		userUUID, ok := httpx.ResolveUserUUID(c)
+		if !ok {
+			return
+		}
+
+		groupUUID, ok := httpx.ParseUUIDParam(
+			c,
+			logger,
+			"uuid",
+			"update group handler: failed to parse uuid",
+			httpx.RequestContextFields(c)...,
+		)
+		if !ok {
 			return
 		}
 
@@ -56,20 +64,31 @@ func NewUpdateGroupHandler(service updateGroupService, logger *zap.Logger) gin.H
 			return
 		}
 
-		group, err := service.Update(c, parsedUUID, req.Name)
-		if errors.Is(err, domain.ErrGroupNotFound) {
-			logger.Warn("group not found", zap.String("uuid", uuidParam))
-			c.JSON(http.StatusNotFound, gin.H{"error": "group not found"})
-			return
-		}
-		if errors.Is(err, domain.ErrInternal) {
-			logger.Error("failed to update group", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update group"})
-			return
-		}
-		if err != nil {
-			logger.Error("failed to update group", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update group"})
+		group, err := service.Update(c.Request.Context(), userUUID, groupUUID, req.Name)
+		if httpx.HandleError(
+			c,
+			logger,
+			err,
+			httpx.ResponseSpec{
+				Status:     http.StatusInternalServerError,
+				Message:    "failed to update group",
+				LogMessage: "failed to update group",
+				LogLevel:   zapcore.ErrorLevel,
+			},
+			httpx.RequestContextFields(c, zap.String("group_uuid", groupUUID.String())),
+			httpx.ResponseSpec{
+				Target:     domain.ErrGroupNotFound,
+				Status:     http.StatusNotFound,
+				Message:    "group not found",
+				LogMessage: "group not found",
+				LogLevel:   zapcore.WarnLevel,
+			},
+			httpx.ResponseSpec{
+				Target:  domain.ErrForbidden,
+				Status:  http.StatusForbidden,
+				Message: "access forbidden",
+			},
+		) {
 			return
 		}
 

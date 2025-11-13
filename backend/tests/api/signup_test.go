@@ -253,14 +253,14 @@ func TestSignUpHandler(main *testing.T) {
 		defer resp2.Body.Close()
 
 		// Assert
-		assert.Equal(t, http.StatusInternalServerError, resp2.StatusCode)
+		assert.Equal(t, http.StatusConflict, resp2.StatusCode)
 
 		var response map[string]interface{}
 		err = json.NewDecoder(resp2.Body).Decode(&response)
 		require.NoError(t, err)
 
 		assert.Contains(t, response, "error")
-		assert.Equal(t, "failed to register", response["error"])
+		assert.Equal(t, "user already exists", response["error"])
 	})
 
 	main.Run("EdgeCases", func(t *testing.T) {
@@ -377,15 +377,15 @@ func TestSignUpHandler(main *testing.T) {
 			require.NoError(t, err)
 			defer resp.Body.Close()
 
-			// Assert - The handler processes the request but fails at service level
-			assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+			// Assert - The handler processes the request but detects existing user
+			assert.Equal(t, http.StatusConflict, resp.StatusCode)
 
 			var response map[string]interface{}
 			err = json.NewDecoder(resp.Body).Decode(&response)
 			require.NoError(t, err)
 
 			assert.Contains(t, response, "error")
-			assert.Equal(t, "failed to register", response["error"])
+			assert.Equal(t, "user already exists", response["error"])
 		})
 	})
 
@@ -432,14 +432,14 @@ func TestSignUpHandler(main *testing.T) {
 			defer resp2.Body.Close()
 
 			// Should fail due to duplicate email
-			assert.Equal(t, http.StatusInternalServerError, resp2.StatusCode)
+			assert.Equal(t, http.StatusConflict, resp2.StatusCode)
 
 			var response map[string]interface{}
 			err = json.NewDecoder(resp2.Body).Decode(&response)
 			require.NoError(t, err)
 
 			assert.Contains(t, response, "error")
-			assert.Equal(t, "failed to register", response["error"])
+			assert.Equal(t, "user already exists", response["error"])
 		})
 	})
 }

@@ -2,7 +2,6 @@ package document
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -10,11 +9,12 @@ import (
 	"github.com/google/uuid"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/document/requests"
+	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/httpx"
 	"go.uber.org/zap"
 )
 
 type updateDocumentService interface {
-	Update(ctx context.Context, uuid uuid.UUID, name, content string) (*domain.Document, error)
+	Update(ctx context.Context, userUUID, documentUUID uuid.UUID, name, content string) (*domain.Document, error)
 }
 
 // NewUpdateDocumentHandler updates a document by UUID
@@ -27,17 +27,26 @@ type updateDocumentService interface {
 // @Param request body requests.UpdateDocumentRequest true "Document update request"
 // @Success 200 {object} responses.UpdateDocumentResponse "Document updated successfully"
 // @Failure 400 {object} map[string]interface{} "Invalid UUID format or validation failed"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
+// @Failure 403 {object} map[string]interface{} "Access forbidden"
 // @Failure 404 {object} map[string]interface{} "Document not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /documents/{uuid} [put]
 func NewUpdateDocumentHandler(service updateDocumentService, logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		uuidParam := c.Param("uuid")
-		parsedUUID, err := uuid.Parse(uuidParam)
-		if err != nil {
-			err = fmt.Errorf("update document handler: failed to parse uuid: %v", err)
-			logger.Error("failed to parse uuid", zap.Error(err))
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid uuid format"})
+		userUUID, ok := httpx.ResolveUserUUID(c)
+		if !ok {
+			return
+		}
+
+		documentUUID, ok := httpx.ParseUUIDParam(
+			c,
+			logger,
+			"uuid",
+			"update document handler: failed to parse uuid",
+			httpx.RequestContextFields(c)...,
+		)
+		if !ok {
 			return
 		}
 
@@ -56,26 +65,8 @@ func NewUpdateDocumentHandler(service updateDocumentService, logger *zap.Logger)
 			return
 		}
 
-		document, err := service.Update(c, parsedUUID, req.Name, req.Content)
-		if errors.Is(err, domain.ErrDocumentNotFound) {
-			logger.Warn("document not found", zap.String("uuid", uuidParam))
-			c.JSON(http.StatusNotFound, gin.H{"error": "document not found"})
-			return
-		}
-		if errors.Is(err, domain.ErrInternal) {
-			logger.Error("failed to update document",
-				zap.Error(err),
-				zap.String("uuid", uuidParam),
-			)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update document"})
-			return
-		}
-		if err != nil {
-			logger.Error("failed to update document",
-				zap.Error(err),
-				zap.String("uuid", uuidParam),
-			)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update document"})
+		document, err := service.Update(c.Request.Context(), userUUID, documentUUID, req.Name, req.Content)
+		if handleDocumentOperationError(c, logger, err, documentUUID, "update") {
 			return
 		}
 

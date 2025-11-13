@@ -7,13 +7,14 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/group/requests"
 	"go.uber.org/zap"
 )
 
 type createGroupService interface {
-	Create(ctx context.Context, name string) (*domain.Group, error)
+	Create(ctx context.Context, ownerUUID uuid.UUID, name string) (*domain.Group, error)
 }
 
 // NewCreateGroupHandler creates a new group
@@ -25,10 +26,24 @@ type createGroupService interface {
 // @Param request body requests.CreateGroupRequest true "Group creation request"
 // @Success 201 {object} responses.CreateGroupResponse "Group created successfully"
 // @Failure 400 {object} map[string]interface{} "Invalid request format or validation failed"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /groups [post]
 func NewCreateGroupHandler(service createGroupService, logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		userUUIDValue, exists := c.Get("user_uid")
+		if !exists {
+			logger.Warn("missing user context", zap.String("request_id", c.GetString("request_id")), zap.String("client_ip", c.ClientIP()))
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "user context missing"})
+			return
+		}
+		userUUID, ok := userUUIDValue.(uuid.UUID)
+		if !ok {
+			logger.Warn("invalid user context", zap.String("request_id", c.GetString("request_id")), zap.String("client_ip", c.ClientIP()))
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid user context"})
+			return
+		}
+
 		var req requests.CreateGroupRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
 			err = fmt.Errorf("create group handler: failed to bind request: %v", err)
@@ -44,7 +59,7 @@ func NewCreateGroupHandler(service createGroupService, logger *zap.Logger) gin.H
 			return
 		}
 
-		group, err := service.Create(c, req.Name)
+		group, err := service.Create(c.Request.Context(), userUUID, req.Name)
 		if errors.Is(err, domain.ErrInternal) {
 			logger.Error("failed to create group", zap.Error(err), zap.String("name", req.Name))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create group"})

@@ -8,9 +8,20 @@ import (
 )
 
 type Group struct {
-	UUID      uuid.UUID
-	Name      string
+	UUID       uuid.UUID
+	Name       string
+	CreatedAt  time.Time
+	AuthorUUID uuid.UUID
+	Role       string
+}
+
+type GroupMember struct {
+	GroupUUID uuid.UUID
+	UserUUID  uuid.UUID
+	Role      string
 	CreatedAt time.Time
+	UserLogin string
+	UserEmail string
 }
 
 type Document struct {
@@ -30,9 +41,19 @@ type User struct {
 }
 
 var (
-	ErrGroupNotFound    = errors.New("group not found")
-	ErrDocumentNotFound = errors.New("document not found")
-	ErrUserNotFound     = errors.New("user not found")
-	ErrInternal         = errors.New("internal error")
-	ErrForbidden        = errors.New("forbidden")
+	ErrGroupNotFound     = errors.New("group not found")
+	ErrDocumentNotFound  = errors.New("document not found")
+	ErrUserNotFound      = errors.New("user not found")
+	ErrInternal          = errors.New("internal error")
+	ErrForbidden         = errors.New("forbidden")
+	ErrAlreadyExists     = errors.New("already exists")
+	ErrSelfAddNotAllowed = errors.New("cannot add yourself to the group")
+	ErrInvalidRole       = errors.New("invalid role")
+	ErrLastAuthor        = errors.New("cannot remove last author from group")
+)
+
+const (
+	GroupRoleAuthor   = "author"
+	GroupRoleCoAuthor = "coauthor"
+	GroupRoleReviewer = "reviewer"
 )

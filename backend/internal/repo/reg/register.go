@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/lib/pq"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 )
 
@@ -23,6 +24,10 @@ func (r *RegRepository) Register(ctx context.Context, login string, email string
 		&user.CreatedAt,
 	)
 	if err != nil {
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
+			return nil, domain.ErrAlreadyExists
+		}
 		return nil, errors.Join(domain.ErrInternal, fmt.Errorf("reg repository: register: %w", err))
 	}
 

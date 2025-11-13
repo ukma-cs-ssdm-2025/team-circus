@@ -2,6 +2,7 @@ package reg
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
@@ -16,6 +17,9 @@ func (s *RegService) Register(ctx context.Context, login string, email string, p
 
 	user, err := s.repo.Register(ctx, login, email, string(hashedPassword))
 	if err != nil {
+		if errors.Is(err, domain.ErrAlreadyExists) {
+			return nil, domain.ErrAlreadyExists
+		}
 		return nil, fmt.Errorf("registration service: %w", err)
 	}
 
