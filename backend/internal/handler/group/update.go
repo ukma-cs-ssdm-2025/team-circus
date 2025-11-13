@@ -56,7 +56,7 @@ func NewUpdateGroupHandler(service updateGroupService, logger *zap.Logger) gin.H
 			return
 		}
 
-		group, err := service.Update(c, parsedUUID, req.Name)
+		group, err := service.Update(c.Request.Context(), parsedUUID, req.Name)
 		if errors.Is(err, domain.ErrGroupNotFound) {
 			logger.Warn("group not found", zap.String("uuid", uuidParam))
 			c.JSON(http.StatusNotFound, gin.H{"error": "group not found"})

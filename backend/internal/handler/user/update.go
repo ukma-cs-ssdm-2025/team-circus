@@ -56,7 +56,7 @@ func NewUpdateUserHandler(service updateUserService, logger *zap.Logger) gin.Han
 			return
 		}
 
-		user, err := service.Update(c, parsedUUID, req.Login, req.Email, req.Password)
+		user, err := service.Update(c.Request.Context(), parsedUUID, req.Login, req.Email, req.Password)
 		if errors.Is(err, domain.ErrUserNotFound) {
 			logger.Warn("user not found", zap.String("uuid", uuidParam))
 			c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})

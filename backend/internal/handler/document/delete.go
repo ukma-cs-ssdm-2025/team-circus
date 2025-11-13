@@ -40,7 +40,7 @@ func NewDeleteDocumentHandler(service deleteDocumentService, logger *zap.Logger)
 			return
 		}
 
-		err = service.Delete(c, parsedUUID)
+		err = service.Delete(c.Request.Context(), parsedUUID)
 		if errors.Is(err, domain.ErrDocumentNotFound) {
 			logger.Warn("document not found", zap.String("uuid", uuidParam))
 			c.JSON(http.StatusNotFound, gin.H{"error": "document not found"})

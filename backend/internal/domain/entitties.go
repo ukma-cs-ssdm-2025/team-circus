@@ -36,3 +36,8 @@ var (
 	ErrInternal         = errors.New("internal error")
 	ErrForbidden        = errors.New("forbidden")
 )
+
+const (
+	GroupRoleOwner  = "owner"
+	GroupRoleMember = "member"
+)
