@@ -3,7 +3,11 @@
 <html lang="en">
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<<<<<<< Updated upstream
 		<title>document: Go Coverage Report</title>
+=======
+		<title>auth: Go Coverage Report</title>
+>>>>>>> Stashed changes
 		<style>
 			body {
 				background: black;
@@ -55,6 +59,7 @@
 			<div id="nav">
 				<select id="files">
 				
+<<<<<<< Updated upstream
 				<option value="file0">github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/document/create.go (100.0%)</option>
 				
 				<option value="file1">github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/document/delete.go (0.0%)</option>
@@ -76,6 +81,45 @@
 				<option value="file9">github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/user/read.go (100.0%)</option>
 				
 				<option value="file10">github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/user/update.go (0.0%)</option>
+=======
+				<option value="file0">github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/auth/login.go (78.7%)</option>
+				
+				<option value="file1">github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/auth/logout.go (100.0%)</option>
+				
+				<option value="file2">github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/auth/refresh.go (59.0%)</option>
+				
+				<option value="file3">github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/document/create.go (100.0%)</option>
+				
+				<option value="file4">github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/document/delete.go (100.0%)</option>
+				
+				<option value="file5">github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/document/handlers.go (100.0%)</option>
+				
+				<option value="file6">github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/document/read.go (92.6%)</option>
+				
+				<option value="file7">github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/document/update.go (100.0%)</option>
+				
+				<option value="file8">github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/group/create.go (100.0%)</option>
+				
+				<option value="file9">github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/group/delete.go (100.0%)</option>
+				
+				<option value="file10">github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/group/handlers.go (100.0%)</option>
+				
+				<option value="file11">github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/group/read.go (100.0%)</option>
+				
+				<option value="file12">github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/group/update.go (100.0%)</option>
+				
+				<option value="file13">github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/reg/handlers.go (100.0%)</option>
+				
+				<option value="file14">github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/reg/register.go (100.0%)</option>
+				
+				<option value="file15">github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/user/delete.go (100.0%)</option>
+				
+				<option value="file16">github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/user/handlers.go (100.0%)</option>
+				
+				<option value="file17">github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/user/read.go (100.0%)</option>
+				
+				<option value="file18">github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/user/update.go (100.0%)</option>
+>>>>>>> Stashed changes
 				
 				</select>
 			</div>
@@ -98,7 +142,286 @@
 		</div>
 		<div id="content">
 		
+<<<<<<< Updated upstream
 		<pre class="file" id="file0" style="display: none">package document
+=======
+		<pre class="file" id="file0" style="display: none">package auth
+
+import (
+        "context"
+        "errors"
+        "fmt"
+        "net/http"
+        "os"
+        "time"
+
+        "github.com/gin-gonic/gin"
+        "github.com/golang-jwt/jwt/v5"
+        "github.com/google/uuid"
+        "github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
+        "github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/auth/requests"
+        "go.uber.org/zap"
+        "golang.org/x/crypto/bcrypt"
+)
+
+type userRepository interface {
+        GetByLogin(ctx context.Context, login string) (*domain.User, error)
+        GetByUUID(ctx context.Context, uuid uuid.UUID) (*domain.User, error)
+}
+
+// NewLogInHandler handles user login and saves JWT tokens in cookies.
+// @Summary User login
+// @Description Authenticates user credentials, creates and saves JWT access/refresh tokens in cookies.
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body requests.LogInRequest true "User login request"
+// @Success 200 {object} map[string]string "Login successful"
+// @Failure 400 {object} map[string]string "Invalid request format"
+// @Failure 401 {object} map[string]string "Invalid credentials"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /auth/login [post]
+func NewLogInHandler(userRepo userRepository, logger *zap.Logger) gin.HandlerFunc <span class="cov10" title="6">{
+        return func(c *gin.Context) </span><span class="cov10" title="6">{
+                var req requests.LogInRequest
+                if err := c.ShouldBindJSON(&amp;req); err != nil </span><span class="cov1" title="1">{
+                        err = fmt.Errorf("log in handler: failed to bind request: %v", err)
+                        logger.Error("failed to bind request", zap.Error(err))
+                        c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request format"})
+                        return
+                }</span>
+
+                <span class="cov9" title="5">user, err := userRepo.GetByLogin(c, req.Login)
+                if errors.Is(err, domain.ErrInternal) </span><span class="cov1" title="1">{
+                        logger.Error("failed to log in", zap.Error(err))
+                        c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to log in"})
+                        return
+                }</span>
+                <span class="cov7" title="4">if err != nil </span><span class="cov1" title="1">{
+                        logger.Error("failed to log in", zap.Error(err))
+                        c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to log in"})
+                        return
+                }</span>
+
+                <span class="cov6" title="3">if user == nil </span><span class="cov1" title="1">{
+                        c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
+                        return
+                }</span>
+
+                <span class="cov4" title="2">err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password))
+                if err != nil </span><span class="cov1" title="1">{
+                        c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
+                        return
+                }</span>
+
+                <span class="cov1" title="1">secretToken := os.Getenv("SECRET_TOKEN")
+                if secretToken == "" </span><span class="cov0" title="0">{
+                        logger.Error("server misconfiguration")
+                        c.JSON(http.StatusInternalServerError, gin.H{"error": "server misconfiguration"})
+                        return
+                }</span>
+
+                <span class="cov1" title="1">accessExpTime := time.Now().Add(10 * time.Minute)
+                accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
+                        Subject:   user.UUID.String(),
+                        ExpiresAt: jwt.NewNumericDate(accessExpTime),
+                })
+
+                accessTokenString, err := accessToken.SignedString([]byte(secretToken))
+                if err != nil </span><span class="cov0" title="0">{
+                        logger.Error("failed to generate access token", zap.Error(err))
+                        c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to generate access token"})
+                        return
+                }</span>
+
+                <span class="cov1" title="1">refreshExpTime := time.Now().Add(30 * 24 * time.Hour)
+                refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
+                        Subject:   user.UUID.String(),
+                        ExpiresAt: jwt.NewNumericDate(refreshExpTime),
+                })
+
+                refreshTokenString, err := refreshToken.SignedString([]byte(secretToken))
+                if err != nil </span><span class="cov0" title="0">{
+                        logger.Error("failed to generate refresh token", zap.Error(err))
+                        c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to generate refresh token"})
+                        return
+                }</span>
+
+                <span class="cov1" title="1">c.SetSameSite(http.SameSiteNoneMode)
+                c.SetCookie("accessToken", accessTokenString, int(time.Until(accessExpTime).Seconds()), "/", "", true, true)
+                c.SetCookie("refreshToken", refreshTokenString, int(time.Until(refreshExpTime).Seconds()), "/", "", true, true)
+
+                c.JSON(http.StatusOK, gin.H{})</span>
+        }
+}
+
+func Validate(c *gin.Context) <span class="cov0" title="0">{
+        c.JSON(http.StatusOK, gin.H{
+                "message": "I'm logged in",
+        })
+}</span>
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package auth
+
+import (
+        "net/http"
+
+        "github.com/gin-gonic/gin"
+        "go.uber.org/zap"
+)
+
+// NewLogOutHandler logs the user out by expiring auth cookies.
+// @Summary User logout
+// @Description Expires the JWT access/refresh cookies.
+// @Tags auth
+// @Success 204 "Logged out successfully"
+// @Router /auth/logout [post]
+func NewLogOutHandler(logger *zap.Logger) gin.HandlerFunc <span class="cov8" title="1">{
+        return func(c *gin.Context) </span><span class="cov8" title="1">{
+                c.SetSameSite(http.SameSiteNoneMode)
+                c.SetCookie("accessToken", "", -1, "/", "", true, true)
+                c.SetCookie("refreshToken", "", -1, "/", "", true, true)
+
+                c.Status(http.StatusNoContent)
+        }</span>
+}
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">package auth
+
+import (
+        "errors"
+        "fmt"
+        "net/http"
+        "os"
+        "time"
+
+        "github.com/gin-gonic/gin"
+        "github.com/golang-jwt/jwt/v5"
+        "github.com/google/uuid"
+        "github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
+        "go.uber.org/zap"
+)
+
+// NewRefreshTokenHandler handles refresh token requests
+// @Summary Refresh access token
+// @Description Validates the refresh token cookie and issues a new access/refresh token pair
+// @Tags auth
+// @Produce json
+// @Param Cookie header string true "Cookie header containing refreshToken cookie"
+// @Success 200 {object} map[string]string "Tokens refreshed successfully"
+// @Failure 401 {object} map[string]string "Invalid or expired refresh token"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /auth/refresh [post]
+func NewRefreshTokenHandler(userRepo userRepository, logger *zap.Logger) gin.HandlerFunc <span class="cov10" title="5">{
+        return func(c *gin.Context) </span><span class="cov10" title="5">{
+                // var req requests.RefreshTokenRequest
+                // if err := c.ShouldBindJSON(&amp;req); err != nil {
+                //         err = fmt.Errorf("refresh token handler: failed to bind request: %v", err)
+                //         logger.Error("failed to bind request", zap.Error(err))
+                //         c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request format"})
+                //         return
+                // }
+
+                tokenString, err := c.Cookie("refreshToken")
+                if err != nil || tokenString == "" </span><span class="cov1" title="1">{
+                        c.JSON(http.StatusUnauthorized, gin.H{"error": "refresh token required"})
+                        return
+                }</span>
+
+                <span class="cov8" title="4">secretToken := os.Getenv("SECRET_TOKEN")
+                if secretToken == "" </span><span class="cov1" title="1">{
+                        logger.Error("server misconfiguration")
+                        c.JSON(http.StatusInternalServerError, gin.H{"error": "server misconfiguration"})
+                        return
+                }</span>
+
+                <span class="cov7" title="3">token, err := jwt.ParseWithClaims(tokenString, &amp;jwt.RegisteredClaims{}, func(t *jwt.Token) (interface{}, error) </span><span class="cov4" title="2">{
+                        if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok </span><span class="cov0" title="0">{
+                                return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
+                        }</span>
+                        <span class="cov4" title="2">return []byte(secretToken), nil</span>
+                })
+                <span class="cov7" title="3">if err != nil </span><span class="cov4" title="2">{
+                        logger.Error("invalid refresh token", zap.Error(err))
+                        c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid refresh token"})
+                        return
+                }</span>
+
+                <span class="cov1" title="1">claims, ok := token.Claims.(*jwt.RegisteredClaims)
+                if !ok || !token.Valid </span><span class="cov0" title="0">{
+                        logger.Error("invalid refresh token claims")
+                        c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid refresh token claims"})
+                        return
+                }</span>
+
+                <span class="cov1" title="1">if claims.ExpiresAt != nil &amp;&amp; time.Now().After(claims.ExpiresAt.Time) </span><span class="cov0" title="0">{
+                        logger.Error("refresh token expired")
+                        c.JSON(http.StatusUnauthorized, gin.H{"error": "refresh token expired"})
+                        return
+                }</span>
+
+                <span class="cov1" title="1">uid, err := uuid.Parse(claims.Subject)
+                if err != nil </span><span class="cov0" title="0">{
+                        logger.Error("invalid uuid format in refresh token", zap.Error(err))
+                        c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid uuid format in refresh token"})
+                        return
+                }</span>
+
+                <span class="cov1" title="1">user, err := userRepo.GetByUUID(c.Request.Context(), uid)
+                if err != nil </span><span class="cov0" title="0">{
+                        if errors.Is(err, domain.ErrInternal) </span><span class="cov0" title="0">{
+                                logger.Error("failed to fetch user from refresh token", zap.Error(err))
+                                c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch user from refresh token"})
+                                return
+                        }</span>
+                        <span class="cov0" title="0">logger.Error("invalid refresh token", zap.Error(err))
+                        c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid refresh token"})
+                        return</span>
+                }
+
+                <span class="cov1" title="1">if user == nil </span><span class="cov0" title="0">{
+                        c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid refresh token"})
+                        return
+                }</span>
+
+                <span class="cov1" title="1">accessTokenExpTime := time.Now().Add(10 * time.Minute)
+                accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
+                        Subject:   user.UUID.String(),
+                        ExpiresAt: jwt.NewNumericDate(accessTokenExpTime),
+                })
+
+                accessTokenString, err := accessToken.SignedString([]byte(secretToken))
+                if err != nil </span><span class="cov0" title="0">{
+                        logger.Error("failed to generate access token", zap.Error(err))
+                        c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to generate access token"})
+                        return
+                }</span>
+
+                <span class="cov1" title="1">refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
+                        Subject:   user.UUID.String(),
+                        ExpiresAt: claims.ExpiresAt,
+                })
+
+                refreshTokenString, err := refreshToken.SignedString([]byte(secretToken))
+                if err != nil </span><span class="cov0" title="0">{
+                        logger.Error("failed to generate refresh token", zap.Error(err))
+                        c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to generate refresh token"})
+                        return
+                }</span>
+
+                <span class="cov1" title="1">c.SetSameSite(http.SameSiteNoneMode)
+                c.SetCookie("accessToken", accessTokenString, int(time.Until(accessTokenExpTime).Seconds()), "/", "", true, true)
+                c.SetCookie("refreshToken", refreshTokenString, int(time.Until(claims.ExpiresAt.Time).Seconds()), "/", "", true, true)
+
+                c.JSON(http.StatusOK, gin.H{})</span>
+        }
+}
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">package document
+>>>>>>> Stashed changes
 
 import (
         "context"
@@ -172,7 +495,11 @@ func NewCreateDocumentHandler(service createDocumentService, logger *zap.Logger)
 }
 </pre>
 		
+<<<<<<< Updated upstream
 		<pre class="file" id="file1" style="display: none">package document
+=======
+		<pre class="file" id="file4" style="display: none">package document
+>>>>>>> Stashed changes
 
 import (
         "context"
@@ -203,35 +530,60 @@ type deleteDocumentService interface {
 // @Failure 404 {object} map[string]interface{} "Document not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /documents/{uuid} [delete]
+<<<<<<< Updated upstream
 func NewDeleteDocumentHandler(service deleteDocumentService, logger *zap.Logger) gin.HandlerFunc <span class="cov0" title="0">{
         return func(c *gin.Context) </span><span class="cov0" title="0">{
                 uuidParam := c.Param("uuid")
                 parsedUUID, err := uuid.Parse(uuidParam)
                 if err != nil </span><span class="cov0" title="0">{
+=======
+func NewDeleteDocumentHandler(service deleteDocumentService, logger *zap.Logger) gin.HandlerFunc <span class="cov10" title="5">{
+        return func(c *gin.Context) </span><span class="cov10" title="5">{
+                uuidParam := c.Param("uuid")
+                parsedUUID, err := uuid.Parse(uuidParam)
+                if err != nil </span><span class="cov1" title="1">{
+>>>>>>> Stashed changes
                         err = fmt.Errorf("delete document handler: failed to parse uuid: %v", err)
                         logger.Error("failed to parse uuid", zap.Error(err))
                         c.JSON(http.StatusBadRequest, gin.H{"error": "invalid uuid format"})
                         return
                 }</span>
 
+<<<<<<< Updated upstream
                 <span class="cov0" title="0">err = service.Delete(c, parsedUUID)
                 if errors.Is(err, domain.ErrDocumentNotFound) </span><span class="cov0" title="0">{
+=======
+                <span class="cov8" title="4">err = service.Delete(c, parsedUUID)
+                if errors.Is(err, domain.ErrDocumentNotFound) </span><span class="cov1" title="1">{
+>>>>>>> Stashed changes
                         logger.Warn("document not found", zap.String("uuid", uuidParam))
                         c.JSON(http.StatusNotFound, gin.H{"error": "document not found"})
                         return
                 }</span>
+<<<<<<< Updated upstream
                 <span class="cov0" title="0">if errors.Is(err, domain.ErrInternal) </span><span class="cov0" title="0">{
+=======
+                <span class="cov7" title="3">if errors.Is(err, domain.ErrInternal) </span><span class="cov1" title="1">{
+>>>>>>> Stashed changes
                         logger.Error("failed to delete document", zap.Error(err), zap.String("uuid", uuidParam))
                         c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete document"})
                         return
                 }</span>
+<<<<<<< Updated upstream
                 <span class="cov0" title="0">if err != nil </span><span class="cov0" title="0">{
+=======
+                <span class="cov4" title="2">if err != nil </span><span class="cov1" title="1">{
+>>>>>>> Stashed changes
                         logger.Error("failed to delete document", zap.Error(err), zap.String("uuid", uuidParam))
                         c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete document"})
                         return
                 }</span>
 
+<<<<<<< Updated upstream
                 <span class="cov0" title="0">response := responses.DeleteDocumentResponse{
+=======
+                <span class="cov1" title="1">response := responses.DeleteDocumentResponse{
+>>>>>>> Stashed changes
                         Message: "Document deleted successfully",
                 }
 
@@ -240,7 +592,11 @@ func NewDeleteDocumentHandler(service deleteDocumentService, logger *zap.Logger)
 }
 </pre>
 		
+<<<<<<< Updated upstream
 		<pre class="file" id="file2" style="display: none">package document
+=======
+		<pre class="file" id="file5" style="display: none">package document
+>>>>>>> Stashed changes
 
 import (
         "github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
@@ -267,7 +623,11 @@ func mapDocumentToGetResponse(document *domain.Document) responses.GetDocumentRe
         }
 }</span>
 
+<<<<<<< Updated upstream
 func mapDocumentToUpdateResponse(document *domain.Document) responses.UpdateDocumentResponse <span class="cov0" title="0">{
+=======
+func mapDocumentToUpdateResponse(document *domain.Document) responses.UpdateDocumentResponse <span class="cov1" title="1">{
+>>>>>>> Stashed changes
         return responses.UpdateDocumentResponse{
                 UUID:      document.UUID,
                 GroupUUID: document.GroupUUID,
@@ -286,7 +646,11 @@ func mapDocumentsToGetAllResponse(documents []*domain.Document) []responses.GetD
 }
 </pre>
 		
+<<<<<<< Updated upstream
 		<pre class="file" id="file3" style="display: none">package document
+=======
+		<pre class="file" id="file6" style="display: none">package document
+>>>>>>> Stashed changes
 
 import (
         "context"
@@ -302,6 +666,7 @@ import (
 )
 
 type getDocumentService interface {
+<<<<<<< Updated upstream
         GetByUUID(ctx context.Context, uuid uuid.UUID) (*domain.Document, error)
 }
 
@@ -311,23 +676,57 @@ type getAllDocumentsService interface {
 
 type getDocumentsByGroupService interface {
         GetByGroupUUID(ctx context.Context, groupUUID uuid.UUID) ([]*domain.Document, error)
+=======
+        GetByUUIDForUser(ctx context.Context, documentUUID, userUUID uuid.UUID) (*domain.Document, error)
+}
+
+type getAllDocumentsService interface {
+        GetAllForUser(ctx context.Context, userUUID uuid.UUID) ([]*domain.Document, error)
+>>>>>>> Stashed changes
 }
 
 // NewGetDocumentHandler retrieves a document by UUID
 // @Summary Get a document by UUID
+<<<<<<< Updated upstream
 // @Description Retrieve a specific document by its UUID
+=======
+// @Description Retrieve a specific document by its UUID if the requesting user is a member of the owning group
+>>>>>>> Stashed changes
 // @Tags documents
 // @Accept json
 // @Produce json
 // @Param uuid path string true "Document UUID"
 // @Success 200 {object} responses.GetDocumentResponse "Document retrieved successfully"
 // @Failure 400 {object} map[string]interface{} "Invalid UUID format"
+<<<<<<< Updated upstream
 // @Failure 404 {object} map[string]interface{} "Document not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /documents/{uuid} [get]
 func NewGetDocumentHandler(service getDocumentService, logger *zap.Logger) gin.HandlerFunc <span class="cov10" title="5">{
         return func(c *gin.Context) </span><span class="cov10" title="5">{
                 uuidParam := c.Param("uuid")
+=======
+// @Failure 401 {object} map[string]interface{} "Authentication required"
+// @Failure 403 {object} map[string]interface{} "Access forbidden"
+// @Failure 404 {object} map[string]interface{} "Document not found"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /documents/{uuid} [get]
+func NewGetDocumentHandler(service getDocumentService, logger *zap.Logger) gin.HandlerFunc <span class="cov10" title="7">{
+        return func(c *gin.Context) </span><span class="cov10" title="7">{
+                userUUIDValue, exists := c.Get("user_uid")
+                if !exists </span><span class="cov1" title="1">{
+                        c.JSON(http.StatusUnauthorized, gin.H{"error": "user context missing"})
+                        return
+                }</span>
+
+                <span class="cov9" title="6">userUUID, ok := userUUIDValue.(uuid.UUID)
+                if !ok </span><span class="cov0" title="0">{
+                        c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid user context"})
+                        return
+                }</span>
+
+                <span class="cov9" title="6">uuidParam := c.Param("uuid")
+>>>>>>> Stashed changes
                 parsedUUID, err := uuid.Parse(uuidParam)
                 if err != nil </span><span class="cov1" title="1">{
                         err = fmt.Errorf("get document handler: failed to parse uuid: %v", err)
@@ -336,13 +735,25 @@ func NewGetDocumentHandler(service getDocumentService, logger *zap.Logger) gin.H
                         return
                 }</span>
 
+<<<<<<< Updated upstream
                 <span class="cov8" title="4">document, err := service.GetByUUID(c, parsedUUID)
+=======
+                <span class="cov8" title="5">document, err := service.GetByUUIDForUser(c, parsedUUID, userUUID)
+>>>>>>> Stashed changes
                 if errors.Is(err, domain.ErrDocumentNotFound) </span><span class="cov1" title="1">{
                         logger.Warn("document not found", zap.String("uuid", uuidParam))
                         c.JSON(http.StatusNotFound, gin.H{"error": "document not found"})
                         return
                 }</span>
+<<<<<<< Updated upstream
                 <span class="cov7" title="3">if errors.Is(err, domain.ErrInternal) </span><span class="cov1" title="1">{
+=======
+                <span class="cov7" title="4">if errors.Is(err, domain.ErrForbidden) </span><span class="cov1" title="1">{
+                        c.JSON(http.StatusForbidden, gin.H{"error": "access forbidden"})
+                        return
+                }</span>
+                <span class="cov6" title="3">if errors.Is(err, domain.ErrInternal) </span><span class="cov1" title="1">{
+>>>>>>> Stashed changes
                         logger.Error("failed to get document", zap.Error(err), zap.String("uuid", uuidParam))
                         c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get document"})
                         return
@@ -361,22 +772,51 @@ func NewGetDocumentHandler(service getDocumentService, logger *zap.Logger) gin.H
 
 // NewGetAllDocumentsHandler retrieves all documents
 // @Summary Get all documents
+<<<<<<< Updated upstream
 // @Description Retrieve a list of all documents
+=======
+// @Description Retrieve a list of all documents belonging to groups the requesting user is a member of
+>>>>>>> Stashed changes
 // @Tags documents
 // @Accept json
 // @Produce json
 // @Success 200 {object} responses.GetAllDocumentsResponse "Documents retrieved successfully"
+<<<<<<< Updated upstream
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /documents [get]
 func NewGetAllDocumentsHandler(service getAllDocumentsService, logger *zap.Logger) gin.HandlerFunc <span class="cov8" title="4">{
         return func(c *gin.Context) </span><span class="cov8" title="4">{
                 documents, err := service.GetAll(c)
+=======
+// @Failure 401 {object} map[string]interface{} "Authentication required"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /documents [get]
+func NewGetAllDocumentsHandler(service getAllDocumentsService, logger *zap.Logger) gin.HandlerFunc <span class="cov8" title="5">{
+        return func(c *gin.Context) </span><span class="cov8" title="5">{
+                userUUIDValue, exists := c.Get("user_uid")
+                if !exists </span><span class="cov1" title="1">{
+                        c.JSON(http.StatusUnauthorized, gin.H{"error": "user context missing"})
+                        return
+                }</span>
+
+                <span class="cov7" title="4">userUUID, ok := userUUIDValue.(uuid.UUID)
+                if !ok </span><span class="cov0" title="0">{
+                        c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid user context"})
+                        return
+                }</span>
+
+                <span class="cov7" title="4">documents, err := service.GetAllForUser(c, userUUID)
+>>>>>>> Stashed changes
                 if errors.Is(err, domain.ErrInternal) </span><span class="cov1" title="1">{
                         logger.Error("failed to get documents", zap.Error(err))
                         c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get documents"})
                         return
                 }</span>
+<<<<<<< Updated upstream
                 <span class="cov7" title="3">if err != nil </span><span class="cov1" title="1">{
+=======
+                <span class="cov6" title="3">if err != nil </span><span class="cov1" title="1">{
+>>>>>>> Stashed changes
                         logger.Error("failed to get documents", zap.Error(err))
                         c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get documents"})
                         return
@@ -389,6 +829,7 @@ func NewGetAllDocumentsHandler(service getAllDocumentsService, logger *zap.Logge
                 c.JSON(http.StatusOK, response)</span>
         }
 }
+<<<<<<< Updated upstream
 
 // NewGetDocumentsByGroupHandler retrieves documents by group UUID
 // @Summary Get documents by group UUID
@@ -434,6 +875,11 @@ func NewGetDocumentsByGroupHandler(service getDocumentsByGroupService, logger *z
 </pre>
 		
 		<pre class="file" id="file4" style="display: none">package document
+=======
+</pre>
+		
+		<pre class="file" id="file7" style="display: none">package document
+>>>>>>> Stashed changes
 
 import (
         "context"
@@ -465,39 +911,65 @@ type updateDocumentService interface {
 // @Failure 404 {object} map[string]interface{} "Document not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /documents/{uuid} [put]
+<<<<<<< Updated upstream
 func NewUpdateDocumentHandler(service updateDocumentService, logger *zap.Logger) gin.HandlerFunc <span class="cov0" title="0">{
         return func(c *gin.Context) </span><span class="cov0" title="0">{
                 uuidParam := c.Param("uuid")
                 parsedUUID, err := uuid.Parse(uuidParam)
                 if err != nil </span><span class="cov0" title="0">{
+=======
+func NewUpdateDocumentHandler(service updateDocumentService, logger *zap.Logger) gin.HandlerFunc <span class="cov10" title="7">{
+        return func(c *gin.Context) </span><span class="cov10" title="7">{
+                uuidParam := c.Param("uuid")
+                parsedUUID, err := uuid.Parse(uuidParam)
+                if err != nil </span><span class="cov1" title="1">{
+>>>>>>> Stashed changes
                         err = fmt.Errorf("update document handler: failed to parse uuid: %v", err)
                         logger.Error("failed to parse uuid", zap.Error(err))
                         c.JSON(http.StatusBadRequest, gin.H{"error": "invalid uuid format"})
                         return
                 }</span>
 
+<<<<<<< Updated upstream
                 <span class="cov0" title="0">var req requests.UpdateDocumentRequest
                 if err := c.ShouldBindJSON(&amp;req); err != nil </span><span class="cov0" title="0">{
+=======
+                <span class="cov9" title="6">var req requests.UpdateDocumentRequest
+                if err := c.ShouldBindJSON(&amp;req); err != nil </span><span class="cov1" title="1">{
+>>>>>>> Stashed changes
                         err = fmt.Errorf("update document handler: failed to bind request: %v", err)
                         logger.Error("failed to bind request", zap.Error(err))
                         c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request format"})
                         return
                 }</span>
 
+<<<<<<< Updated upstream
                 <span class="cov0" title="0">if err := req.Validate(); err != nil </span><span class="cov0" title="0">{
+=======
+                <span class="cov8" title="5">if err := req.Validate(); err != nil </span><span class="cov1" title="1">{
+>>>>>>> Stashed changes
                         err = fmt.Errorf("update document handler: validation failed: %v", err)
                         logger.Error("validation failed", zap.Error(err))
                         c.JSON(http.StatusBadRequest, gin.H{"error": "validation failed", "details": err.Error()})
                         return
                 }</span>
 
+<<<<<<< Updated upstream
                 <span class="cov0" title="0">document, err := service.Update(c, parsedUUID, req.Name, req.Content)
                 if errors.Is(err, domain.ErrDocumentNotFound) </span><span class="cov0" title="0">{
+=======
+                <span class="cov7" title="4">document, err := service.Update(c, parsedUUID, req.Name, req.Content)
+                if errors.Is(err, domain.ErrDocumentNotFound) </span><span class="cov1" title="1">{
+>>>>>>> Stashed changes
                         logger.Warn("document not found", zap.String("uuid", uuidParam))
                         c.JSON(http.StatusNotFound, gin.H{"error": "document not found"})
                         return
                 }</span>
+<<<<<<< Updated upstream
                 <span class="cov0" title="0">if errors.Is(err, domain.ErrInternal) </span><span class="cov0" title="0">{
+=======
+                <span class="cov6" title="3">if errors.Is(err, domain.ErrInternal) </span><span class="cov1" title="1">{
+>>>>>>> Stashed changes
                         logger.Error("failed to update document",
                                 zap.Error(err),
                                 zap.String("uuid", uuidParam),
@@ -505,7 +977,11 @@ func NewUpdateDocumentHandler(service updateDocumentService, logger *zap.Logger)
                         c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update document"})
                         return
                 }</span>
+<<<<<<< Updated upstream
                 <span class="cov0" title="0">if err != nil </span><span class="cov0" title="0">{
+=======
+                <span class="cov4" title="2">if err != nil </span><span class="cov1" title="1">{
+>>>>>>> Stashed changes
                         logger.Error("failed to update document",
                                 zap.Error(err),
                                 zap.String("uuid", uuidParam),
@@ -514,14 +990,407 @@ func NewUpdateDocumentHandler(service updateDocumentService, logger *zap.Logger)
                         return
                 }</span>
 
+<<<<<<< Updated upstream
                 <span class="cov0" title="0">response := mapDocumentToUpdateResponse(document)
+=======
+                <span class="cov1" title="1">response := mapDocumentToUpdateResponse(document)
+>>>>>>> Stashed changes
 
                 c.JSON(http.StatusOK, response)</span>
         }
 }
 </pre>
 		
+<<<<<<< Updated upstream
 		<pre class="file" id="file5" style="display: none">package reg
+=======
+		<pre class="file" id="file8" style="display: none">package group
+
+import (
+        "context"
+        "errors"
+        "fmt"
+        "net/http"
+
+        "github.com/gin-gonic/gin"
+        "github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
+        "github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/group/requests"
+        "go.uber.org/zap"
+)
+
+type createGroupService interface {
+        Create(ctx context.Context, name string) (*domain.Group, error)
+}
+
+// NewCreateGroupHandler creates a new group
+// @Summary Create a new group
+// @Description Create a new group with the provided name
+// @Tags groups
+// @Accept json
+// @Produce json
+// @Param request body requests.CreateGroupRequest true "Group creation request"
+// @Success 201 {object} responses.CreateGroupResponse "Group created successfully"
+// @Failure 400 {object} map[string]interface{} "Invalid request format or validation failed"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /groups [post]
+func NewCreateGroupHandler(service createGroupService, logger *zap.Logger) gin.HandlerFunc <span class="cov10" title="5">{
+        return func(c *gin.Context) </span><span class="cov10" title="5">{
+                var req requests.CreateGroupRequest
+                if err := c.ShouldBindJSON(&amp;req); err != nil </span><span class="cov1" title="1">{
+                        err = fmt.Errorf("create group handler: failed to bind request: %v", err)
+                        logger.Error("failed to bind request", zap.Error(err))
+                        c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request format"})
+                        return
+                }</span>
+
+                <span class="cov8" title="4">if err := req.Validate(); err != nil </span><span class="cov1" title="1">{
+                        err = fmt.Errorf("create group handler: validation failed: %v", err)
+                        logger.Error("validation failed", zap.Error(err))
+                        c.JSON(http.StatusBadRequest, gin.H{"error": "validation failed", "details": err.Error()})
+                        return
+                }</span>
+
+                <span class="cov7" title="3">group, err := service.Create(c, req.Name)
+                if errors.Is(err, domain.ErrInternal) </span><span class="cov1" title="1">{
+                        logger.Error("failed to create group", zap.Error(err), zap.String("name", req.Name))
+                        c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create group"})
+                        return
+                }</span>
+                <span class="cov4" title="2">if err != nil </span><span class="cov1" title="1">{
+                        logger.Error("failed to create group", zap.Error(err), zap.String("name", req.Name))
+                        c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create group"})
+                        return
+                }</span>
+
+                <span class="cov1" title="1">response := mapGroupToCreateResponse(group)
+
+                c.JSON(http.StatusCreated, response)</span>
+        }
+}
+</pre>
+		
+		<pre class="file" id="file9" style="display: none">package group
+
+import (
+        "context"
+        "errors"
+        "fmt"
+        "net/http"
+
+        "github.com/gin-gonic/gin"
+        "github.com/google/uuid"
+        "github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
+        "github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/group/responses"
+        "go.uber.org/zap"
+)
+
+type deleteGroupService interface {
+        Delete(ctx context.Context, uuid uuid.UUID) error
+}
+
+// NewDeleteGroupHandler deletes a group by UUID
+// @Summary Delete a group by UUID
+// @Description Delete a specific group by its UUID
+// @Tags groups
+// @Accept json
+// @Produce json
+// @Param uuid path string true "Group UUID"
+// @Success 200 {object} responses.DeleteGroupResponse "Group deleted successfully"
+// @Failure 400 {object} map[string]interface{} "Invalid UUID format"
+// @Failure 404 {object} map[string]interface{} "Group not found"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /groups/{uuid} [delete]
+func NewDeleteGroupHandler(service deleteGroupService, logger *zap.Logger) gin.HandlerFunc <span class="cov10" title="5">{
+        return func(c *gin.Context) </span><span class="cov10" title="5">{
+                uuidParam := c.Param("uuid")
+                parsedUUID, err := uuid.Parse(uuidParam)
+                if err != nil </span><span class="cov1" title="1">{
+                        err = fmt.Errorf("delete group handler: failed to parse uuid: %v", err)
+                        logger.Error("failed to parse uuid", zap.Error(err))
+                        c.JSON(http.StatusBadRequest, gin.H{"error": "invalid uuid format"})
+                        return
+                }</span>
+
+                <span class="cov8" title="4">err = service.Delete(c, parsedUUID)
+                if errors.Is(err, domain.ErrGroupNotFound) </span><span class="cov1" title="1">{
+                        logger.Warn("group not found", zap.String("uuid", uuidParam))
+                        c.JSON(http.StatusNotFound, gin.H{"error": "group not found"})
+                        return
+                }</span>
+                <span class="cov7" title="3">if errors.Is(err, domain.ErrInternal) </span><span class="cov1" title="1">{
+                        logger.Error("failed to delete group", zap.Error(err))
+                        c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete group"})
+                        return
+                }</span>
+                <span class="cov4" title="2">if err != nil </span><span class="cov1" title="1">{
+                        logger.Error("failed to delete group", zap.Error(err))
+                        c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete group"})
+                        return
+                }</span>
+
+                <span class="cov1" title="1">response := responses.DeleteGroupResponse{
+                        Message: "Group deleted successfully",
+                }
+
+                c.JSON(http.StatusOK, response)</span>
+        }
+}
+</pre>
+		
+		<pre class="file" id="file10" style="display: none">package group
+
+import (
+        "github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
+        "github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/group/responses"
+)
+
+func mapGroupToCreateResponse(group *domain.Group) responses.CreateGroupResponse <span class="cov1" title="1">{
+        return responses.CreateGroupResponse{
+                UUID:      group.UUID,
+                Name:      group.Name,
+                CreatedAt: group.CreatedAt,
+        }
+}</span>
+
+func mapGroupToGetResponse(group *domain.Group) responses.GetGroupResponse <span class="cov10" title="3">{
+        return responses.GetGroupResponse{
+                UUID:      group.UUID,
+                Name:      group.Name,
+                CreatedAt: group.CreatedAt,
+        }
+}</span>
+
+func mapGroupToUpdateResponse(group *domain.Group) responses.UpdateGroupResponse <span class="cov1" title="1">{
+        return responses.UpdateGroupResponse{
+                UUID:      group.UUID,
+                Name:      group.Name,
+                CreatedAt: group.CreatedAt,
+        }
+}</span>
+
+func mapGroupsToGetAllResponse(groups []*domain.Group) []responses.GetGroupResponse <span class="cov6" title="2">{
+        result := make([]responses.GetGroupResponse, len(groups))
+        for i, group := range groups </span><span class="cov6" title="2">{
+                result[i] = mapGroupToGetResponse(group)
+        }</span>
+        <span class="cov6" title="2">return result</span>
+}
+</pre>
+		
+		<pre class="file" id="file11" style="display: none">package group
+
+import (
+        "context"
+        "errors"
+        "fmt"
+        "net/http"
+
+        "github.com/gin-gonic/gin"
+        "github.com/google/uuid"
+        "github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
+        "github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/group/responses"
+        "go.uber.org/zap"
+)
+
+type getGroupService interface {
+        GetByUUIDForUser(ctx context.Context, groupUUID, userUUID uuid.UUID) (*domain.Group, error)
+}
+
+type getAllGroupsService interface {
+        GetAllForUser(ctx context.Context, userUUID uuid.UUID) ([]*domain.Group, error)
+}
+
+// NewGetGroupHandler retrieves a group by UUID
+// @Summary Get a group by UUID
+// @Description Retrieve a specific group by its UUID if the requesting user is a member
+// @Tags groups
+// @Accept json
+// @Produce json
+// @Param uuid path string true "Group UUID"
+// @Success 200 {object} responses.GetGroupResponse "Group retrieved successfully"
+// @Failure 400 {object} map[string]interface{} "Invalid UUID format"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
+// @Failure 403 {object} map[string]interface{} "Access forbidden"
+// @Failure 404 {object} map[string]interface{} "Group not found"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /groups/{uuid} [get]
+func NewGetGroupHandler(service getGroupService, logger *zap.Logger) gin.HandlerFunc <span class="cov10" title="8">{
+        return func(c *gin.Context) </span><span class="cov10" title="8">{
+                userUUIDValue, exists := c.Get("user_uid")
+                if !exists </span><span class="cov1" title="1">{
+                        c.JSON(http.StatusUnauthorized, gin.H{"error": "user context missing"})
+                        return
+                }</span>
+                <span class="cov9" title="7">userUUID, ok := userUUIDValue.(uuid.UUID)
+                if !ok </span><span class="cov1" title="1">{
+                        c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid user context"})
+                        return
+                }</span>
+
+                <span class="cov8" title="6">uuidParam := c.Param("uuid")
+                parsedUUID, err := uuid.Parse(uuidParam)
+                if err != nil </span><span class="cov1" title="1">{
+                        err = fmt.Errorf("get group handler: failed to parse uuid: %v", err)
+                        logger.Error("failed to parse uuid", zap.Error(err))
+                        c.JSON(http.StatusBadRequest, gin.H{"error": "invalid uuid format"})
+                        return
+                }</span>
+
+                <span class="cov7" title="5">group, err := service.GetByUUIDForUser(c, parsedUUID, userUUID)
+                if errors.Is(err, domain.ErrGroupNotFound) </span><span class="cov1" title="1">{
+                        logger.Warn("group not found", zap.String("uuid", uuidParam))
+                        c.JSON(http.StatusNotFound, gin.H{"error": "group not found"})
+                        return
+                }</span>
+                <span class="cov7" title="4">if errors.Is(err, domain.ErrForbidden) </span><span class="cov1" title="1">{
+                        c.JSON(http.StatusForbidden, gin.H{"error": "access forbidden"})
+                        return
+                }</span>
+                <span class="cov5" title="3">if errors.Is(err, domain.ErrInternal) </span><span class="cov1" title="1">{
+                        c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get group"})
+                        return
+                }</span>
+                <span class="cov4" title="2">if err != nil </span><span class="cov1" title="1">{
+                        logger.Error("failed to get group", zap.Error(err))
+                        c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get group"})
+                        return
+                }</span>
+
+                <span class="cov1" title="1">response := mapGroupToGetResponse(group)
+
+                c.JSON(http.StatusOK, response)</span>
+        }
+}
+
+// NewGetAllGroupsHandler retrieves all groups
+// @Summary Get all groups
+// @Description Retrieve a list of all groups the requesting user belongs to
+// @Tags groups
+// @Accept json
+// @Produce json
+// @Success 200 {object} responses.GetAllGroupsResponse "Groups retrieved successfully"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /groups [get]
+func NewGetAllGroupsHandler(service getAllGroupsService, logger *zap.Logger) gin.HandlerFunc <span class="cov8" title="6">{
+        return func(c *gin.Context) </span><span class="cov8" title="6">{
+                userUUIDValue, exists := c.Get("user_uid")
+                if !exists </span><span class="cov1" title="1">{
+                        c.JSON(http.StatusUnauthorized, gin.H{"error": "user context missing"})
+                        return
+                }</span>
+
+                <span class="cov7" title="5">userUUID, ok := userUUIDValue.(uuid.UUID)
+                if !ok </span><span class="cov1" title="1">{
+                        c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid user context"})
+                        return
+                }</span>
+
+                <span class="cov7" title="4">groups, err := service.GetAllForUser(c, userUUID)
+                if errors.Is(err, domain.ErrInternal) </span><span class="cov1" title="1">{
+                        logger.Error("failed to get groups", zap.Error(err))
+                        c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get groups"})
+                        return
+                }</span>
+                <span class="cov5" title="3">if err != nil </span><span class="cov1" title="1">{
+                        logger.Error("failed to get groups", zap.Error(err))
+                        c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get groups"})
+                        return
+                }</span>
+
+                <span class="cov4" title="2">response := responses.GetAllGroupsResponse{
+                        Groups: mapGroupsToGetAllResponse(groups),
+                }
+
+                c.JSON(http.StatusOK, response)</span>
+        }
+}
+</pre>
+		
+		<pre class="file" id="file12" style="display: none">package group
+
+import (
+        "context"
+        "errors"
+        "fmt"
+        "net/http"
+
+        "github.com/gin-gonic/gin"
+        "github.com/google/uuid"
+        "github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
+        "github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/group/requests"
+        "go.uber.org/zap"
+)
+
+type updateGroupService interface {
+        Update(ctx context.Context, uuid uuid.UUID, name string) (*domain.Group, error)
+}
+
+// NewUpdateGroupHandler updates a group by UUID
+// @Summary Update a group by UUID
+// @Description Update a specific group's name by its UUID
+// @Tags groups
+// @Accept json
+// @Produce json
+// @Param uuid path string true "Group UUID"
+// @Param request body requests.UpdateGroupRequest true "Group update request"
+// @Success 200 {object} responses.UpdateGroupResponse "Group updated successfully"
+// @Failure 400 {object} map[string]interface{} "Invalid UUID format or validation failed"
+// @Failure 404 {object} map[string]interface{} "Group not found"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /groups/{uuid} [put]
+func NewUpdateGroupHandler(service updateGroupService, logger *zap.Logger) gin.HandlerFunc <span class="cov10" title="7">{
+        return func(c *gin.Context) </span><span class="cov10" title="7">{
+                uuidParam := c.Param("uuid")
+                parsedUUID, err := uuid.Parse(uuidParam)
+                if err != nil </span><span class="cov1" title="1">{
+                        err = fmt.Errorf("update group handler: failed to parse uuid: %v", err)
+                        logger.Error("failed to parse uuid", zap.Error(err))
+                        c.JSON(http.StatusBadRequest, gin.H{"error": "invalid uuid format"})
+                        return
+                }</span>
+
+                <span class="cov9" title="6">var req requests.UpdateGroupRequest
+                if err := c.ShouldBindJSON(&amp;req); err != nil </span><span class="cov1" title="1">{
+                        err = fmt.Errorf("update group handler: failed to bind request: %v", err)
+                        logger.Error("failed to bind request", zap.Error(err))
+                        c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request format"})
+                        return
+                }</span>
+
+                <span class="cov8" title="5">if err := req.Validate(); err != nil </span><span class="cov1" title="1">{
+                        err = fmt.Errorf("update group handler: validation failed: %v", err)
+                        logger.Error("validation failed", zap.Error(err))
+                        c.JSON(http.StatusBadRequest, gin.H{"error": "validation failed", "details": err.Error()})
+                        return
+                }</span>
+
+                <span class="cov7" title="4">group, err := service.Update(c, parsedUUID, req.Name)
+                if errors.Is(err, domain.ErrGroupNotFound) </span><span class="cov1" title="1">{
+                        logger.Warn("group not found", zap.String("uuid", uuidParam))
+                        c.JSON(http.StatusNotFound, gin.H{"error": "group not found"})
+                        return
+                }</span>
+                <span class="cov6" title="3">if errors.Is(err, domain.ErrInternal) </span><span class="cov1" title="1">{
+                        logger.Error("failed to update group", zap.Error(err))
+                        c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update group"})
+                        return
+                }</span>
+                <span class="cov4" title="2">if err != nil </span><span class="cov1" title="1">{
+                        logger.Error("failed to update group", zap.Error(err))
+                        c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update group"})
+                        return
+                }</span>
+
+                <span class="cov1" title="1">response := mapGroupToUpdateResponse(group)
+
+                c.JSON(http.StatusOK, response)</span>
+        }
+}
+</pre>
+		
+		<pre class="file" id="file13" style="display: none">package reg
+>>>>>>> Stashed changes
 
 import (
         "github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
@@ -538,7 +1407,11 @@ func mapUserToRegResponse(user *domain.User) responses.RegResponse <span class="
 }</span>
 </pre>
 		
+<<<<<<< Updated upstream
 		<pre class="file" id="file6" style="display: none">package reg
+=======
+		<pre class="file" id="file14" style="display: none">package reg
+>>>>>>> Stashed changes
 
 import (
         "context"
@@ -556,7 +1429,11 @@ type regService interface {
         Register(ctx context.Context, login string, email string, password string) (*domain.User, error)
 }
 
+<<<<<<< Updated upstream
 // NewCreateUserHandler registers a new user
+=======
+// NewRegHandler registers a new user
+>>>>>>> Stashed changes
 // @Summary Register a new user
 // @Description Register a new user with the provided login, email and password
 // @Tags registration
@@ -611,7 +1488,11 @@ func NewRegHandler(service regService, logger *zap.Logger) gin.HandlerFunc <span
 }
 </pre>
 		
+<<<<<<< Updated upstream
 		<pre class="file" id="file7" style="display: none">package user
+=======
+		<pre class="file" id="file15" style="display: none">package user
+>>>>>>> Stashed changes
 
 import (
         "context"
@@ -642,35 +1523,60 @@ type deleteUserService interface {
 // @Failure 404 {object} map[string]interface{} "User not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /users/{uuid} [delete]
+<<<<<<< Updated upstream
 func NewDeleteUserHandler(service deleteUserService, logger *zap.Logger) gin.HandlerFunc <span class="cov0" title="0">{
         return func(c *gin.Context) </span><span class="cov0" title="0">{
                 uuidParam := c.Param("uuid")
                 parsedUUID, err := uuid.Parse(uuidParam)
                 if err != nil </span><span class="cov0" title="0">{
+=======
+func NewDeleteUserHandler(service deleteUserService, logger *zap.Logger) gin.HandlerFunc <span class="cov10" title="5">{
+        return func(c *gin.Context) </span><span class="cov10" title="5">{
+                uuidParam := c.Param("uuid")
+                parsedUUID, err := uuid.Parse(uuidParam)
+                if err != nil </span><span class="cov1" title="1">{
+>>>>>>> Stashed changes
                         err = fmt.Errorf("delete user handler: failed to parse uuid: %v", err)
                         logger.Error("failed to parse uuid", zap.Error(err))
                         c.JSON(http.StatusBadRequest, gin.H{"error": "invalid uuid format"})
                         return
                 }</span>
 
+<<<<<<< Updated upstream
                 <span class="cov0" title="0">err = service.Delete(c, parsedUUID)
                 if errors.Is(err, domain.ErrUserNotFound) </span><span class="cov0" title="0">{
+=======
+                <span class="cov8" title="4">err = service.Delete(c, parsedUUID)
+                if errors.Is(err, domain.ErrUserNotFound) </span><span class="cov1" title="1">{
+>>>>>>> Stashed changes
                         logger.Warn("user not found", zap.String("uuid", uuidParam))
                         c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
                         return
                 }</span>
+<<<<<<< Updated upstream
                 <span class="cov0" title="0">if errors.Is(err, domain.ErrInternal) </span><span class="cov0" title="0">{
+=======
+                <span class="cov7" title="3">if errors.Is(err, domain.ErrInternal) </span><span class="cov1" title="1">{
+>>>>>>> Stashed changes
                         logger.Error("failed to delete user", zap.Error(err), zap.String("uuid", uuidParam))
                         c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete user"})
                         return
                 }</span>
+<<<<<<< Updated upstream
                 <span class="cov0" title="0">if err != nil </span><span class="cov0" title="0">{
+=======
+                <span class="cov4" title="2">if err != nil </span><span class="cov1" title="1">{
+>>>>>>> Stashed changes
                         logger.Error("failed to delete user", zap.Error(err), zap.String("uuid", uuidParam))
                         c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete user"})
                         return
                 }</span>
 
+<<<<<<< Updated upstream
                 <span class="cov0" title="0">response := responses.DeleteUserResponse{
+=======
+                <span class="cov1" title="1">response := responses.DeleteUserResponse{
+>>>>>>> Stashed changes
                         Message: "User deleted successfully",
                 }
 
@@ -679,7 +1585,11 @@ func NewDeleteUserHandler(service deleteUserService, logger *zap.Logger) gin.Han
 }
 </pre>
 		
+<<<<<<< Updated upstream
 		<pre class="file" id="file8" style="display: none">package user
+=======
+		<pre class="file" id="file16" style="display: none">package user
+>>>>>>> Stashed changes
 
 import (
         "github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
@@ -695,7 +1605,11 @@ func mapUserToGetResponse(user *domain.User) responses.GetUserResponse <span cla
         }
 }</span>
 
+<<<<<<< Updated upstream
 func mapUserToUpdateResponse(user *domain.User) responses.UpdateUserResponse <span class="cov0" title="0">{
+=======
+func mapUserToUpdateResponse(user *domain.User) responses.UpdateUserResponse <span class="cov1" title="1">{
+>>>>>>> Stashed changes
         return responses.UpdateUserResponse{
                 UUID:      user.UUID,
                 Login:     user.Login,
@@ -713,7 +1627,11 @@ func mapUsersToGetAllResponse(users []*domain.User) []responses.GetUserResponse 
 }
 </pre>
 		
+<<<<<<< Updated upstream
 		<pre class="file" id="file9" style="display: none">package user
+=======
+		<pre class="file" id="file17" style="display: none">package user
+>>>>>>> Stashed changes
 
 import (
         "context"
@@ -814,7 +1732,11 @@ func NewGetAllUsersHandler(service getAllUsersService, logger *zap.Logger) gin.H
 }
 </pre>
 		
+<<<<<<< Updated upstream
 		<pre class="file" id="file10" style="display: none">package user
+=======
+		<pre class="file" id="file18" style="display: none">package user
+>>>>>>> Stashed changes
 
 import (
         "context"
@@ -846,50 +1768,84 @@ type updateUserService interface {
 // @Failure 404 {object} map[string]interface{} "User not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /users/{uuid} [put]
+<<<<<<< Updated upstream
 func NewUpdateUserHandler(service updateUserService, logger *zap.Logger) gin.HandlerFunc <span class="cov0" title="0">{
         return func(c *gin.Context) </span><span class="cov0" title="0">{
                 uuidParam := c.Param("uuid")
                 parsedUUID, err := uuid.Parse(uuidParam)
                 if err != nil </span><span class="cov0" title="0">{
+=======
+func NewUpdateUserHandler(service updateUserService, logger *zap.Logger) gin.HandlerFunc <span class="cov10" title="9">{
+        return func(c *gin.Context) </span><span class="cov10" title="9">{
+                uuidParam := c.Param("uuid")
+                parsedUUID, err := uuid.Parse(uuidParam)
+                if err != nil </span><span class="cov1" title="1">{
+>>>>>>> Stashed changes
                         err = fmt.Errorf("update user handler: failed to parse uuid: %v", err)
                         logger.Error("failed to parse uuid", zap.Error(err))
                         c.JSON(http.StatusBadRequest, gin.H{"error": "invalid uuid format"})
                         return
                 }</span>
 
+<<<<<<< Updated upstream
                 <span class="cov0" title="0">var req requests.UpdateUserRequest
                 if err := c.ShouldBindJSON(&amp;req); err != nil </span><span class="cov0" title="0">{
+=======
+                <span class="cov9" title="8">var req requests.UpdateUserRequest
+                if err := c.ShouldBindJSON(&amp;req); err != nil </span><span class="cov1" title="1">{
+>>>>>>> Stashed changes
                         err = fmt.Errorf("update user handler: failed to bind request: %v", err)
                         logger.Error("failed to bind request", zap.Error(err))
                         c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request format"})
                         return
                 }</span>
 
+<<<<<<< Updated upstream
                 <span class="cov0" title="0">if err := req.Validate(); err != nil </span><span class="cov0" title="0">{
+=======
+                <span class="cov8" title="7">if err := req.Validate(); err != nil </span><span class="cov5" title="3">{
+>>>>>>> Stashed changes
                         err = fmt.Errorf("update user handler: validation failed: %v", err)
                         logger.Error("validation failed", zap.Error(err))
                         c.JSON(http.StatusBadRequest, gin.H{"error": "validation failed", "details": err.Error()})
                         return
                 }</span>
 
+<<<<<<< Updated upstream
                 <span class="cov0" title="0">user, err := service.Update(c, parsedUUID, req.Login, req.Email, req.Password)
                 if errors.Is(err, domain.ErrUserNotFound) </span><span class="cov0" title="0">{
+=======
+                <span class="cov6" title="4">user, err := service.Update(c, parsedUUID, req.Login, req.Email, req.Password)
+                if errors.Is(err, domain.ErrUserNotFound) </span><span class="cov1" title="1">{
+>>>>>>> Stashed changes
                         logger.Warn("user not found", zap.String("uuid", uuidParam))
                         c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
                         return
                 }</span>
+<<<<<<< Updated upstream
                 <span class="cov0" title="0">if errors.Is(err, domain.ErrInternal) </span><span class="cov0" title="0">{
+=======
+                <span class="cov5" title="3">if errors.Is(err, domain.ErrInternal) </span><span class="cov1" title="1">{
+>>>>>>> Stashed changes
                         logger.Error("failed to update user", zap.Error(err), zap.String("uuid", uuidParam))
                         c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update user"})
                         return
                 }</span>
+<<<<<<< Updated upstream
                 <span class="cov0" title="0">if err != nil </span><span class="cov0" title="0">{
+=======
+                <span class="cov3" title="2">if err != nil </span><span class="cov1" title="1">{
+>>>>>>> Stashed changes
                         logger.Error("failed to update user", zap.Error(err), zap.String("uuid", uuidParam))
                         c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update user"})
                         return
                 }</span>
 
+<<<<<<< Updated upstream
                 <span class="cov0" title="0">response := mapUserToUpdateResponse(user)
+=======
+                <span class="cov1" title="1">response := mapUserToUpdateResponse(user)
+>>>>>>> Stashed changes
 
                 c.JSON(http.StatusOK, response)</span>
         }
