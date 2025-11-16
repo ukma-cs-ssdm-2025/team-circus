@@ -85,7 +85,12 @@ jobs:
     name: Build and Push Images
     needs: [lint, unit-tests, functional-tests, build-go-binary]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
