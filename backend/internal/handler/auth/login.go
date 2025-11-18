@@ -42,6 +42,12 @@ func NewLogInHandler(userRepo userRepository, logger *zap.Logger, secretToken st
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request format"})
 			return
 		}
+		if err := req.Validate(); err != nil {
+			err = fmt.Errorf("log in handler: validation failed: %v", err)
+			logger.Error("validation failed", zap.Error(err))
+			c.JSON(http.StatusBadRequest, gin.H{"error": "validation failed", "details": err.Error()})
+			return
+		}
 
 		user, err := userRepo.GetByLogin(c, req.Login)
 		if errors.Is(err, domain.ErrInternal) {
