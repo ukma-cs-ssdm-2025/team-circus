@@ -37,5 +37,6 @@ func main() {
 	if err := app.Run(ctx); err != nil {
 		l.Panic("Failed to run app", zap.Error(err))
 	}
+
 	l.Info("App stopped successfully")
 }
