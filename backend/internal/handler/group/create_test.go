@@ -24,8 +24,8 @@ type mockCreateGroupService struct {
 	mock.Mock
 }
 
-func (m *mockCreateGroupService) Create(ctx context.Context, name string) (*domain.Group, error) {
-	args := m.Called(ctx, name)
+func (m *mockCreateGroupService) Create(ctx context.Context, ownerUUID uuid.UUID, name string) (*domain.Group, error) {
+	args := m.Called(ctx, ownerUUID, name)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -54,7 +54,8 @@ func TestNewCreateGroupHandler(t *testing.T) {
 			CreatedAt: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
 		}
 
-		mockService.On("Create", mock.Anything, "Test Group").Return(expectedGroup, nil)
+		ownerUUID := uuid.New()
+		mockService.On("Create", mock.Anything, ownerUUID, "Test Group").Return(expectedGroup, nil)
 
 		requestBody := requests.CreateGroupRequest{
 			Name: "Test Group",
@@ -69,6 +70,8 @@ func TestNewCreateGroupHandler(t *testing.T) {
 
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
+
+		c.Set("user_uid", ownerUUID)
 
 		// Act
 		handler(c)
@@ -96,6 +99,8 @@ func TestNewCreateGroupHandler(t *testing.T) {
 
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
+
+		c.Set("user_uid", uuid.New())
 
 		// Act
 		handler(c)
@@ -129,6 +134,8 @@ func TestNewCreateGroupHandler(t *testing.T) {
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
 
+		c.Set("user_uid", uuid.New())
+
 		// Act
 		handler(c)
 
@@ -147,7 +154,8 @@ func TestNewCreateGroupHandler(t *testing.T) {
 		// Arrange
 		mockService, handler := setup(t)
 
-		mockService.On("Create", mock.Anything, "Test Group").Return(nil, domain.ErrInternal)
+		ownerUUID := uuid.New()
+		mockService.On("Create", mock.Anything, ownerUUID, "Test Group").Return(nil, domain.ErrInternal)
 
 		requestBody := requests.CreateGroupRequest{
 			Name: "Test Group",
@@ -162,6 +170,8 @@ func TestNewCreateGroupHandler(t *testing.T) {
 
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
+
+		c.Set("user_uid", ownerUUID)
 
 		// Act
 		handler(c)
@@ -181,7 +191,8 @@ func TestNewCreateGroupHandler(t *testing.T) {
 		// Arrange
 		mockService, handler := setup(t)
 
-		mockService.On("Create", mock.Anything, "Test Group").Return(nil, errors.New("database connection failed"))
+		ownerUUID := uuid.New()
+		mockService.On("Create", mock.Anything, ownerUUID, "Test Group").Return(nil, errors.New("database connection failed"))
 
 		requestBody := requests.CreateGroupRequest{
 			Name: "Test Group",
@@ -196,6 +207,8 @@ func TestNewCreateGroupHandler(t *testing.T) {
 
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
+
+		c.Set("user_uid", ownerUUID)
 
 		// Act
 		handler(c)
