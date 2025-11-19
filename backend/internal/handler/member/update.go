@@ -79,7 +79,7 @@ func NewUpdateMemberHandler(service updateMemberService, logger *zap.Logger) gin
 			return
 		}
 		if errors.Is(err, domain.ErrOnlyAuthor) {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "cannot change the last author"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "there must be an author"})
 			return
 		}
 		if err != nil {
