@@ -27,7 +27,7 @@ type mockCreateMemberService struct {
 func (m *mockCreateMemberService) CreateMemberByUser(ctx context.Context, userUUID, groupUUID, memberUUID uuid.UUID,
 	role string) (*domain.Member, error) {
 	args := m.Called(ctx, userUUID, groupUUID, memberUUID, role)
-	member, _ := args.Get(0).(*domain.Member)
+	member := args.Get(0).(*domain.Member) //nolint:errcheck
 	return member, args.Error(1)
 }
 

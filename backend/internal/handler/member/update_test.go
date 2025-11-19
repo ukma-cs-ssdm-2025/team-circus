@@ -24,9 +24,14 @@ type mockUpdateMemberService struct {
 	mock.Mock
 }
 
-func (m *mockUpdateMemberService) UpdateMemberByUser(ctx context.Context, userUUID, groupUUID, memberUUID uuid.UUID, role string) (*domain.Member, error) {
+func (m *mockUpdateMemberService) UpdateMemberByUser(ctx context.Context,
+	userUUID,
+	groupUUID,
+	memberUUID uuid.UUID,
+	role string,
+) (*domain.Member, error) {
 	args := m.Called(ctx, userUUID, groupUUID, memberUUID, role)
-	member, _ := args.Get(0).(*domain.Member)
+	member := args.Get(0).(*domain.Member) //nolint:errcheck
 	return member, args.Error(1)
 }
 
@@ -87,7 +92,9 @@ func TestNewUpdateMemberHandler(t *testing.T) {
 	t.Run("InvalidGroupUUID", func(t *testing.T) {
 		_, handler := setup(t)
 
-		req := httptest.NewRequest(http.MethodPatch, "/groups/invalid/members/"+uuid.NewString(), bytes.NewBufferString(`{}`))
+		req := httptest.NewRequest(http.MethodPatch,
+			"/groups/invalid/members/"+uuid.NewString(),
+			bytes.NewBufferString(`{}`))
 		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
@@ -110,7 +117,9 @@ func TestNewUpdateMemberHandler(t *testing.T) {
 		groupUUID := uuid.New()
 		memberUUID := uuid.New()
 
-		req := httptest.NewRequest(http.MethodPatch, "/groups/"+groupUUID.String()+"/members/"+memberUUID.String(), bytes.NewBufferString(`{}`))
+		req := httptest.NewRequest(http.MethodPatch,
+			"/groups/"+groupUUID.String()+"/members/"+memberUUID.String(),
+			bytes.NewBufferString(`{}`))
 		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
@@ -133,7 +142,10 @@ func TestNewUpdateMemberHandler(t *testing.T) {
 		groupUUID := uuid.New()
 		memberUUID := uuid.New()
 
-		req := httptest.NewRequest(http.MethodPatch, "/groups/"+groupUUID.String()+"/members/"+memberUUID.String(), bytes.NewBufferString(`{}`))
+		req := httptest.NewRequest(
+			http.MethodPatch,
+			"/groups/"+groupUUID.String()+"/members/"+memberUUID.String(),
+			bytes.NewBufferString(`{}`))
 		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
@@ -156,7 +168,10 @@ func TestNewUpdateMemberHandler(t *testing.T) {
 		_, handler := setup(t)
 		groupUUID := uuid.New()
 
-		req := httptest.NewRequest(http.MethodPatch, "/groups/"+groupUUID.String()+"/members/invalid", bytes.NewBufferString(`{}`))
+		req := httptest.NewRequest(
+			http.MethodPatch,
+			"/groups/"+groupUUID.String()+"/members/invalid",
+			bytes.NewBufferString(`{}`))
 		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
@@ -180,7 +195,10 @@ func TestNewUpdateMemberHandler(t *testing.T) {
 		groupUUID := uuid.New()
 		memberUUID := uuid.New()
 
-		req := httptest.NewRequest(http.MethodPatch, "/groups/"+groupUUID.String()+"/members/"+memberUUID.String(), bytes.NewBufferString(`invalid`))
+		req := httptest.NewRequest(
+			http.MethodPatch,
+			"/groups/"+groupUUID.String()+"/members/"+memberUUID.String(),
+			bytes.NewBufferString(`invalid`))
 		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
@@ -204,7 +222,9 @@ func TestNewUpdateMemberHandler(t *testing.T) {
 		groupUUID := uuid.New()
 		memberUUID := uuid.New()
 
-		req := httptest.NewRequest(http.MethodPatch, "/groups/"+groupUUID.String()+"/members/"+memberUUID.String(),
+		req := httptest.NewRequest(
+			http.MethodPatch,
+			"/groups/"+groupUUID.String()+"/members/"+memberUUID.String(),
 			bytes.NewBufferString(`{"role":"invalid"}`))
 		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
@@ -255,7 +275,10 @@ func TestNewUpdateMemberHandler(t *testing.T) {
 			mockService.On("UpdateMemberByUser", mock.Anything, authUserUUID, groupUUID, memberUUID, domain.RoleEditor).
 				Return((*domain.Member)(nil), tc.serviceErr).Once()
 
-			req := httptest.NewRequest(http.MethodPatch, "/groups/"+groupUUID.String()+"/members/"+memberUUID.String(), bytes.NewReader(body))
+			req := httptest.NewRequest(
+				http.MethodPatch,
+				"/groups/"+groupUUID.String()+"/members/"+memberUUID.String(),
+				bytes.NewReader(body))
 			req.Header.Set("Content-Type", "application/json")
 			w := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(w)

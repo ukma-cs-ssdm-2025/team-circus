@@ -24,7 +24,7 @@ type mockGetAllMembersService struct {
 
 func (m *mockGetAllMembersService) GetAllMembersForUser(ctx context.Context, userUUID, groupUUID uuid.UUID) ([]*domain.Member, error) {
 	args := m.Called(ctx, userUUID, groupUUID)
-	members, _ := args.Get(0).([]*domain.Member)
+	members := args.Get(0).([]*domain.Member) //nolint:errcheck
 	return members, args.Error(1)
 }
 
