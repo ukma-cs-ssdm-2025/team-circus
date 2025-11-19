@@ -14,10 +14,14 @@ export const API_ENDPOINTS = {
   DOCUMENTS: {
     BASE: '/documents',
     SEARCH: '/documents/search',
+    DETAIL: (uuid: string) => `/documents/${uuid}`,
   },
   GROUPS: {
     BASE: '/groups',
-    MEMBERS: '/groups/members',
+    DETAIL: (uuid: string) => `/groups/${uuid}`,
+    MEMBERS: (groupUUID: string) => `/groups/${groupUUID}/members`,
+    MEMBER: (groupUUID: string, userUUID: string) =>
+      `/groups/${groupUUID}/members/${userUUID}`,
   },
 } as const;
 
@@ -30,6 +34,7 @@ export const ROUTES = {
   SETTINGS: '/settings',
   DOCUMENTS: '/documents',
   GROUPS: '/groups',
+  GROUP_DETAILS: '/groups/:uuid',
   NOT_FOUND: '/404',
 } as const;
 
@@ -59,6 +64,13 @@ export const DOCUMENT_PERMISSIONS = {
   WRITE: 'write',
   DELETE: 'delete',
   SHARE: 'share',
+} as const;
+
+// Group member roles
+export const MEMBER_ROLES = {
+  AUTHOR: 'author',
+  EDITOR: 'editor',
+  VIEWER: 'viewer',
 } as const;
 
 // Pagination

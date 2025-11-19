@@ -1,37 +1,43 @@
-import Grid from '@mui/material/Grid';
-import DocumentCard from './DocumentCard';
-import type { DocumentItem } from '../../types/entities';
+import Grid from "@mui/material/Grid";
+import DocumentCard from "./DocumentCard";
+import type { DocumentItem } from "../../types/entities";
 
 interface DocumentsGridProps {
-  documents: DocumentItem[];
-  groupNameByUUID: Record<string, string>;
-  createdAtLabel: string;
-  noContentLabel: string;
-  groupUnknownLabel: string;
+	documents: DocumentItem[];
+	groupNameByUUID: Record<string, string>;
+	createdAtLabel: string;
+	noContentLabel: string;
+	groupUnknownLabel: string;
+	deleteLabel?: string;
+	onDeleteDocument?: (document: DocumentItem) => void;
 }
 
-const DocumentsGrid = ({ 
-  documents, 
-  groupNameByUUID, 
-  createdAtLabel, 
-  noContentLabel, 
-  groupUnknownLabel 
+const DocumentsGrid = ({
+	documents,
+	groupNameByUUID,
+	createdAtLabel,
+	noContentLabel,
+	groupUnknownLabel,
+	deleteLabel,
+	onDeleteDocument,
 }: DocumentsGridProps) => {
-  return (
-    <Grid container spacing={3}>
-      {documents.map(document => (
-        <Grid key={document.uuid} size={{ xs: 12, md: 6 }}>
-          <DocumentCard
-            document={document}
-            groupName={groupNameByUUID[document.group_uuid]}
-            createdAtLabel={createdAtLabel}
-            noContentLabel={noContentLabel}
-            groupUnknownLabel={groupUnknownLabel}
-          />
-        </Grid>
-      ))}
-    </Grid>
-  );
+	return (
+		<Grid container spacing={3}>
+			{documents.map((document) => (
+				<Grid key={document.uuid} size={{ xs: 12, md: 6 }}>
+					<DocumentCard
+						document={document}
+						groupName={groupNameByUUID[document.group_uuid]}
+						createdAtLabel={createdAtLabel}
+						noContentLabel={noContentLabel}
+						groupUnknownLabel={groupUnknownLabel}
+						deleteLabel={deleteLabel}
+						onDelete={onDeleteDocument}
+					/>
+				</Grid>
+			))}
+		</Grid>
+	);
 };
 
 export default DocumentsGrid;
