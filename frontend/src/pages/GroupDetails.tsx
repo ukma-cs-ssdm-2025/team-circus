@@ -114,7 +114,7 @@ const GroupDetails = ({ className = "" }: GroupDetailsProps) => {
 		[members, user?.uuid],
 	);
 	const canManageMembers = Boolean(
-		!user?.uuid || currentMember?.role === MEMBER_ROLES.AUTHOR,
+		user?.uuid && currentMember?.role === MEMBER_ROLES.AUTHOR,
 	);
 
 	const validateMemberForm = () => {

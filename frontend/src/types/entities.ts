@@ -32,10 +32,14 @@ export interface CreateGroupPayload {
 	name: string;
 }
 
+import { MEMBER_ROLES } from "../constants";
+
+type MemberRole = (typeof MEMBER_ROLES)[number];
+
 export interface MemberItem {
 	group_uuid: string;
 	user_uuid: string;
-	role: "author" | "editor" | "viewer";
+	role: MemberRole;
 	created_at: string;
 }
 
@@ -45,11 +49,11 @@ export interface MembersResponse {
 
 export interface CreateMemberPayload {
 	user_uuid: string;
-	role: "author" | "editor" | "viewer";
+	role: MemberRole;
 }
 
 export interface UpdateMemberPayload {
-	role: "author" | "editor" | "viewer";
+	role: MemberRole;
 }
 
 export interface DeleteResponse {
