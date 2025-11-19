@@ -64,7 +64,8 @@ export const isValidPassword = (password: string): boolean => {
 
 // URL utilities
 export const buildApiUrl = (endpoint: string): string => {
-	const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
+	const baseUrl =
+		import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api/v1";
 	return `${baseUrl}${endpoint}`;
 };
 

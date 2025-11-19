@@ -195,6 +195,10 @@ const translations = {
 		"groupDetails.updateError": "Не вдалося змінити роль.",
 		"groupDetails.removeSuccess": "Учасника видалено.",
 		"groupDetails.removeError": "Не вдалося видалити учасника.",
+		"groupDetails.promoteConfirmTitle": "Змінити роль на автора",
+		"groupDetails.promoteConfirmMessage":
+			"Підвищення до автора дає повний контроль на групою. Продовжити?",
+		"groupDetails.promoteConfirmAction": "Підвищити",
 
 		// Members
 		"members.role.author": "Автор",
@@ -360,6 +364,10 @@ const translations = {
 		"groupDetails.updateError": "Failed to change the role.",
 		"groupDetails.removeSuccess": "Member removed.",
 		"groupDetails.removeError": "Failed to remove the member.",
+		"groupDetails.promoteConfirmTitle": "Promote to author",
+		"groupDetails.promoteConfirmMessage":
+			"Authors can manage other members. Are you sure you want to promote this member?",
+		"groupDetails.promoteConfirmAction": "Promote",
 
 		// Members
 		"members.role.author": "Author",

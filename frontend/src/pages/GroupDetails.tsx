@@ -20,6 +20,7 @@ import {
 import { useNavigate, useParams } from "react-router-dom";
 import {
 	CenteredContent,
+	ConfirmDialog,
 	PageCard,
 	PageHeader,
 	ErrorAlert,
@@ -45,11 +46,14 @@ import type {
 
 type GroupDetailsProps = BaseComponentProps;
 
-const roleOptions = [
-	{ value: MEMBER_ROLES.AUTHOR, key: "members.role.author" },
-	{ value: MEMBER_ROLES.EDITOR, key: "members.role.editor" },
-	{ value: MEMBER_ROLES.VIEWER, key: "members.role.viewer" },
-] as const;
+const roleOptions = MEMBER_ROLES.map((role) => ({
+	value: role,
+	key: `members.role.${role}`,
+}));
+
+const memberFormRoleOptions = roleOptions.filter(
+	(option) => option.value !== MEMBER_ROLES[0],
+);
 
 const GroupDetails = ({ className = "" }: GroupDetailsProps) => {
 	const { t } = useLanguage();
@@ -60,7 +64,7 @@ const GroupDetails = ({ className = "" }: GroupDetailsProps) => {
 
 	const [memberForm, setMemberForm] = useState({
 		user_uuid: "",
-		role: MEMBER_ROLES.VIEWER,
+		role: MEMBER_ROLES[2],
 	});
 	const [memberFormErrors, setMemberFormErrors] = useState<
 		Record<string, string>
@@ -72,6 +76,10 @@ const GroupDetails = ({ className = "" }: GroupDetailsProps) => {
 	const [addingMember, setAddingMember] = useState(false);
 	const [updatingMemberId, setUpdatingMemberId] = useState<string | null>(null);
 	const [removingMemberId, setRemovingMemberId] = useState<string | null>(null);
+	const [roleConfirmation, setRoleConfirmation] = useState<{
+		memberUUID: string;
+		role: MemberRole;
+	} | null>(null);
 
 	const {
 		data: groupData,
@@ -95,8 +103,27 @@ const GroupDetails = ({ className = "" }: GroupDetailsProps) => {
 	const users = useMemo(() => usersData?.users ?? [], [usersData]);
 
 	const selectableUsers = useMemo(
-		() => users.filter((candidate) => candidate.uuid !== user?.uuid),
-		[users, user?.uuid],
+		() =>
+			membersLoading
+				? []
+				:
+					users.filter(
+						(candidate) =>
+							candidate.uuid !== user?.uuid &&
+							!members.some((member) => member.user_uuid === candidate.uuid),
+					),
+		[members, membersLoading, user?.uuid, users],
+	);
+
+	const userListLoading = usersLoading || membersLoading;
+
+	const selectableUserOptions = useMemo(
+		() =>
+			selectableUsers.map((userOption) => ({
+				value: userOption.uuid,
+				label: `${userOption.login} (${userOption.email})`,
+			})),
+		[selectableUsers],
 	);
 
 	const userByUUID = useMemo(() => {
@@ -109,13 +136,20 @@ const GroupDetails = ({ className = "" }: GroupDetailsProps) => {
 		);
 	}, [users]);
 
-	const currentMember = useMemo(
-		() => members.find((member) => member.user_uuid === user?.uuid),
-		[members, user?.uuid],
-	);
-	const canManageMembers = Boolean(
-		user?.uuid && currentMember?.role === MEMBER_ROLES.AUTHOR,
-	);
+	const currentMember = useMemo(() => {
+		if (!user) {
+			return undefined;
+		}
+
+		return (
+			members.find((member) => member.user_uuid === user.uuid) ??
+			members.find(
+				(member) => userByUUID[member.user_uuid]?.login === user.login,
+			)
+		);
+	}, [members, user, userByUUID]);
+
+	const canManageMembers = Boolean(currentMember?.role === MEMBER_ROLES[0]);
 
 	const validateMemberForm = () => {
 		const errors: Record<string, string> = {};
@@ -147,7 +181,7 @@ const GroupDetails = ({ className = "" }: GroupDetailsProps) => {
 				type: "success",
 				message: t("groupDetails.addSuccess"),
 			});
-			setMemberForm({ user_uuid: "", role: MEMBER_ROLES.VIEWER });
+			setMemberForm({ user_uuid: "", role: MEMBER_ROLES[2] });
 			setMemberFormErrors({});
 			await refetchMembers();
 		} catch (error) {
@@ -158,7 +192,7 @@ const GroupDetails = ({ className = "" }: GroupDetailsProps) => {
 		}
 	};
 
-	const handleRoleChange = async (memberUUID: string, role: string) => {
+	const handleRoleChange = async (memberUUID: string, role: MemberRole) => {
 		if (!groupUUID) {
 			return;
 		}
@@ -182,6 +216,15 @@ const GroupDetails = ({ className = "" }: GroupDetailsProps) => {
 		} finally {
 			setUpdatingMemberId(null);
 		}
+	};
+
+	const handleConfirmRoleChange = async () => {
+		if (!roleConfirmation) {
+			return;
+		}
+
+		await handleRoleChange(roleConfirmation.memberUUID, roleConfirmation.role);
+		setRoleConfirmation(null);
 	};
 
 	const handleRemoveMember = async (memberUUID: string) => {
@@ -289,25 +332,22 @@ const GroupDetails = ({ className = "" }: GroupDetailsProps) => {
 							<Alert severity="info" sx={{ mb: 2 }}>
 								{t("groupDetails.permissionsHint")}
 							</Alert>
-						)}
+									)}
 						<Stack spacing={2}>
 							<Autocomplete
-								options={selectableUsers.map((userOption) => ({
-									value: userOption.uuid,
-									label: `${userOption.login} (${userOption.email})`,
-								}))}
-								loading={usersLoading}
+								options={selectableUserOptions}
+								loading={userListLoading}
 								isOptionEqualToValue={(option, value) =>
 									option.value === value.value
 								}
 								value={
 									memberForm.user_uuid
 										? {
-												value: memberForm.user_uuid,
-												label:
-													userByUUID[memberForm.user_uuid]?.login ||
-													memberForm.user_uuid,
-											}
+											value: memberForm.user_uuid,
+											label:
+												userByUUID[memberForm.user_uuid]?.login ||
+												memberForm.user_uuid,
+										}
 										: null
 								}
 								onChange={(_, option) => {
@@ -327,7 +367,7 @@ const GroupDetails = ({ className = "" }: GroupDetailsProps) => {
 										error={Boolean(memberFormErrors.user_uuid)}
 									/>
 								)}
-								disabled={!canManageMembers}
+								disabled={!canManageMembers || userListLoading}
 							/>
 
 							<FormControl fullWidth error={Boolean(memberFormErrors.role)}>
@@ -346,7 +386,7 @@ const GroupDetails = ({ className = "" }: GroupDetailsProps) => {
 									}}
 									disabled={!canManageMembers}
 								>
-									{roleOptions.map((option) => (
+									{memberFormRoleOptions.map((option) => (
 										<MenuItem key={option.value} value={option.value}>
 											{t(option.key)}
 										</MenuItem>
@@ -413,34 +453,55 @@ const GroupDetails = ({ className = "" }: GroupDetailsProps) => {
 												</Typography>
 											</TableCell>
 											<TableCell sx={{ minWidth: 180 }}>
-												<FormControl
-													size="small"
-													fullWidth
-													disabled={
-														!canManageMembers ||
-														updatingMemberId === member.user_uuid
-													}
-												>
-													<InputLabel>
-														{t("groupDetails.roleFieldLabel")}
-													</InputLabel>
-													<Select
-														value={member.role}
-														label={t("groupDetails.roleFieldLabel")}
-														onChange={(event) =>
-															handleRoleChange(
-																member.user_uuid,
-																event.target.value,
-															)
+												{member.role === MEMBER_ROLES[0] ? (
+													<Typography fontWeight={600}>
+														{t(`members.role.${member.role}`)}
+													</Typography>
+												) : (
+													<FormControl
+														size="small"
+														fullWidth
+														disabled={
+															!canManageMembers ||
+															updatingMemberId === member.user_uuid
 														}
 													>
-														{roleOptions.map((option) => (
-															<MenuItem key={option.value} value={option.value}>
-																{t(option.key)}
-															</MenuItem>
-														))}
-													</Select>
-												</FormControl>
+														<InputLabel>
+															{t("groupDetails.roleFieldLabel")}
+														</InputLabel>
+														<Select
+															value={member.role}
+															label={t("groupDetails.roleFieldLabel")}
+															onChange={(event) => {
+																const nextRole = event.target
+																	.value as MemberRole;
+																if (
+																	nextRole === MEMBER_ROLES[0] &&
+																	member.role !== MEMBER_ROLES[0]
+																) {
+																	setRoleConfirmation({
+																		memberUUID: member.user_uuid,
+																		role: nextRole,
+																	});
+																	return;
+																}
+																void handleRoleChange(
+																	member.user_uuid,
+																	nextRole,
+																);
+															}}
+														>
+															{roleOptions.map((option) => (
+																<MenuItem
+																	key={option.value}
+																	value={option.value}
+																>
+																	{t(option.key)}
+																</MenuItem>
+															))}
+														</Select>
+													</FormControl>
+												)}
 											</TableCell>
 											<TableCell align="right">
 												<Button
@@ -449,6 +510,7 @@ const GroupDetails = ({ className = "" }: GroupDetailsProps) => {
 													onClick={() => handleRemoveMember(member.user_uuid)}
 													disabled={
 														!canManageMembers ||
+														member.role === MEMBER_ROLES[0] ||
 														removingMemberId === member.user_uuid
 													}
 												>
@@ -465,6 +527,15 @@ const GroupDetails = ({ className = "" }: GroupDetailsProps) => {
 					</Paper>
 				</Stack>
 			</PageCard>
+			<ConfirmDialog
+				open={Boolean(roleConfirmation)}
+				title={t("groupDetails.promoteConfirmTitle")}
+				description={t("groupDetails.promoteConfirmMessage")}
+				confirmLabel={t("groupDetails.promoteConfirmAction")}
+				cancelLabel={t("common.cancel")}
+				onConfirm={handleConfirmRoleChange}
+				onClose={() => setRoleConfirmation(null)}
+			/>
 		</CenteredContent>
 	);
 };
