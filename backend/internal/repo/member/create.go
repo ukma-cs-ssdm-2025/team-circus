@@ -23,7 +23,7 @@ func (r *MemberRepository) CreateMember(ctx context.Context, groupUUID, userUUID
 		&member.CreatedAt,
 	)
 	if err != nil {
-		return nil, errors.Join(domain.ErrInternal, fmt.Errorf("group repository: create member: %w", err))
+		return nil, errors.Join(domain.ErrInternal, fmt.Errorf("member repository: create member: %w", err))
 	}
 
 	return &member, nil

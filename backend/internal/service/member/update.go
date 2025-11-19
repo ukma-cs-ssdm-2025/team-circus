@@ -53,10 +53,8 @@ func (s *MemberService) UpdateMemberByUser(ctx context.Context, userUUID, groupU
 			return nil, domain.ErrUserNotFound
 		}
 
-		_, err = s.repo.UpdateMember(ctx, groupUUID, actor.UserUUID, domain.RoleEditor)
-		if err != nil {
-			// very unlucky
-		}
+		// unlucky if fails
+		_, _ = s.repo.UpdateMember(ctx, groupUUID, actor.UserUUID, domain.RoleEditor) //nolint:errcheck
 
 		return member, nil
 	}

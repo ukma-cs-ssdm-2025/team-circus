@@ -14,12 +14,8 @@ func (s *GroupService) Create(ctx context.Context, ownerUUID uuid.UUID, name str
 		return nil, fmt.Errorf("group service: create: %w", err)
 	}
 
-	if _, err := s.memberRepo.CreateMember(ctx, group.UUID, ownerUUID, domain.RoleAuthor); err != nil {
-		if deleteErr := s.repo.Delete(ctx, group.UUID); deleteErr != nil {
-			return nil, fmt.Errorf("group service: create add owner: %w, cleanup: %v", err, deleteErr)
-		}
-		return nil, fmt.Errorf("group service: create add owner: %w", err)
-	}
+	// unlucky if fails
+	_, _ = s.memberRepo.CreateMember(ctx, group.UUID, ownerUUID, domain.RoleAuthor) //nolint:errcheck
 
 	return group, nil
 }

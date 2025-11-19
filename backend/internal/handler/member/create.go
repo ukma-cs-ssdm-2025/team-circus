@@ -74,6 +74,10 @@ func NewCreateMemberHandler(service createMemberService, logger *zap.Logger) gin
 			c.JSON(http.StatusConflict, gin.H{"error": "member already exists"})
 			return
 		}
+		if errors.Is(err, domain.ErrOnlyAuthor) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "there must be only one author"})
+			return
+		}
 		if err != nil {
 			logger.Error("failed to create member", zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create member"})
