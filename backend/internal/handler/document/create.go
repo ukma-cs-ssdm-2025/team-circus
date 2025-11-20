@@ -45,7 +45,7 @@ func NewCreateDocumentHandler(service createDocumentService, logger *zap.Logger)
 			return
 		}
 
-		document, err := service.Create(c, req.GroupUUID, req.Name, req.Content)
+		document, err := service.Create(c.Request.Context(), req.GroupUUID, req.Name, req.Content)
 		if errors.Is(err, domain.ErrInternal) {
 			logger.Error("failed to create document",
 				zap.Error(err),
