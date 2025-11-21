@@ -24,7 +24,8 @@ type mockUpdateDocumentService struct {
 	mock.Mock
 }
 
-func (m *mockUpdateDocumentService) Update(ctx context.Context, docUUID, userUUID uuid.UUID, name, content string) (*domain.Document, error) {
+func (m *mockUpdateDocumentService) Update(ctx context.Context, docUUID, userUUID uuid.UUID,
+	name, content string) (*domain.Document, error) {
 	args := m.Called(ctx, docUUID, userUUID, name, content)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -201,7 +202,8 @@ func TestNewUpdateDocumentHandler(t *testing.T) {
 
 		documentUUID := uuid.New()
 		userUUID := uuid.New()
-		mockService.On("Update", mock.Anything, documentUUID, userUUID, "Updated Document", "Updated content").Return(nil, domain.ErrDocumentNotFound)
+		mockService.On("Update", mock.Anything, documentUUID, userUUID,
+			"Updated Document", "Updated content").Return(nil, domain.ErrDocumentNotFound)
 
 		requestBody := requests.UpdateDocumentRequest{
 			Name:    "Updated Document",
@@ -240,7 +242,8 @@ func TestNewUpdateDocumentHandler(t *testing.T) {
 
 		documentUUID := uuid.New()
 		userUUID := uuid.New()
-		mockService.On("Update", mock.Anything, documentUUID, userUUID, "Updated Document", "Updated content").Return(nil, domain.ErrInternal)
+		mockService.On("Update", mock.Anything, documentUUID, userUUID,
+			"Updated Document", "Updated content").Return(nil, domain.ErrInternal)
 
 		requestBody := requests.UpdateDocumentRequest{
 			Name:    "Updated Document",
