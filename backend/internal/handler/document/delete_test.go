@@ -21,8 +21,8 @@ type mockDeleteDocumentService struct {
 	mock.Mock
 }
 
-func (m *mockDeleteDocumentService) Delete(ctx context.Context, uuid uuid.UUID) error {
-	args := m.Called(ctx, uuid)
+func (m *mockDeleteDocumentService) Delete(ctx context.Context, docUUID, userUUID uuid.UUID) error {
+	args := m.Called(ctx, docUUID, userUUID)
 	return args.Error(0)
 }
 
@@ -43,7 +43,8 @@ func TestNewDeleteDocumentHandler(t *testing.T) {
 		mockService, handler := setup(t)
 
 		documentUUID := uuid.New()
-		mockService.On("Delete", mock.Anything, documentUUID).Return(nil)
+		userUUID := uuid.New()
+		mockService.On("Delete", mock.Anything, documentUUID, userUUID).Return(nil)
 
 		req := httptest.NewRequest("DELETE", "/documents/"+documentUUID.String(), nil)
 		w := httptest.NewRecorder()
@@ -51,6 +52,7 @@ func TestNewDeleteDocumentHandler(t *testing.T) {
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
 		c.Params = gin.Params{{Key: "uuid", Value: documentUUID.String()}}
+		c.Set("user_uid", userUUID)
 
 		// Act
 		handler(c)
@@ -76,6 +78,7 @@ func TestNewDeleteDocumentHandler(t *testing.T) {
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
 		c.Params = gin.Params{{Key: "uuid", Value: "invalid-uuid"}}
+		c.Set("user_uid", uuid.New())
 
 		// Act
 		handler(c)
@@ -96,7 +99,8 @@ func TestNewDeleteDocumentHandler(t *testing.T) {
 		mockService, handler := setup(t)
 
 		documentUUID := uuid.New()
-		mockService.On("Delete", mock.Anything, documentUUID).Return(domain.ErrDocumentNotFound)
+		userUUID := uuid.New()
+		mockService.On("Delete", mock.Anything, documentUUID, userUUID).Return(domain.ErrDocumentNotFound)
 
 		req := httptest.NewRequest("DELETE", "/documents/"+documentUUID.String(), nil)
 		w := httptest.NewRecorder()
@@ -104,6 +108,7 @@ func TestNewDeleteDocumentHandler(t *testing.T) {
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
 		c.Params = gin.Params{{Key: "uuid", Value: documentUUID.String()}}
+		c.Set("user_uid", userUUID)
 
 		// Act
 		handler(c)
@@ -124,7 +129,8 @@ func TestNewDeleteDocumentHandler(t *testing.T) {
 		mockService, handler := setup(t)
 
 		documentUUID := uuid.New()
-		mockService.On("Delete", mock.Anything, documentUUID).Return(domain.ErrInternal)
+		userUUID := uuid.New()
+		mockService.On("Delete", mock.Anything, documentUUID, userUUID).Return(domain.ErrInternal)
 
 		req := httptest.NewRequest("DELETE", "/documents/"+documentUUID.String(), nil)
 		w := httptest.NewRecorder()
@@ -132,6 +138,7 @@ func TestNewDeleteDocumentHandler(t *testing.T) {
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
 		c.Params = gin.Params{{Key: "uuid", Value: documentUUID.String()}}
+		c.Set("user_uid", userUUID)
 
 		// Act
 		handler(c)
@@ -152,7 +159,8 @@ func TestNewDeleteDocumentHandler(t *testing.T) {
 		mockService, handler := setup(t)
 
 		documentUUID := uuid.New()
-		mockService.On("Delete", mock.Anything, documentUUID).Return(errors.New("database connection failed"))
+		userUUID := uuid.New()
+		mockService.On("Delete", mock.Anything, documentUUID, userUUID).Return(errors.New("database connection failed"))
 
 		req := httptest.NewRequest("DELETE", "/documents/"+documentUUID.String(), nil)
 		w := httptest.NewRecorder()
@@ -160,6 +168,7 @@ func TestNewDeleteDocumentHandler(t *testing.T) {
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
 		c.Params = gin.Params{{Key: "uuid", Value: documentUUID.String()}}
+		c.Set("user_uid", userUUID)
 
 		// Act
 		handler(c)

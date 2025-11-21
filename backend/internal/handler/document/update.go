@@ -14,7 +14,7 @@ import (
 )
 
 type updateDocumentService interface {
-	Update(ctx context.Context, uuid uuid.UUID, name, content string) (*domain.Document, error)
+	Update(ctx context.Context, docUUID, userUUID uuid.UUID, name, content string) (*domain.Document, error)
 }
 
 // NewUpdateDocumentHandler updates a document by UUID
@@ -27,17 +27,31 @@ type updateDocumentService interface {
 // @Param request body requests.UpdateDocumentRequest true "Document update request"
 // @Success 200 {object} responses.UpdateDocumentResponse "Document updated successfully"
 // @Failure 400 {object} map[string]interface{} "Invalid UUID format or validation failed"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
+// @Failure 403 {object} map[string]interface{} "Access forbidden"
 // @Failure 404 {object} map[string]interface{} "Document not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /documents/{uuid} [put]
 func NewUpdateDocumentHandler(service updateDocumentService, logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		uuidParam := c.Param("uuid")
-		parsedUUID, err := uuid.Parse(uuidParam)
+		docUUID, err := uuid.Parse(uuidParam)
 		if err != nil {
 			err = fmt.Errorf("update document handler: failed to parse uuid: %v", err)
 			logger.Error("failed to parse uuid", zap.Error(err))
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid uuid format"})
+			return
+		}
+
+		userUUIDValue, exists := c.Get("user_uid")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "user context missing"})
+			return
+		}
+
+		userUUID, ok := userUUIDValue.(uuid.UUID)
+		if !ok {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid user context"})
 			return
 		}
 
@@ -56,10 +70,14 @@ func NewUpdateDocumentHandler(service updateDocumentService, logger *zap.Logger)
 			return
 		}
 
-		document, err := service.Update(c.Request.Context(), parsedUUID, req.Name, req.Content)
+		document, err := service.Update(c.Request.Context(), docUUID, userUUID, req.Name, req.Content)
 		if errors.Is(err, domain.ErrDocumentNotFound) {
 			logger.Warn("document not found", zap.String("uuid", uuidParam))
 			c.JSON(http.StatusNotFound, gin.H{"error": "document not found"})
+			return
+		}
+		if errors.Is(err, domain.ErrForbidden) {
+			c.JSON(http.StatusForbidden, gin.H{"error": "access forbidden"})
 			return
 		}
 		if errors.Is(err, domain.ErrInternal) {

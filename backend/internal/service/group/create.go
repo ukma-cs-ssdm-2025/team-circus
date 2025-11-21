@@ -14,8 +14,10 @@ func (s *GroupService) Create(ctx context.Context, ownerUUID uuid.UUID, name str
 		return nil, fmt.Errorf("group service: create: %w", err)
 	}
 
-	// unlucky if fails
-	_, _ = s.memberRepo.CreateMember(ctx, group.UUID, ownerUUID, domain.RoleAuthor) //nolint:errcheck
+	_, err = s.memberRepo.CreateMember(ctx, group.UUID, ownerUUID, domain.RoleAuthor)
+	if err != nil {
+		return nil, fmt.Errorf("group service: create: add owner: %w", err)
+	}
 
 	return group, nil
 }

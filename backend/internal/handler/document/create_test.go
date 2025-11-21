@@ -24,8 +24,8 @@ type mockCreateDocumentService struct {
 	mock.Mock
 }
 
-func (m *mockCreateDocumentService) Create(ctx context.Context, groupUUID uuid.UUID, name, content string) (*domain.Document, error) {
-	args := m.Called(ctx, groupUUID, name, content)
+func (m *mockCreateDocumentService) Create(ctx context.Context, userUUID, groupUUID uuid.UUID, name, content string) (*domain.Document, error) {
+	args := m.Called(ctx, userUUID, groupUUID, name, content)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -49,6 +49,7 @@ func TestNewCreateDocumentHandler(main *testing.T) {
 		mockService, handler := setup(t)
 
 		groupUUID := uuid.New()
+		userUUID := uuid.New()
 		expectedDocument := &domain.Document{
 			UUID:      uuid.New(),
 			GroupUUID: groupUUID,
@@ -57,7 +58,7 @@ func TestNewCreateDocumentHandler(main *testing.T) {
 			CreatedAt: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
 		}
 
-		mockService.On("Create", mock.Anything, groupUUID, "Test Document", "This is test content").
+		mockService.On("Create", mock.Anything, userUUID, groupUUID, "Test Document", "This is test content").
 			Return(expectedDocument, nil)
 
 		requestBody := requests.CreateDocumentRequest{
@@ -75,6 +76,7 @@ func TestNewCreateDocumentHandler(main *testing.T) {
 
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
+		c.Set("user_uid", userUUID)
 
 		// Act
 		handler(c)
@@ -103,6 +105,7 @@ func TestNewCreateDocumentHandler(main *testing.T) {
 
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
+		c.Set("user_uid", uuid.New())
 
 		// Act
 		handler(c)
@@ -137,6 +140,7 @@ func TestNewCreateDocumentHandler(main *testing.T) {
 
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
+		c.Set("user_uid", uuid.New())
 
 		// Act
 		handler(c)
@@ -158,7 +162,8 @@ func TestNewCreateDocumentHandler(main *testing.T) {
 		mockService, handler := setup(t)
 
 		groupUUID := uuid.New()
-		mockService.On("Create", mock.Anything, groupUUID, "Test Document", "This is test content").
+		userUUID := uuid.New()
+		mockService.On("Create", mock.Anything, userUUID, groupUUID, "Test Document", "This is test content").
 			Return(nil, domain.ErrInternal)
 
 		requestBody := requests.CreateDocumentRequest{
@@ -176,6 +181,7 @@ func TestNewCreateDocumentHandler(main *testing.T) {
 
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
+		c.Set("user_uid", userUUID)
 
 		// Act
 		handler(c)
@@ -196,7 +202,8 @@ func TestNewCreateDocumentHandler(main *testing.T) {
 		mockService, handler := setup(t)
 
 		groupUUID := uuid.New()
-		mockService.On("Create", mock.Anything, groupUUID, "Test Document", "This is test content").
+		userUUID := uuid.New()
+		mockService.On("Create", mock.Anything, userUUID, groupUUID, "Test Document", "This is test content").
 			Return(nil, errors.New("database connection failed"))
 
 		requestBody := requests.CreateDocumentRequest{
@@ -214,6 +221,7 @@ func TestNewCreateDocumentHandler(main *testing.T) {
 
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
+		c.Set("user_uid", userUUID)
 
 		// Act
 		handler(c)
@@ -240,6 +248,7 @@ func TestNewCreateDocumentHandler(main *testing.T) {
 
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
+		c.Set("user_uid", uuid.New())
 
 		// Act
 		handler(c)
