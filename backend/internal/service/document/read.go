@@ -27,12 +27,11 @@ func (s *DocumentService) GetByUUIDForUser(ctx context.Context, documentUUID, us
 		return nil, err
 	}
 
-	isMember, err := s.groupRepo.IsMember(ctx, document.GroupUUID, userUUID)
+	member, err := s.memberRepo.GetMember(ctx, document.GroupUUID, userUUID)
 	if err != nil {
 		return nil, fmt.Errorf("document service: getByUUIDForUser: %w", err)
 	}
-
-	if !isMember {
+	if member == nil {
 		return nil, domain.ErrForbidden
 	}
 

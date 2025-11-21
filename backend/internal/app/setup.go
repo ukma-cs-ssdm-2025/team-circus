@@ -47,7 +47,7 @@ func (a *App) setupRouter() *gin.Engine {
 	groupService := groupservice.NewGroupService(groupRepo, memberRepo)
 
 	documentRepo := documentrepo.NewDocumentRepository(a.DB)
-	documentService := documentservice.NewDocumentService(documentRepo, groupRepo)
+	documentService := documentservice.NewDocumentService(documentRepo, memberRepo)
 
 	userRepo := userrepo.NewUserRepository(a.DB)
 	userService := userservice.NewUserService(userRepo, a.cfg.HashingCost)

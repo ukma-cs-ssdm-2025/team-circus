@@ -40,7 +40,7 @@ func NewDeleteGroupHandler(service deleteGroupService, logger *zap.Logger) gin.H
 			return
 		}
 
-		err = service.Delete(c, parsedUUID)
+		err = service.Delete(c.Request.Context(), parsedUUID)
 		if errors.Is(err, domain.ErrGroupNotFound) {
 			logger.Warn("group not found", zap.String("uuid", uuidParam))
 			c.JSON(http.StatusNotFound, gin.H{"error": "group not found"})

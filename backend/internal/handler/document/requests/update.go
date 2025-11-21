@@ -12,6 +12,6 @@ type UpdateDocumentRequest struct {
 func (r UpdateDocumentRequest) Validate() error {
 	return validation.ValidateStruct(&r,
 		validation.Field(&r.Name, validation.Required, validation.Length(1, 255)),
-		validation.Field(&r.Content, validation.Required),
+		validation.Field(&r.Content),
 	)
 }

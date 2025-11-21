@@ -24,8 +24,9 @@ type mockUpdateDocumentService struct {
 	mock.Mock
 }
 
-func (m *mockUpdateDocumentService) Update(ctx context.Context, uuid uuid.UUID, name, content string) (*domain.Document, error) {
-	args := m.Called(ctx, uuid, name, content)
+func (m *mockUpdateDocumentService) Update(ctx context.Context, docUUID, userUUID uuid.UUID,
+	name, content string) (*domain.Document, error) {
+	args := m.Called(ctx, docUUID, userUUID, name, content)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -49,6 +50,7 @@ func TestNewUpdateDocumentHandler(t *testing.T) {
 		mockService, handler := setup(t)
 
 		documentUUID := uuid.New()
+		userUUID := uuid.New()
 		expectedDocument := &domain.Document{
 			UUID:      documentUUID,
 			GroupUUID: uuid.New(),
@@ -57,7 +59,7 @@ func TestNewUpdateDocumentHandler(t *testing.T) {
 			CreatedAt: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
 		}
 
-		mockService.On("Update", mock.Anything, documentUUID, "Updated Document", "Updated content").Return(expectedDocument, nil)
+		mockService.On("Update", mock.Anything, documentUUID, userUUID, "Updated Document", "Updated content").Return(expectedDocument, nil)
 
 		requestBody := requests.UpdateDocumentRequest{
 			Name:    "Updated Document",
@@ -74,6 +76,7 @@ func TestNewUpdateDocumentHandler(t *testing.T) {
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
 		c.Params = gin.Params{{Key: "uuid", Value: documentUUID.String()}}
+		c.Set("user_uid", userUUID)
 
 		// Act
 		handler(c)
@@ -109,6 +112,7 @@ func TestNewUpdateDocumentHandler(t *testing.T) {
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
 		c.Params = gin.Params{{Key: "uuid", Value: "invalid-uuid"}}
+		c.Set("user_uid", uuid.New())
 
 		// Act
 		handler(c)
@@ -129,6 +133,7 @@ func TestNewUpdateDocumentHandler(t *testing.T) {
 		mockService, handler := setup(t)
 
 		documentUUID := uuid.New()
+		userUUID := uuid.New()
 		invalidJSON := `{"name": "Updated Document", "content": "Updated content"` // Missing closing brace
 
 		req := httptest.NewRequest("PUT", "/documents/"+documentUUID.String(), bytes.NewBufferString(invalidJSON))
@@ -138,6 +143,7 @@ func TestNewUpdateDocumentHandler(t *testing.T) {
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
 		c.Params = gin.Params{{Key: "uuid", Value: documentUUID.String()}}
+		c.Set("user_uid", userUUID)
 
 		// Act
 		handler(c)
@@ -158,6 +164,7 @@ func TestNewUpdateDocumentHandler(t *testing.T) {
 		mockService, handler := setup(t)
 
 		documentUUID := uuid.New()
+		userUUID := uuid.New()
 		requestBody := requests.UpdateDocumentRequest{
 			Name:    "",
 			Content: "Updated content",
@@ -173,6 +180,7 @@ func TestNewUpdateDocumentHandler(t *testing.T) {
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
 		c.Params = gin.Params{{Key: "uuid", Value: documentUUID.String()}}
+		c.Set("user_uid", userUUID)
 
 		// Act
 		handler(c)
@@ -193,7 +201,9 @@ func TestNewUpdateDocumentHandler(t *testing.T) {
 		mockService, handler := setup(t)
 
 		documentUUID := uuid.New()
-		mockService.On("Update", mock.Anything, documentUUID, "Updated Document", "Updated content").Return(nil, domain.ErrDocumentNotFound)
+		userUUID := uuid.New()
+		mockService.On("Update", mock.Anything, documentUUID, userUUID,
+			"Updated Document", "Updated content").Return(nil, domain.ErrDocumentNotFound)
 
 		requestBody := requests.UpdateDocumentRequest{
 			Name:    "Updated Document",
@@ -210,6 +220,7 @@ func TestNewUpdateDocumentHandler(t *testing.T) {
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
 		c.Params = gin.Params{{Key: "uuid", Value: documentUUID.String()}}
+		c.Set("user_uid", userUUID)
 
 		// Act
 		handler(c)
@@ -230,7 +241,9 @@ func TestNewUpdateDocumentHandler(t *testing.T) {
 		mockService, handler := setup(t)
 
 		documentUUID := uuid.New()
-		mockService.On("Update", mock.Anything, documentUUID, "Updated Document", "Updated content").Return(nil, domain.ErrInternal)
+		userUUID := uuid.New()
+		mockService.On("Update", mock.Anything, documentUUID, userUUID,
+			"Updated Document", "Updated content").Return(nil, domain.ErrInternal)
 
 		requestBody := requests.UpdateDocumentRequest{
 			Name:    "Updated Document",
@@ -247,6 +260,7 @@ func TestNewUpdateDocumentHandler(t *testing.T) {
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
 		c.Params = gin.Params{{Key: "uuid", Value: documentUUID.String()}}
+		c.Set("user_uid", userUUID)
 
 		// Act
 		handler(c)
@@ -267,10 +281,12 @@ func TestNewUpdateDocumentHandler(t *testing.T) {
 		mockService, handler := setup(t)
 
 		documentUUID := uuid.New()
+		userUUID := uuid.New()
 		mockService.On(
 			"Update",
 			mock.Anything,
 			documentUUID,
+			userUUID,
 			"Updated Document",
 			"Updated content",
 		).Return(nil, errors.New("database connection failed"))
@@ -290,6 +306,7 @@ func TestNewUpdateDocumentHandler(t *testing.T) {
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
 		c.Params = gin.Params{{Key: "uuid", Value: documentUUID.String()}}
+		c.Set("user_uid", userUUID)
 
 		// Act
 		handler(c)
