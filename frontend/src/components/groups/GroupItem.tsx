@@ -8,8 +8,8 @@ import {
 	Stack,
 	Typography,
 } from "@mui/material";
-import { formatDate } from "../../utils";
 import type { GroupItem as GroupItemType } from "../../types/entities";
+import { formatDate } from "../../utils";
 
 interface GroupItemProps {
 	group: GroupItemType;

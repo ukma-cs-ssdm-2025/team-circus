@@ -1,7 +1,7 @@
 import { useEffect } from "react";
-import { useLocalStorage } from "./useLocalStorage";
 import { THEME } from "../constants";
 import type { Theme } from "../types";
+import { useLocalStorage } from "./useLocalStorage";
 
 export function useTheme() {
 	const [theme, setTheme] = useLocalStorage<Theme>(

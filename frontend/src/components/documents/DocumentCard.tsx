@@ -1,3 +1,4 @@
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import {
 	Box,
 	Card,
@@ -10,10 +11,9 @@ import {
 	Typography,
 } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
-import { formatDate, truncateText } from "../../utils";
 import { ROUTES } from "../../constants";
 import type { DocumentItem } from "../../types/entities";
+import { formatDate, truncateText } from "../../utils";
 
 interface DocumentCardProps {
 	document: DocumentItem;

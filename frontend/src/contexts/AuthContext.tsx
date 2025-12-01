@@ -1,7 +1,6 @@
-import React, { useReducer, useEffect, type ReactNode } from "react";
-import { authService } from "../services/auth";
+import React, { type ReactNode, useEffect, useReducer } from "react";
 import { STORAGE_KEYS } from "../constants";
-import { AuthContext } from "./AuthContextBase";
+import { authService } from "../services/auth";
 import type {
 	AuthContextType,
 	AuthState,
@@ -9,6 +8,7 @@ import type {
 	LoginRequest,
 	RegisterRequest,
 } from "../types/auth";
+import { AuthContext } from "./AuthContextBase";
 
 const loadStoredUser = (): AuthUser | null => {
 	if (typeof window === "undefined") {

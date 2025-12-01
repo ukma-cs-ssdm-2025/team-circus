@@ -1,14 +1,14 @@
-import React from "react";
 import {
+	Alert,
 	Box,
+	Button,
 	Card,
 	CardContent,
-	Typography,
-	Button,
-	Alert,
 	Chip,
 	Divider,
+	Typography,
 } from "@mui/material";
+import type React from "react";
 import { useAuth } from "../contexts/AuthContextBase";
 
 export const AuthTest: React.FC = () => {

@@ -1,24 +1,24 @@
 import {
+	Close as CloseIcon,
+	Description as DescriptionIcon,
+	Group as GroupIcon,
+	Home as HomeIcon,
+} from "@mui/icons-material";
+import {
 	Box,
 	Drawer,
+	IconButton,
 	List,
 	ListItemButton,
 	ListItemIcon,
 	ListItemText,
 	Typography,
-	IconButton,
 	useTheme,
 } from "@mui/material";
-import {
-	Group as GroupIcon,
-	Home as HomeIcon,
-	Description as DescriptionIcon,
-	Close as CloseIcon,
-} from "@mui/icons-material";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { ROUTES } from "../../constants";
 import { useLanguage } from "../../contexts/LanguageContext";
 import type { BaseComponentProps } from "../../types";
-import { ROUTES } from "../../constants";
 
 interface SidebarProps extends BaseComponentProps {
 	open?: boolean;

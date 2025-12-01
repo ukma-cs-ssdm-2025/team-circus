@@ -7,8 +7,8 @@ import {
 	TextField,
 } from "@mui/material";
 import type {
-	GroupOption,
 	DocumentFilters as DocumentFiltersState,
+	GroupOption,
 } from "../../types/entities";
 
 interface DocumentFiltersProps {

@@ -1,16 +1,16 @@
 import {
 	FormControl,
 	InputLabel,
-	Select,
 	MenuItem,
+	Select,
 	Stack,
 } from "@mui/material";
-import { PageCard, PageHeader, CenteredContent } from "../components/common";
+import { CenteredContent, PageCard, PageHeader } from "../components/common";
 import { SettingsSection } from "../components/forms";
-import { useLanguage } from "../contexts/LanguageContext";
-import { useTheme, type Theme } from "../contexts/ThemeContext";
-import type { BaseComponentProps } from "../types";
 import type { Language } from "../contexts/LanguageContext";
+import { useLanguage } from "../contexts/LanguageContext";
+import { type Theme, useTheme } from "../contexts/ThemeContext";
+import type { BaseComponentProps } from "../types";
 
 type SettingsProps = BaseComponentProps;
 

@@ -1,13 +1,4 @@
 import {
-	memo,
-	useDeferredValue,
-	useEffect,
-	useMemo,
-	useState,
-	type ChangeEvent,
-} from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import {
 	Alert,
 	Box,
 	Button,
@@ -16,12 +7,21 @@ import {
 	TextField,
 	Typography,
 } from "@mui/material";
+import {
+	type ChangeEvent,
+	memo,
+	useDeferredValue,
+	useEffect,
+	useMemo,
+	useState,
+} from "react";
 import ReactMarkdown from "react-markdown";
+import { useNavigate, useParams } from "react-router-dom";
 import remarkGfm from "remark-gfm";
 import { ErrorAlert, LoadingSpinner } from "../components";
+import { API_ENDPOINTS, ROUTES } from "../constants";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useApi, useMutation } from "../hooks";
-import { API_ENDPOINTS, ROUTES } from "../constants";
 import type {
 	BaseComponentProps,
 	DocumentItem,
@@ -114,31 +114,29 @@ type MarkdownPreviewProps = {
 	emptyText: string;
 };
 
-const MarkdownPreview = memo(
-	({ content, emptyText }: MarkdownPreviewProps) => {
-		const trimmedContent = content.trim();
+const MarkdownPreview = memo(({ content, emptyText }: MarkdownPreviewProps) => {
+	const trimmedContent = content.trim();
 
-		const renderedMarkdown = useMemo(() => {
-			if (!trimmedContent) {
-				return null;
-			}
-
-			return (
-				<Box sx={markdownStyles}>
-					<ReactMarkdown remarkPlugins={[remarkGfm]}>
-						{trimmedContent}
-					</ReactMarkdown>
-				</Box>
-			);
-		}, [trimmedContent]);
-
+	const renderedMarkdown = useMemo(() => {
 		if (!trimmedContent) {
-			return <Typography color="text.secondary">{emptyText}</Typography>;
+			return null;
 		}
 
-		return renderedMarkdown;
-	},
-);
+		return (
+			<Box sx={markdownStyles}>
+				<ReactMarkdown remarkPlugins={[remarkGfm]}>
+					{trimmedContent}
+				</ReactMarkdown>
+			</Box>
+		);
+	}, [trimmedContent]);
+
+	if (!trimmedContent) {
+		return <Typography color="text.secondary">{emptyText}</Typography>;
+	}
+
+	return renderedMarkdown;
+});
 
 const DocumentEditor = ({ className = "" }: DocumentEditorProps) => {
 	const { t } = useLanguage();

@@ -1,11 +1,11 @@
 import { API_ENDPOINTS } from "../constants";
-import { apiClient } from "./apiClient";
 import type {
 	CreateGroupPayload,
 	DeleteResponse,
 	GroupItem,
 	GroupsResponse,
 } from "../types";
+import { apiClient } from "./apiClient";
 
 export const createGroup = async (
 	payload: CreateGroupPayload,

@@ -1,4 +1,3 @@
-import { useEffect, useMemo, useState } from "react";
 import {
 	Alert,
 	Box,
@@ -15,28 +14,29 @@ import {
 	TextField,
 	Typography,
 } from "@mui/material";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import {
 	CenteredContent,
-	PageCard,
-	PageHeader,
-	ErrorAlert,
-	LoadingSpinner,
+	ConfirmDialog,
 	DocumentFilters,
 	DocumentsGrid,
-	ConfirmDialog,
+	ErrorAlert,
+	LoadingSpinner,
+	PageCard,
+	PageHeader,
 } from "../components";
+import { API_ENDPOINTS, MEMBER_ROLES } from "../constants";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useApi } from "../hooks";
-import { API_ENDPOINTS, MEMBER_ROLES } from "../constants";
 import { createDocument, deleteDocument } from "../services";
 import type {
 	BaseComponentProps,
-	DocumentsResponse,
-	DocumentItem,
-	GroupsResponse,
 	DocumentFilters as DocumentFiltersType,
+	DocumentItem,
+	DocumentsResponse,
 	GroupOption,
+	GroupsResponse,
 } from "../types";
 
 type DocumentsProps = BaseComponentProps;

@@ -1,24 +1,24 @@
-import { Link as RouterLink, useNavigate } from "react-router-dom";
+import {
+	DarkMode as DarkModeIcon,
+	LightMode as LightModeIcon,
+	Logout as LogoutIcon,
+	Menu as MenuIcon,
+	Settings as SettingsIcon,
+} from "@mui/icons-material";
 import {
 	AppBar,
+	Box,
+	IconButton,
 	Toolbar,
 	Typography,
-	IconButton,
-	Box,
 	useTheme,
 } from "@mui/material";
-import {
-	Settings as SettingsIcon,
-	LightMode as LightModeIcon,
-	DarkMode as DarkModeIcon,
-	Menu as MenuIcon,
-	Logout as LogoutIcon,
-} from "@mui/icons-material";
-import type { BaseComponentProps } from "../../types";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
+import { ROUTES } from "../../constants";
+import { useAuth } from "../../contexts/AuthContextBase";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useTheme as useAppTheme } from "../../contexts/ThemeContext";
-import { useAuth } from "../../contexts/AuthContextBase";
-import { ROUTES } from "../../constants";
+import type { BaseComponentProps } from "../../types";
 
 interface HeaderProps extends BaseComponentProps {
 	onToggleSidebar?: () => void;

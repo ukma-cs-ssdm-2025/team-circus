@@ -1,5 +1,5 @@
-export * from "./auth";
 export { ApiClient } from "./apiClient";
+export * from "./auth";
 export * from "./documents";
 export * from "./groups";
 export * from "./members";

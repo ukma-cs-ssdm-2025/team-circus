@@ -1,9 +1,9 @@
 import { Box, Stack } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { ActionButton } from "../components/forms";
+import { ROUTES } from "../constants";
 import { useLanguage } from "../contexts/LanguageContext";
 import type { BaseComponentProps } from "../types";
-import { ROUTES } from "../constants";
 
 type HomeProps = BaseComponentProps;
 

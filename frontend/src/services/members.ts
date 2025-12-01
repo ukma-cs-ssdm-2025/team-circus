@@ -1,5 +1,4 @@
 import { API_ENDPOINTS } from "../constants";
-import { apiClient } from "./apiClient";
 import type {
 	CreateMemberPayload,
 	DeleteResponse,
@@ -7,6 +6,7 @@ import type {
 	MembersResponse,
 	UpdateMemberPayload,
 } from "../types";
+import { apiClient } from "./apiClient";
 
 export const getGroupMembers = async (
 	groupUUID: string,

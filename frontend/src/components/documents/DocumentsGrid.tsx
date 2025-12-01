@@ -1,6 +1,6 @@
 import Grid from "@mui/material/Grid";
-import DocumentCard from "./DocumentCard";
 import type { DocumentItem } from "../../types/entities";
+import DocumentCard from "./DocumentCard";
 
 interface DocumentsGridProps {
 	documents: DocumentItem[];

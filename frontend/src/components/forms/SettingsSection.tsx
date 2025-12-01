@@ -1,4 +1,4 @@
-import { Card, Typography, Stack } from "@mui/material";
+import { Card, Stack, Typography } from "@mui/material";
 import type { BaseComponentProps } from "../../types";
 
 interface SettingsSectionProps extends BaseComponentProps {

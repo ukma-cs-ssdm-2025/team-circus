@@ -1,5 +1,5 @@
 // Entity types for the application
-import { MEMBER_ROLES } from "../constants";
+import type { MEMBER_ROLES } from "../constants";
 
 export type MemberRole = (typeof MEMBER_ROLES)[number];
 

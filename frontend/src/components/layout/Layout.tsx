@@ -1,8 +1,8 @@
-import { useState } from "react";
 import { Box, useTheme } from "@mui/material";
+import { useState } from "react";
 import type { BaseComponentProps } from "../../types";
-import Header from "./Header";
 import Footer from "./Footer";
+import Header from "./Header";
 import Sidebar from "./Sidebar";
 
 interface LayoutProps extends BaseComponentProps {

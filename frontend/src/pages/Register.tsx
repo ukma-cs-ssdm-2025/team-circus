@@ -1,19 +1,20 @@
-import React, { useState } from "react";
-import { Navigate, useLocation, Link as RouterLink } from "react-router-dom";
 import {
+	Alert,
 	Box,
+	Button,
 	Card,
 	CardContent,
-	TextField,
-	Button,
-	Typography,
-	Alert,
-	Link,
 	Container,
+	Link,
 	Paper,
+	TextField,
+	Typography,
 } from "@mui/material";
-import { useAuth } from "../contexts/AuthContextBase";
+import type React from "react";
+import { useState } from "react";
+import { Navigate, Link as RouterLink, useLocation } from "react-router-dom";
 import { ROUTES } from "../constants";
+import { useAuth } from "../contexts/AuthContextBase";
 import type { RegisterRequest } from "../types/auth";
 
 type AuthLocationState = { from?: { pathname?: string } };

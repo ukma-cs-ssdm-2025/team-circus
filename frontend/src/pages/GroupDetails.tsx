@@ -1,4 +1,3 @@
-import { useEffect, useMemo, useState } from "react";
 import {
 	Alert,
 	Autocomplete,
@@ -17,25 +16,25 @@ import {
 	TextField,
 	Typography,
 } from "@mui/material";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
 	CenteredContent,
 	ConfirmDialog,
-	PageCard,
-	PageHeader,
 	ErrorAlert,
 	LoadingSpinner,
+	PageCard,
+	PageHeader,
 } from "../components";
+import { API_ENDPOINTS, MEMBER_ROLES, ROUTES } from "../constants";
+import { useAuth } from "../contexts/AuthContextBase";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useApi } from "../hooks";
-import { API_ENDPOINTS, MEMBER_ROLES, ROUTES } from "../constants";
 import {
 	addGroupMember,
 	removeGroupMember,
 	updateGroupMemberRole,
 } from "../services";
-import { useAuth } from "../contexts/AuthContextBase";
-import { formatDate } from "../utils";
 import type {
 	BaseComponentProps,
 	GroupItem,
@@ -43,6 +42,7 @@ import type {
 	MembersResponse,
 	UsersResponse,
 } from "../types";
+import { formatDate } from "../utils";
 
 type GroupDetailsProps = BaseComponentProps;
 
@@ -106,8 +106,7 @@ const GroupDetails = ({ className = "" }: GroupDetailsProps) => {
 		() =>
 			membersLoading
 				? []
-				:
-					users.filter(
+				: users.filter(
 						(candidate) =>
 							candidate.uuid !== user?.uuid &&
 							!members.some((member) => member.user_uuid === candidate.uuid),
@@ -332,7 +331,7 @@ const GroupDetails = ({ className = "" }: GroupDetailsProps) => {
 							<Alert severity="info" sx={{ mb: 2 }}>
 								{t("groupDetails.permissionsHint")}
 							</Alert>
-									)}
+						)}
 						<Stack spacing={2}>
 							<Autocomplete
 								options={selectableUserOptions}
@@ -343,11 +342,11 @@ const GroupDetails = ({ className = "" }: GroupDetailsProps) => {
 								value={
 									memberForm.user_uuid
 										? {
-											value: memberForm.user_uuid,
-											label:
-												userByUUID[memberForm.user_uuid]?.login ||
-												memberForm.user_uuid,
-										}
+												value: memberForm.user_uuid,
+												label:
+													userByUUID[memberForm.user_uuid]?.login ||
+													memberForm.user_uuid,
+											}
 										: null
 								}
 								onChange={(_, option) => {

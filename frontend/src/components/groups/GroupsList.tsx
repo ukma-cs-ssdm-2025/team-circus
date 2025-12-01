@@ -1,6 +1,6 @@
 import { List, Stack, Typography } from "@mui/material";
-import GroupItem from "./GroupItem";
 import type { GroupItem as GroupItemType } from "../../types/entities";
+import GroupItem from "./GroupItem";
 
 interface GroupsListProps {
 	groups: GroupItemType[];

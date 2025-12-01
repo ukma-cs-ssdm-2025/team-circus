@@ -1,6 +1,6 @@
 // Note: We use direct fetch calls instead of apiClient to avoid circular dependencies
 import { API_ENDPOINTS } from "../constants";
-import type { LoginRequest, RegisterRequest, AuthUser } from "../types/auth";
+import type { AuthUser, LoginRequest, RegisterRequest } from "../types/auth";
 
 class AuthService {
 	private async requestWithCredentials<T>(

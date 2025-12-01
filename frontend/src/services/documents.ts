@@ -1,10 +1,10 @@
 import { API_ENDPOINTS } from "../constants";
-import { apiClient } from "./apiClient";
 import type {
 	CreateDocumentPayload,
 	DeleteResponse,
 	DocumentItem,
 } from "../types";
+import { apiClient } from "./apiClient";
 
 export const createDocument = async (
 	payload: CreateDocumentPayload,

@@ -1,27 +1,27 @@
 import {
+	Outlet,
+	Route,
 	BrowserRouter as Router,
 	Routes,
-	Route,
-	Outlet,
 } from "react-router-dom";
-import { ThemeProvider } from "./contexts/ThemeContext";
-import { LanguageProvider } from "./contexts/LanguageContext";
-import { AuthProvider } from "./contexts/AuthContext";
 import { Layout } from "./components/layout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
-import {
-	Home,
-	Settings,
-	NotFound,
-	Documents,
-	Groups,
-	GroupDetails,
-	DocumentEditor,
-	Login,
-	Register,
-	AuthTest,
-} from "./pages";
 import { ROUTES } from "./constants";
+import { AuthProvider } from "./contexts/AuthContext";
+import { LanguageProvider } from "./contexts/LanguageContext";
+import { ThemeProvider } from "./contexts/ThemeContext";
+import {
+	AuthTest,
+	DocumentEditor,
+	Documents,
+	GroupDetails,
+	Groups,
+	Home,
+	Login,
+	NotFound,
+	Register,
+	Settings,
+} from "./pages";
 
 const stripLeadingSlash = (path: string) => path.replace(/^\//, "");
 

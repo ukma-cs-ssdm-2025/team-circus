@@ -1,7 +1,7 @@
-import { Box, Typography, Chip, CircularProgress } from "@mui/material";
 import { CheckCircle, Error, Warning } from "@mui/icons-material";
-import { useApi } from "../../hooks";
+import { Box, Chip, CircularProgress, Typography } from "@mui/material";
 import { ENV } from "../../config";
+import { useApi } from "../../hooks";
 import type { BaseComponentProps } from "../../types";
 
 interface ApiStatusProps extends BaseComponentProps {

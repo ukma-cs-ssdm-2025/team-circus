@@ -1,13 +1,13 @@
-import { Link } from "react-router-dom";
-import { Box, Typography, Stack, useTheme } from "@mui/material";
 import {
-	Home as HomeIcon,
 	ArrowBack as ArrowBackIcon,
+	Home as HomeIcon,
 } from "@mui/icons-material";
-import { PageCard, CenteredContent } from "../components/common";
+import { Box, Stack, Typography, useTheme } from "@mui/material";
+import { Link } from "react-router-dom";
+import { CenteredContent, PageCard } from "../components/common";
 import { ActionButton } from "../components/forms";
-import { useLanguage } from "../contexts/LanguageContext";
 import { ROUTES } from "../constants";
+import { useLanguage } from "../contexts/LanguageContext";
 import type { BaseComponentProps } from "../types";
 
 type NotFoundProps = BaseComponentProps;

@@ -1,16 +1,16 @@
 import {
 	Box,
 	Container,
-	Typography,
-	Link as MuiLink,
 	Divider,
+	Link as MuiLink,
+	Typography,
 	useTheme,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import { Link as RouterLink } from "react-router-dom";
+import { ROUTES } from "../../constants";
 import { useLanguage } from "../../contexts/LanguageContext";
 import type { BaseComponentProps } from "../../types";
-import { ROUTES } from "../../constants";
 
 type FooterProps = BaseComponentProps;
 

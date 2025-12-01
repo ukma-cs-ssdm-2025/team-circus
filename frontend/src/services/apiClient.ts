@@ -1,6 +1,6 @@
 import { getApiUrl } from "../config/env";
-import { authService } from "./auth";
 import type { ApiResponse } from "../types";
+import { authService } from "./auth";
 
 // Enhanced API Client with automatic token refresh
 class ApiClient {
