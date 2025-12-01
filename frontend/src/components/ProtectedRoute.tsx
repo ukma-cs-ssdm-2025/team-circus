@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContextBase";
 import { ROUTES } from "../constants";
@@ -9,17 +9,8 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-	const { isAuthenticated, isLoading, refreshToken } = useAuth();
+	const { isAuthenticated, isLoading } = useAuth();
 	const location = useLocation();
-	const didAttemptRefreshRef = useRef(false);
-
-	useEffect(() => {
-		// If not authenticated and not loading, try to refresh token
-		if (!isAuthenticated && !isLoading && !didAttemptRefreshRef.current) {
-			didAttemptRefreshRef.current = true;
-			refreshToken();
-		}
-	}, [isAuthenticated, isLoading, refreshToken]);
 
 	// Show loading spinner while checking authentication
 	if (isLoading) {

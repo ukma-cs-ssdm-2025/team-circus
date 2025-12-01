@@ -28,7 +28,7 @@ import {
 } from "../components";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useApi } from "../hooks";
-import { API_ENDPOINTS } from "../constants";
+import { API_ENDPOINTS, MEMBER_ROLES } from "../constants";
 import { createDocument, deleteDocument } from "../services";
 import type {
 	BaseComponentProps,
@@ -41,6 +41,8 @@ import type {
 
 type DocumentsProps = BaseComponentProps;
 
+const DEFAULT_DOCUMENT_CONTENT = "# New document";
+
 const Documents = ({ className = "" }: DocumentsProps) => {
 	const { t } = useLanguage();
 	const location = useLocation();
@@ -52,7 +54,6 @@ const Documents = ({ className = "" }: DocumentsProps) => {
 	const [createForm, setCreateForm] = useState({
 		name: "",
 		group_uuid: "",
-		content: "",
 	});
 	const [createErrors, setCreateErrors] = useState<Record<string, string>>({});
 	const [createLoading, setCreateLoading] = useState(false);
@@ -89,6 +90,22 @@ const Documents = ({ className = "" }: DocumentsProps) => {
 		}));
 	}, [groups]);
 
+	const creatableGroups = useMemo(
+		() =>
+			groups.filter(
+				(group) =>
+					!group.role || group.role !== MEMBER_ROLES[MEMBER_ROLES.length - 1],
+			),
+		[groups],
+	);
+
+	const creatableGroupOptions = useMemo((): GroupOption[] => {
+		return creatableGroups.map((group) => ({
+			value: group.uuid,
+			label: group.name,
+		}));
+	}, [creatableGroups]);
+
 	const groupNameByUUID = useMemo(() => {
 		return groups.reduce<Record<string, string>>((acc, group) => {
 			acc[group.uuid] = group.name;
@@ -117,7 +134,7 @@ const Documents = ({ className = "" }: DocumentsProps) => {
 	};
 
 	const isLoading = documentsLoading || groupsLoading;
-	const canCreateDocument = groups.length > 0;
+	const canCreateDocument = creatableGroupOptions.length > 0;
 
 	useEffect(() => {
 		const params = new URLSearchParams(location.search);
@@ -133,6 +150,23 @@ const Documents = ({ className = "" }: DocumentsProps) => {
 		}
 	}, [location.search, groups]);
 
+	useEffect(() => {
+		if (!createDialogOpen) {
+			return;
+		}
+
+		const stillAvailable = creatableGroupOptions.some(
+			(option) => option.value === createForm.group_uuid,
+		);
+
+		if (!stillAvailable) {
+			setCreateForm((prev) => ({
+				...prev,
+				group_uuid: creatableGroupOptions[0]?.value ?? "",
+			}));
+		}
+	}, [createDialogOpen, creatableGroupOptions, createForm.group_uuid]);
+
 	const validateCreateForm = () => {
 		const errors: Record<string, string> = {};
 		if (!createForm.name.trim()) {
@@ -140,9 +174,6 @@ const Documents = ({ className = "" }: DocumentsProps) => {
 		}
 		if (!createForm.group_uuid) {
 			errors.group_uuid = t("documents.fieldRequired");
-		}
-		if (!createForm.content.trim()) {
-			errors.content = t("documents.fieldRequired");
 		}
 		setCreateErrors(errors);
 		return Object.keys(errors).length === 0;
@@ -158,11 +189,11 @@ const Documents = ({ className = "" }: DocumentsProps) => {
 			await createDocument({
 				...createForm,
 				name: createForm.name.trim(),
-				content: createForm.content.trim(),
+				content: DEFAULT_DOCUMENT_CONTENT,
 			});
 			setFeedback({ type: "success", message: t("documents.createSuccess") });
 			setCreateDialogOpen(false);
-			setCreateForm({ name: "", group_uuid: "", content: "" });
+			setCreateForm({ name: "", group_uuid: "" });
 			setCreateErrors({});
 			await refetchDocuments();
 		} catch (error) {
@@ -312,7 +343,7 @@ const Documents = ({ className = "" }: DocumentsProps) => {
 									}))
 								}
 							>
-								{groupOptions.map((option) => (
+								{creatableGroupOptions.map((option) => (
 									<MenuItem key={option.value} value={option.value}>
 										{option.label}
 									</MenuItem>
@@ -324,22 +355,6 @@ const Documents = ({ className = "" }: DocumentsProps) => {
 								</Typography>
 							)}
 						</FormControl>
-
-						<TextField
-							label={t("documents.createDialogContentLabel")}
-							value={createForm.content}
-							onChange={(event) =>
-								setCreateForm((prev) => ({
-									...prev,
-									content: event.target.value,
-								}))
-							}
-							error={Boolean(createErrors.content)}
-							helperText={createErrors.content}
-							multiline
-							minRows={4}
-							required
-						/>
 					</Stack>
 				</DialogContent>
 				<DialogActions>

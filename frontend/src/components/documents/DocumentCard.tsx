@@ -63,8 +63,26 @@ const DocumentCard = ({
 			>
 				<CardContent sx={{ flex: 1 }}>
 					<Stack spacing={2}>
-						<Stack direction="row" spacing={1} alignItems="center">
-							<Typography variant="h6" sx={{ fontWeight: 600 }}>
+						<Stack
+							direction="row"
+							spacing={1}
+							alignItems="center"
+							sx={{ minWidth: 0, flexWrap: "wrap", rowGap: 0.5 }}
+						>
+							<Typography
+								variant="h6"
+								sx={{
+									fontWeight: 600,
+									minWidth: 0,
+									flexShrink: 1,
+									wordBreak: "break-word",
+									overflowWrap: "anywhere",
+									display: "-webkit-box",
+									WebkitLineClamp: 2,
+									WebkitBoxOrient: "vertical",
+									overflow: "hidden",
+								}}
+							>
 								{document.name}
 							</Typography>
 							<Chip
@@ -88,7 +106,11 @@ const DocumentCard = ({
 							)}
 						</Stack>
 
-						<Typography variant="body2" color="text.secondary">
+						<Typography
+							variant="body2"
+							color="text.secondary"
+							sx={{ overflowWrap: "anywhere", wordBreak: "break-word" }}
+						>
 							{truncateText(document.content || noContentLabel, 180)}
 						</Typography>
 

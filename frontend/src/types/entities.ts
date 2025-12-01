@@ -1,9 +1,13 @@
 // Entity types for the application
+import { MEMBER_ROLES } from "../constants";
+
+export type MemberRole = (typeof MEMBER_ROLES)[number];
 
 export interface GroupItem {
 	uuid: string;
 	name: string;
 	created_at: string;
+	role?: MemberRole;
 }
 
 export interface DocumentItem {
@@ -31,10 +35,6 @@ export interface DocumentsResponse {
 export interface CreateGroupPayload {
 	name: string;
 }
-
-import { MEMBER_ROLES } from "../constants";
-
-type MemberRole = (typeof MEMBER_ROLES)[number];
 
 export interface MemberItem {
 	group_uuid: string;

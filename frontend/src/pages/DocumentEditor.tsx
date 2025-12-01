@@ -1,4 +1,11 @@
-import { useEffect, useMemo, useState, type ChangeEvent } from "react";
+import {
+	memo,
+	useDeferredValue,
+	useEffect,
+	useMemo,
+	useState,
+	type ChangeEvent,
+} from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
 	Alert,
@@ -102,6 +109,37 @@ const markdownStyles = {
 	},
 } as const;
 
+type MarkdownPreviewProps = {
+	content: string;
+	emptyText: string;
+};
+
+const MarkdownPreview = memo(
+	({ content, emptyText }: MarkdownPreviewProps) => {
+		const trimmedContent = content.trim();
+
+		const renderedMarkdown = useMemo(() => {
+			if (!trimmedContent) {
+				return null;
+			}
+
+			return (
+				<Box sx={markdownStyles}>
+					<ReactMarkdown remarkPlugins={[remarkGfm]}>
+						{trimmedContent}
+					</ReactMarkdown>
+				</Box>
+			);
+		}, [trimmedContent]);
+
+		if (!trimmedContent) {
+			return <Typography color="text.secondary">{emptyText}</Typography>;
+		}
+
+		return renderedMarkdown;
+	},
+);
+
 const DocumentEditor = ({ className = "" }: DocumentEditorProps) => {
 	const { t } = useLanguage();
 	const navigate = useNavigate();
@@ -133,6 +171,7 @@ const DocumentEditor = ({ className = "" }: DocumentEditorProps) => {
 
 	const [name, setName] = useState("");
 	const [content, setContent] = useState("");
+	const deferredContent = useDeferredValue(content);
 	const [lastSaved, setLastSaved] = useState<UpdateDocumentPayload | null>(
 		null,
 	);
@@ -355,6 +394,7 @@ const DocumentEditor = ({ className = "" }: DocumentEditorProps) => {
 							fullWidth
 							multiline
 							minRows={16}
+							maxRows={30}
 							sx={{
 								flex: 1,
 								"& .MuiOutlinedInput-root": {
@@ -371,6 +411,8 @@ const DocumentEditor = ({ className = "" }: DocumentEditorProps) => {
 								"& textarea": {
 									flex: 1,
 									overflowY: "auto",
+									scrollbarWidth: "thin",
+									scrollbarGutter: "stable",
 									resize: "none",
 									height: "100% !important",
 									maxHeight: "100% !important",
@@ -399,17 +441,10 @@ const DocumentEditor = ({ className = "" }: DocumentEditorProps) => {
 							{t("documentEditor.previewTitle")}
 						</Typography>
 						<Box sx={{ flex: 1, overflowY: "auto" }}>
-							{content.trim() ? (
-								<Box sx={markdownStyles}>
-									<ReactMarkdown remarkPlugins={[remarkGfm]}>
-										{content}
-									</ReactMarkdown>
-								</Box>
-							) : (
-								<Typography color="text.secondary">
-									{t("documentEditor.previewEmpty")}
-								</Typography>
-							)}
+							<MarkdownPreview
+								content={deferredContent}
+								emptyText={t("documentEditor.previewEmpty")}
+							/>
 						</Box>
 					</Box>
 				</Box>
