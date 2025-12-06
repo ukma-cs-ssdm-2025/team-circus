@@ -21,8 +21,8 @@ type mockDeleteGroupService struct {
 	mock.Mock
 }
 
-func (m *mockDeleteGroupService) Delete(ctx context.Context, uuid uuid.UUID) error {
-	args := m.Called(ctx, uuid)
+func (m *mockDeleteGroupService) Delete(ctx context.Context, userUUID, uuid uuid.UUID) error {
+	args := m.Called(ctx, userUUID, uuid)
 	return args.Error(0)
 }
 
@@ -42,8 +42,9 @@ func TestNewDeleteGroupHandler(t *testing.T) {
 		// Arrange
 		mockService, handler := setup(t)
 
+		userUUID := uuid.New()
 		groupUUID := uuid.New()
-		mockService.On("Delete", mock.Anything, groupUUID).Return(nil)
+		mockService.On("Delete", mock.Anything, userUUID, groupUUID).Return(nil)
 
 		req := httptest.NewRequest("DELETE", "/groups/"+groupUUID.String(), nil)
 		w := httptest.NewRecorder()
@@ -51,6 +52,7 @@ func TestNewDeleteGroupHandler(t *testing.T) {
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
 		c.Params = gin.Params{{Key: "uuid", Value: groupUUID.String()}}
+		c.Set("user_uid", userUUID)
 
 		// Act
 		handler(c)
@@ -70,12 +72,14 @@ func TestNewDeleteGroupHandler(t *testing.T) {
 		// Arrange
 		mockService, handler := setup(t)
 
+		userUUID := uuid.New()
 		req := httptest.NewRequest("DELETE", "/groups/invalid-uuid", nil)
 		w := httptest.NewRecorder()
 
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
 		c.Params = gin.Params{{Key: "uuid", Value: "invalid-uuid"}}
+		c.Set("user_uid", userUUID)
 
 		// Act
 		handler(c)
@@ -95,8 +99,9 @@ func TestNewDeleteGroupHandler(t *testing.T) {
 		// Arrange
 		mockService, handler := setup(t)
 
+		userUUID := uuid.New()
 		groupUUID := uuid.New()
-		mockService.On("Delete", mock.Anything, groupUUID).Return(domain.ErrGroupNotFound)
+		mockService.On("Delete", mock.Anything, userUUID, groupUUID).Return(domain.ErrGroupNotFound)
 
 		req := httptest.NewRequest("DELETE", "/groups/"+groupUUID.String(), nil)
 		w := httptest.NewRecorder()
@@ -104,6 +109,7 @@ func TestNewDeleteGroupHandler(t *testing.T) {
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
 		c.Params = gin.Params{{Key: "uuid", Value: groupUUID.String()}}
+		c.Set("user_uid", userUUID)
 
 		// Act
 		handler(c)
@@ -123,8 +129,9 @@ func TestNewDeleteGroupHandler(t *testing.T) {
 		// Arrange
 		mockService, handler := setup(t)
 
+		userUUID := uuid.New()
 		groupUUID := uuid.New()
-		mockService.On("Delete", mock.Anything, groupUUID).Return(domain.ErrInternal)
+		mockService.On("Delete", mock.Anything, userUUID, groupUUID).Return(domain.ErrInternal)
 
 		req := httptest.NewRequest("DELETE", "/groups/"+groupUUID.String(), nil)
 		w := httptest.NewRecorder()
@@ -132,6 +139,7 @@ func TestNewDeleteGroupHandler(t *testing.T) {
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
 		c.Params = gin.Params{{Key: "uuid", Value: groupUUID.String()}}
+		c.Set("user_uid", userUUID)
 
 		// Act
 		handler(c)
@@ -151,8 +159,9 @@ func TestNewDeleteGroupHandler(t *testing.T) {
 		// Arrange
 		mockService, handler := setup(t)
 
+		userUUID := uuid.New()
 		groupUUID := uuid.New()
-		mockService.On("Delete", mock.Anything, groupUUID).Return(errors.New("database connection failed"))
+		mockService.On("Delete", mock.Anything, userUUID, groupUUID).Return(errors.New("database connection failed"))
 
 		req := httptest.NewRequest("DELETE", "/groups/"+groupUUID.String(), nil)
 		w := httptest.NewRecorder()
@@ -160,6 +169,7 @@ func TestNewDeleteGroupHandler(t *testing.T) {
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
 		c.Params = gin.Params{{Key: "uuid", Value: groupUUID.String()}}
+		c.Set("user_uid", userUUID)
 
 		// Act
 		handler(c)
@@ -173,5 +183,56 @@ func TestNewDeleteGroupHandler(t *testing.T) {
 		assert.Equal(t, "failed to delete group", response["error"])
 
 		mockService.AssertExpectations(t)
+	})
+
+	t.Run("Forbidden", func(t *testing.T) {
+		// Arrange
+		mockService, handler := setup(t)
+
+		userUUID := uuid.New()
+		groupUUID := uuid.New()
+		mockService.On("Delete", mock.Anything, userUUID, groupUUID).Return(domain.ErrForbidden)
+
+		req := httptest.NewRequest("DELETE", "/groups/"+groupUUID.String(), nil)
+		w := httptest.NewRecorder()
+
+		c, _ := gin.CreateTestContext(w)
+		c.Request = req
+		c.Params = gin.Params{{Key: "uuid", Value: groupUUID.String()}}
+		c.Set("user_uid", userUUID)
+
+		// Act
+		handler(c)
+
+		// Assert
+		assert.Equal(t, http.StatusForbidden, w.Code)
+
+		var response map[string]interface{}
+		err := json.Unmarshal(w.Body.Bytes(), &response)
+		assert.NoError(t, err)
+		assert.Equal(t, "access forbidden", response["error"])
+
+		mockService.AssertExpectations(t)
+	})
+
+	t.Run("MissingUserContext", func(t *testing.T) {
+		// Arrange
+		mockService, handler := setup(t)
+
+		groupUUID := uuid.New()
+
+		req := httptest.NewRequest("DELETE", "/groups/"+groupUUID.String(), nil)
+		w := httptest.NewRecorder()
+
+		c, _ := gin.CreateTestContext(w)
+		c.Request = req
+		c.Params = gin.Params{{Key: "uuid", Value: groupUUID.String()}}
+
+		// Act
+		handler(c)
+
+		// Assert
+		assert.Equal(t, http.StatusUnauthorized, w.Code)
+		mockService.AssertNotCalled(t, "Delete")
 	})
 }
