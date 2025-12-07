@@ -14,7 +14,7 @@ import (
 )
 
 type deleteGroupService interface {
-	Delete(ctx context.Context, uuid uuid.UUID) error
+	Delete(ctx context.Context, userUUID, uuid uuid.UUID) error
 }
 
 // NewDeleteGroupHandler deletes a group by UUID
@@ -26,11 +26,24 @@ type deleteGroupService interface {
 // @Param uuid path string true "Group UUID"
 // @Success 200 {object} responses.DeleteGroupResponse "Group deleted successfully"
 // @Failure 400 {object} map[string]interface{} "Invalid UUID format"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
+// @Failure 403 {object} map[string]interface{} "Access forbidden"
 // @Failure 404 {object} map[string]interface{} "Group not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /groups/{uuid} [delete]
 func NewDeleteGroupHandler(service deleteGroupService, logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		userUUIDValue, exists := c.Get("user_uid")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "user context missing"})
+			return
+		}
+		userUUID, ok := userUUIDValue.(uuid.UUID)
+		if !ok {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid user context"})
+			return
+		}
+
 		uuidParam := c.Param("uuid")
 		parsedUUID, err := uuid.Parse(uuidParam)
 		if err != nil {
@@ -40,10 +53,14 @@ func NewDeleteGroupHandler(service deleteGroupService, logger *zap.Logger) gin.H
 			return
 		}
 
-		err = service.Delete(c.Request.Context(), parsedUUID)
+		err = service.Delete(c.Request.Context(), userUUID, parsedUUID)
 		if errors.Is(err, domain.ErrGroupNotFound) {
 			logger.Warn("group not found", zap.String("uuid", uuidParam))
 			c.JSON(http.StatusNotFound, gin.H{"error": "group not found"})
+			return
+		}
+		if errors.Is(err, domain.ErrForbidden) {
+			c.JSON(http.StatusForbidden, gin.H{"error": "access forbidden"})
 			return
 		}
 		if errors.Is(err, domain.ErrInternal) {
