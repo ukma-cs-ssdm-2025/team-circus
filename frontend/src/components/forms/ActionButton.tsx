@@ -30,20 +30,6 @@ const ActionButton = ({
 }: ActionButtonProps) => {
   const theme = useTheme();
 
-  let height;
-  let fontSize;
-
-  if (size === 'large') {
-    height = 60;
-    fontSize = '1.1rem';
-  } else if (size === 'medium') {
-    height = 48;
-    fontSize = '1rem';
-  } else {
-    height = 36;
-    fontSize = '0.875rem';
-  }
-
   const getButtonStyles = () => {
     if (variant === 'contained') {
       return {
@@ -76,8 +62,8 @@ const ActionButton = ({
       className={className}
       sx={{
         minWidth: fullWidth ? 'auto' : 200,
-        height: height,
-        fontSize: fontSize,
+        height: size === 'large' ? 60 : size === 'medium' ? 48 : 36,
+        fontSize: size === 'large' ? '1.1rem' : size === 'medium' ? '1rem' : '0.875rem',
         fontWeight: 600,
         textTransform: 'none',
         borderRadius: 2,
