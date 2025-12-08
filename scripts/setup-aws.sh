@@ -44,6 +44,17 @@ fi
 # Install additional utilities
 sudo apt-get install -y curl wget vim
 
+# Install Task (taskfile.dev)
+if ! command -v task &> /dev/null; then
+    echo "Installing Task..."
+    sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b ~/.local/bin
+    export PATH="$HOME/.local/bin:$PATH"
+    echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+    echo "Task installed successfully"
+else
+    echo "Task is already installed"
+fi
+
 # Configure firewall (UFW)
 echo "Configuring firewall..."
 sudo ufw allow 22/tcp   # SSH
@@ -55,7 +66,8 @@ echo "Setup completed!"
 echo ""
 echo "Next steps:"
 echo "1. Logout and login again (or run: newgrp docker) to apply docker group changes"
-echo "2. Clone your repository: git clone <your-repo-url>"
-echo "3. Copy .env.production.sample to .env and configure it"
-echo "4. Run ./deploy.sh to deploy the application"
+echo "2. Source ~/.bashrc or logout/login to add Task to PATH"
+echo "3. Clone your repository: git clone <your-repo-url>"
+echo "4. Run 'task copy:env' to create .env file and configure it"
+echo "5. Run 'task docker:prod:deploy' to deploy the application"
 
