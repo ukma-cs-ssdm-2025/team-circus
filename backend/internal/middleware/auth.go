@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -19,7 +18,7 @@ type userRepository interface {
 	GetByUUID(ctx context.Context, uuid uuid.UUID) (*domain.User, error)
 }
 
-func AuthMiddleware(userRepo userRepository) gin.HandlerFunc {
+func AuthMiddleware(userRepo userRepository, secretToken string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tokenString, err := c.Cookie("accessToken")
 		if err != nil || tokenString == "" {
@@ -27,7 +26,6 @@ func AuthMiddleware(userRepo userRepository) gin.HandlerFunc {
 			return
 		}
 
-		secretToken := os.Getenv("SECRET_TOKEN")
 		if secretToken == "" {
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "server misconfiguration"})
 			return

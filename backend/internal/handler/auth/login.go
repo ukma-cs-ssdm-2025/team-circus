@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -34,7 +33,7 @@ type userRepository interface {
 // @Failure 401 {object} map[string]string "Invalid credentials"
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /auth/login [post]
-func NewLogInHandler(userRepo userRepository, logger *zap.Logger) gin.HandlerFunc {
+func NewLogInHandler(userRepo userRepository, logger *zap.Logger, secretToken string, accessDur, refreshDur int) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req requests.LogInRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
@@ -43,8 +42,14 @@ func NewLogInHandler(userRepo userRepository, logger *zap.Logger) gin.HandlerFun
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request format"})
 			return
 		}
+		if err := req.Validate(); err != nil {
+			err = fmt.Errorf("log in handler: validation failed: %v", err)
+			logger.Error("validation failed", zap.Error(err))
+			c.JSON(http.StatusBadRequest, gin.H{"error": "validation failed", "details": err.Error()})
+			return
+		}
 
-		user, err := userRepo.GetByLogin(c, req.Login)
+		user, err := userRepo.GetByLogin(c.Request.Context(), req.Login)
 		if errors.Is(err, domain.ErrInternal) {
 			logger.Error("failed to log in", zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to log in"})
@@ -67,14 +72,13 @@ func NewLogInHandler(userRepo userRepository, logger *zap.Logger) gin.HandlerFun
 			return
 		}
 
-		secretToken := os.Getenv("SECRET_TOKEN")
 		if secretToken == "" {
 			logger.Error("server misconfiguration")
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "server misconfiguration"})
 			return
 		}
 
-		accessExpTime := time.Now().Add(10 * time.Minute)
+		accessExpTime := time.Now().Add(time.Duration(accessDur) * time.Minute)
 		accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
 			Subject:   user.UUID.String(),
 			ExpiresAt: jwt.NewNumericDate(accessExpTime),
@@ -87,7 +91,7 @@ func NewLogInHandler(userRepo userRepository, logger *zap.Logger) gin.HandlerFun
 			return
 		}
 
-		refreshExpTime := time.Now().Add(30 * 24 * time.Hour)
+		refreshExpTime := time.Now().Add(time.Duration(refreshDur) * time.Minute)
 		refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
 			Subject:   user.UUID.String(),
 			ExpiresAt: jwt.NewNumericDate(refreshExpTime),

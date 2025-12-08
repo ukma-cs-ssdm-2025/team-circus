@@ -10,15 +10,18 @@ import (
 	authhandler "github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/auth"
 	documenthandler "github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/document"
 	grouphandler "github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/group"
+	memberhandler "github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/member"
 	reghandler "github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/reg"
 	userhandler "github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/user"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/middleware"
 	documentrepo "github.com/ukma-cs-ssdm-2025/team-circus/internal/repo/document"
 	grouprepo "github.com/ukma-cs-ssdm-2025/team-circus/internal/repo/group"
+	memberrepo "github.com/ukma-cs-ssdm-2025/team-circus/internal/repo/member"
 	regrepo "github.com/ukma-cs-ssdm-2025/team-circus/internal/repo/reg"
 	userrepo "github.com/ukma-cs-ssdm-2025/team-circus/internal/repo/user"
 	documentservice "github.com/ukma-cs-ssdm-2025/team-circus/internal/service/document"
 	groupservice "github.com/ukma-cs-ssdm-2025/team-circus/internal/service/group"
+	memberservice "github.com/ukma-cs-ssdm-2025/team-circus/internal/service/member"
 	regservice "github.com/ukma-cs-ssdm-2025/team-circus/internal/service/reg"
 	userservice "github.com/ukma-cs-ssdm-2025/team-circus/internal/service/user"
 )
@@ -40,28 +43,32 @@ func (a *App) setupRouter() *gin.Engine {
 	router.GET("/swagger/*any", ginswagger.WrapHandler(swaggerfiles.Handler))
 
 	groupRepo := grouprepo.NewGroupRepository(a.DB)
-	groupService := groupservice.NewGroupService(groupRepo)
+	memberRepo := memberrepo.NewMemberRepository(a.DB)
+	groupService := groupservice.NewGroupService(groupRepo, memberRepo)
 
 	documentRepo := documentrepo.NewDocumentRepository(a.DB)
-	documentService := documentservice.NewDocumentService(documentRepo, groupRepo)
+	documentService := documentservice.NewDocumentService(documentRepo, memberRepo)
 
 	userRepo := userrepo.NewUserRepository(a.DB)
-	userService := userservice.NewUserService(userRepo)
+	userService := userservice.NewUserService(userRepo, a.cfg.HashingCost)
 
 	regRepo := regrepo.NewRegRepository(a.DB)
-	regService := regservice.NewRegService(regRepo, a.cfg.HashingCost.HashingCost)
+	regService := regservice.NewRegService(regRepo, a.cfg.HashingCost)
+
+	memberService := memberservice.NewMemberService(memberRepo, groupRepo, userRepo)
 
 	apiV1 := router.Group("/api/v1")
 
 	public := apiV1.Group("")
 	{
 		public.POST("/signup", reghandler.NewRegHandler(regService, a.l))
-		public.POST("/auth/login", authhandler.NewLogInHandler(userRepo, a.l))
-		public.POST("/auth/refresh", authhandler.NewRefreshTokenHandler(userRepo, a.l))
+		public.POST("/auth/login", authhandler.NewLogInHandler(userRepo, a.l,
+			a.cfg.SecretToken, a.cfg.AccessDuration, a.cfg.RefreshDuration))
+		public.POST("/auth/refresh", authhandler.NewRefreshTokenHandler(userRepo, a.l, a.cfg.SecretToken, a.cfg.AccessDuration))
 	}
 
 	protected := apiV1.Group("")
-	protected.Use(middleware.AuthMiddleware(userRepo))
+	protected.Use(middleware.AuthMiddleware(userRepo, a.cfg.SecretToken))
 	{
 		protected.POST("/auth/logout", authhandler.NewLogOutHandler(a.l))
 
@@ -72,6 +79,14 @@ func (a *App) setupRouter() *gin.Engine {
 			groups.GET("", grouphandler.NewGetAllGroupsHandler(groupService, a.l))
 			groups.PUT("/:uuid", grouphandler.NewUpdateGroupHandler(groupService, a.l))
 			groups.DELETE("/:uuid", grouphandler.NewDeleteGroupHandler(groupService, a.l))
+
+			members := groups.Group("/:uuid/members")
+			{
+				members.GET("", memberhandler.NewGetAllMembersHandler(memberService, a.l))
+				members.POST("", memberhandler.NewCreateMemberHandler(memberService, a.l))
+				members.PUT("/:user_uuid", memberhandler.NewUpdateMemberHandler(memberService, a.l))
+				members.DELETE("/:user_uuid", memberhandler.NewDeleteMemberHandler(memberService, a.l))
+			}
 		}
 
 		documents := protected.Group("/documents")

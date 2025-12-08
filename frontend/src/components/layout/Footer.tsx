@@ -2,13 +2,15 @@ import {
   Box,
   Container,
   Typography,
-  Link,
+  Link as MuiLink,
   Divider,
   useTheme
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
+import { Link as RouterLink } from 'react-router-dom';
 import { useLanguage } from '../../contexts/LanguageContext';
 import type { BaseComponentProps } from '../../types';
+import { ROUTES } from '../../constants';
 
 type FooterProps = BaseComponentProps;
 
@@ -73,8 +75,9 @@ const Footer = ({ className = '' }: FooterProps) => {
               gap: 2,
               alignItems: { xs: 'center', md: 'flex-start' }
             }}>
-              <Link
-                href="/"
+              <MuiLink
+                component={RouterLink}
+                to={ROUTES.HOME}
                 color="text.secondary"
                 underline="hover"
                 sx={{
@@ -87,9 +90,10 @@ const Footer = ({ className = '' }: FooterProps) => {
                 }}
               >
                 {t('footer.home')}
-              </Link>
-              <Link
-                href="/documents"
+              </MuiLink>
+              <MuiLink
+                component={RouterLink}
+                to={ROUTES.DOCUMENTS}
                 color="text.secondary"
                 underline="hover"
                 sx={{
@@ -102,9 +106,10 @@ const Footer = ({ className = '' }: FooterProps) => {
                 }}
               >
                 {t('footer.documents')}
-              </Link>
-              <Link
-                href="/groups"
+              </MuiLink>
+              <MuiLink
+                component={RouterLink}
+                to={ROUTES.GROUPS}
                 color="text.secondary"
                 underline="hover"
                 sx={{
@@ -117,9 +122,10 @@ const Footer = ({ className = '' }: FooterProps) => {
                 }}
               >
                 {t('footer.groups')}
-              </Link>
-              <Link
-                href="/settings"
+              </MuiLink>
+              <MuiLink
+                component={RouterLink}
+                to={ROUTES.SETTINGS}
                 color="text.secondary"
                 underline="hover"
                 sx={{
@@ -132,7 +138,7 @@ const Footer = ({ className = '' }: FooterProps) => {
                 }}
               >
                 {t('footer.settings')}
-              </Link>
+              </MuiLink>
             </Box>
           </Grid>
         </Grid>

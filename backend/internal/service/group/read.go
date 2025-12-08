@@ -22,11 +22,11 @@ func (s *GroupService) GetByUUID(ctx context.Context, uuid uuid.UUID) (*domain.G
 }
 
 func (s *GroupService) GetByUUIDForUser(ctx context.Context, groupUUID, userUUID uuid.UUID) (*domain.Group, error) {
-	isMember, err := s.repo.IsMember(ctx, groupUUID, userUUID)
+	member, err := s.memberRepo.GetMember(ctx, groupUUID, userUUID)
 	if err != nil {
 		return nil, fmt.Errorf("group service: getByUUIDForUser: %w", err)
 	}
-	if !isMember {
+	if member == nil {
 		return nil, domain.ErrForbidden
 	}
 
