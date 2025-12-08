@@ -30,23 +30,23 @@
 
 Потрібно мати встановлені:
 
-- **Go** (версія 1.19+)
+- **Go** (версія 1.22+)
 - **Bun** (версія 1.3+)
 - **Task** (taskfile.dev)
 - **Docker** (з docker-compose)
 
 Клонування репозиторію
 
-   ```bash
-   git clone https://github.com/ukma-cs-ssdm-2025/team-circus
-   cd team-circus
-   ```
+```bash
+git clone https://github.com/ukma-cs-ssdm-2025/team-circus
+cd team-circus
+```
 
 Скопіювати .env
 
-   ```bash
-   task copy:env
-   ```
+```bash
+task copy:env
+```
 
 ### Postgres
 
@@ -129,25 +129,25 @@ task --list-all
 
 ### Юніт тести
 
-   ```bash
-   task back:test:unit
-   ```
+```bash
+task back:test:unit
+```
 
 Команда запусутить всі юніт тести, тобто тестові файли, які не мають жодних тегів по типу `func_test`. Також Буде виведеий coverage по кожному пакету.
 
 #### Відображення coverage у інтерактивному форматі
 
-   ```bash
-   task back:test:unit:coverage
-   ```
+```bash
+task back:test:unit:coverage
+```
 
-   Згенерує звіт, який буде лежати в [`./backend/coverage/coverage.out`](./backend/coverage/coverage.out)
+Згенерує звіт, який буде лежати в [`./backend/coverage/coverage.out`](./backend/coverage/coverage.out)
 
-   ```bash
-   task back:test:unit:coverage:html
-   ```
+```bash
+task back:test:unit:coverage:html
+```
 
-   Згенерує html, який буде лежати в [`./backend/coverage/coverage.html`](./backend/coverage/coverage.html)
+Згенерує html, який буде лежати в [`./backend/coverage/coverage.html`](./backend/coverage/coverage.html)
 
 ### Функціональні (інтеграційні) тести
 
@@ -157,16 +157,16 @@ task --list-all
 Там же ми хардкодимо значення змінних оточення.
 У [`backend/tests/pkg/testapp/app.go`](./backend/tests/pkg/testapp/app.go) в конфігу ми вказуємо всі змінні для нашої тестової app.
 
-*Присутні дві опції:*
+_Присутні дві опції:_
 
 1. Однією командою підняти залежності та запустити усі тести
 2. Підняти залежності, а потім окремо зупскати тести (навіть через ide)
 
 #### Все однією командою
 
-   ```bash
-   task back:test:func
-   ```
+```bash
+task back:test:func
+```
 
 #### Окремо запускати тести
 

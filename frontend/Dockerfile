@@ -2,27 +2,27 @@
 # STAGE 1: Build Stage
 # ====================================================================
 # 1. ЗМІНА БАЗОВОГО ОБРАЗУ: Використовуємо образ, який містить Bun
-FROM oven/bun:alpine AS builder #
+FROM oven/bun:alpine AS builder
 
 WORKDIR /app
 
 # 2. КОПІЮВАННЯ ЗАЛЕЖНОСТЕЙ: Копіюємо package.json та bun.lockb
 # Примітка: Припускаємо, що Dockerfile знаходиться у корені, а файли у frontend/
 COPY frontend/package.json ./
-COPY frontend/bun.lock ./ 
+COPY frontend/bun.lock ./
 
 # 3. Встановлюємо залежності за допомогою Bun
-RUN bun install --frozen-lockfile 
+RUN bun install --frozen-lockfile
 
 # 4. КОПІЮВАННЯ КОДУ
-COPY frontend/ . 
+COPY frontend/ .
 
 # 5. Встановлення змінної середовища
 ARG VITE_API_BASE_URL
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 
 # 6. Збірка програми
-RUN bun run build 
+RUN bun run build
 # ====================================================================
 # STAGE 2: Production stage (Залишається незмінним)
 # ====================================================================

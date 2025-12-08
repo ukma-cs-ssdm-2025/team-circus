@@ -1,4 +1,4 @@
-FROM golang:1.25.1 AS builder
+FROM golang:1.22 AS builder
 WORKDIR /app
 
 # Install task runner
@@ -9,7 +9,7 @@ COPY backend/go.mod backend/go.sum ./
 WORKDIR /app/backend
 
 # Download dependencies
-RUN go mod download 
+RUN go mod download
 RUN go mod vendor
 
 # Copy source code
