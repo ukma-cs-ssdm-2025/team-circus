@@ -32,6 +32,20 @@ export const getApiUrl = (endpoint: string = '') => {
   return `${baseUrl}${cleanEndpoint}`;
 };
 
+// Helper function to get WebSocket URL
+export const getWebSocketUrl = (endpoint: string = '') => {
+  const httpUrl = getApiUrl(endpoint);
+
+  if (httpUrl.startsWith('https://')) {
+    return `wss://${httpUrl.slice('https://'.length)}`;
+  }
+  if (httpUrl.startsWith('http://')) {
+    return `ws://${httpUrl.slice('http://'.length)}`;
+  }
+
+  return httpUrl.replace(/^http/, 'ws');
+};
+
 // Helper function to check if we're in development
 export const isDevelopment = () => ENV.NODE_ENV === 'development';
 

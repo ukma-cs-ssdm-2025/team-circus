@@ -48,6 +48,7 @@ func (a *App) setupRouter() *gin.Engine {
 
 	documentRepo := documentrepo.NewDocumentRepository(a.DB)
 	documentService := documentservice.NewDocumentService(documentRepo, memberRepo)
+	documentHub := documenthandler.NewDocumentHub(a.l)
 
 	userRepo := userrepo.NewUserRepository(a.DB)
 	userService := userservice.NewUserService(userRepo, a.cfg.HashingCost)
@@ -94,8 +95,12 @@ func (a *App) setupRouter() *gin.Engine {
 			documents.POST("", documenthandler.NewCreateDocumentHandler(documentService, a.l))
 			documents.GET("/:uuid", documenthandler.NewGetDocumentHandler(documentService, a.l))
 			documents.GET("", documenthandler.NewGetAllDocumentsHandler(documentService, a.l))
-			documents.PUT("/:uuid", documenthandler.NewUpdateDocumentHandler(documentService, a.l))
+			documents.PUT("/:uuid", documenthandler.NewUpdateDocumentHandler(
+				documenthandler.NewBroadcastingUpdateService(documentService, documentHub),
+				a.l,
+			))
 			documents.DELETE("/:uuid", documenthandler.NewDeleteDocumentHandler(documentService, a.l))
+			documents.GET("/:uuid/ws", documenthandler.NewDocumentWebsocketHandler(documentService, documentHub, a.l, a.cfg.CORS.AllowOrigins))
 		}
 
 		users := protected.Group("/users")

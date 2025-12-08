@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ChangeEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Alert,
@@ -15,11 +15,18 @@ import { ErrorAlert, LoadingSpinner } from '../components';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useApi, useMutation } from '../hooks';
 import { API_ENDPOINTS, ROUTES } from '../constants';
+import { getWebSocketUrl } from '../config/env';
 import type { BaseComponentProps, DocumentItem, GroupsResponse } from '../types';
 
 type UpdateDocumentPayload = {
   name: string;
   content: string;
+};
+
+type DocumentSocketMessage = {
+  type: 'init' | 'update' | 'error';
+  document?: DocumentItem;
+  error?: string;
 };
 
 type DocumentEditorProps = BaseComponentProps;
@@ -120,7 +127,7 @@ const DocumentEditor = ({ className = '' }: DocumentEditorProps) => {
     data: groupsData,
   } = useApi<GroupsResponse>(API_ENDPOINTS.GROUPS.BASE);
 
-  const { mutate: updateDocument, loading: saving } = useMutation<DocumentItem, UpdateDocumentPayload>(
+  const { mutate: updateDocument, loading: httpSaving } = useMutation<DocumentItem, UpdateDocumentPayload>(
     endpoint,
     'PUT'
   );
@@ -129,6 +136,12 @@ const DocumentEditor = ({ className = '' }: DocumentEditorProps) => {
   const [content, setContent] = useState('');
   const [lastSaved, setLastSaved] = useState<UpdateDocumentPayload | null>(null);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [pendingWsSave, setPendingWsSave] = useState(false);
+  const [wsStatus, setWsStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'error'>('disconnected');
+  const [wsError, setWsError] = useState<string | null>(null);
+  const socketRef = useRef<WebSocket | null>(null);
+  const pendingWsSaveRef = useRef(false);
+  const pendingWsOriginRef = useRef<'manual' | 'auto' | null>(null);
 
   useEffect(() => {
     if (documentData) {
@@ -139,8 +152,15 @@ const DocumentEditor = ({ className = '' }: DocumentEditorProps) => {
         content: documentData.content ?? '',
       });
       setSaveStatus('idle');
+      setPendingWsSave(false);
+      pendingWsSaveRef.current = false;
+      setWsError(null);
     }
   }, [documentData]);
+
+  useEffect(() => {
+    pendingWsSaveRef.current = pendingWsSave;
+  }, [pendingWsSave]);
 
   const documentGroupUUID = documentData?.group_uuid ?? '';
   const groupName = useMemo(() => {
@@ -154,18 +174,139 @@ const DocumentEditor = ({ className = '' }: DocumentEditorProps) => {
 
   const isNameValid = name.trim().length > 0;
   const isDirty = lastSaved !== null && (lastSaved.name !== name || lastSaved.content !== content);
-  const isSaveDisabled = !isNameValid || !isDirty || saving || !documentId;
+  const isSaving = httpSaving || pendingWsSave;
+  const canUseWebSocket = wsStatus === 'connected' && socketRef.current?.readyState === WebSocket.OPEN;
+  const isSaveDisabled = !isNameValid || !isDirty || isSaving || !documentId;
+
+  const sendWebsocketUpdate = useCallback((nextName: string, nextContent: string, origin: 'manual' | 'auto' = 'manual') => {
+    if (!canUseWebSocket) {
+      return false;
+    }
+
+    const socket = socketRef.current;
+    if (!socket || socket.readyState !== WebSocket.OPEN) {
+      return false;
+    }
+
+    try {
+      setPendingWsSave(true);
+      pendingWsSaveRef.current = true;
+      pendingWsOriginRef.current = origin;
+      setSaveStatus('idle');
+      if (origin === 'manual') {
+        setWsError(null);
+      }
+
+      socket.send(JSON.stringify({
+        type: 'update',
+        name: nextName,
+        content: nextContent,
+      }));
+      return true;
+    } catch (error) {
+      console.error('Failed to send websocket update', error);
+      setPendingWsSave(false);
+      pendingWsSaveRef.current = false;
+      pendingWsOriginRef.current = null;
+      if (origin === 'manual') {
+        setSaveStatus('error');
+        setWsError('Unable to send live update');
+      }
+      return false;
+    }
+  }, [canUseWebSocket]);
+
+  useEffect(() => {
+    if (!documentId) {
+      return;
+    }
+
+    const wsUrl = getWebSocketUrl(`${API_ENDPOINTS.DOCUMENTS.BASE}/${documentId}/ws`);
+    setWsStatus('connecting');
+    setWsError(null);
+
+    const socket = new WebSocket(wsUrl);
+    socketRef.current = socket;
+
+    socket.onopen = () => {
+      setWsStatus('connected');
+    };
+
+    socket.onmessage = event => {
+      try {
+        const message: DocumentSocketMessage = JSON.parse(event.data);
+        if ((message.type === 'init' || message.type === 'update') && message.document) {
+          const incoming = message.document;
+          setName(incoming.name ?? '');
+          setContent(incoming.content ?? '');
+          setLastSaved({
+            name: incoming.name ?? '',
+            content: incoming.content ?? '',
+          });
+          updateDocumentCache(incoming);
+          if (pendingWsSaveRef.current) {
+            if (pendingWsOriginRef.current === 'manual') {
+              setSaveStatus('success');
+            } else {
+              setSaveStatus(prev => (prev === 'error' ? 'idle' : prev));
+            }
+            setPendingWsSave(false);
+            pendingWsSaveRef.current = false;
+            pendingWsOriginRef.current = null;
+            setWsError(null);
+          } else {
+            setSaveStatus(prev => (prev === 'error' ? 'idle' : prev));
+          }
+        } else if (message.type === 'error') {
+          setWsError(message.error ?? 'Live update error');
+          setSaveStatus(pendingWsOriginRef.current === 'manual' ? 'error' : 'idle');
+          setPendingWsSave(false);
+          pendingWsSaveRef.current = false;
+          pendingWsOriginRef.current = null;
+        }
+      } catch (error) {
+        console.error('Failed to parse websocket message', error);
+      }
+    };
+
+    socket.onerror = () => {
+      setWsStatus('error');
+      setWsError('Live updates connection failed');
+      setSaveStatus('error');
+      setPendingWsSave(false);
+      pendingWsSaveRef.current = false;
+      pendingWsOriginRef.current = null;
+    };
+
+    socket.onclose = () => {
+      setWsStatus('disconnected');
+      setPendingWsSave(false);
+      pendingWsSaveRef.current = false;
+      pendingWsOriginRef.current = null;
+    };
+
+    return () => {
+      socket.close();
+      socketRef.current = null;
+      setWsStatus('disconnected');
+      setPendingWsSave(false);
+      pendingWsSaveRef.current = false;
+      pendingWsOriginRef.current = null;
+    };
+  }, [documentId, updateDocumentCache]);
 
   const handleNameChange = (event: ChangeEvent<HTMLInputElement>) => {
-    if (saveStatus !== 'idle') {
+    if (saveStatus !== 'idle' || wsError) {
       setSaveStatus('idle');
+      setWsError(null);
     }
     setName(event.target.value);
   };
 
   const handleContentChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    if (saveStatus !== 'idle') {
+    if (saveStatus !== 'idle' || wsError) {
       setSaveStatus('idle');
+      setWsError(null);
     }
     setContent(event.target.value);
   };
@@ -175,9 +316,15 @@ const DocumentEditor = ({ className = '' }: DocumentEditorProps) => {
       return;
     }
 
+    const trimmedName = name.trim();
+
+    if (sendWebsocketUpdate(trimmedName, content, 'manual')) {
+      return;
+    }
+
     try {
       const updated = await updateDocument({
-        name: name.trim(),
+        name: trimmedName,
         content,
       });
 
@@ -187,11 +334,32 @@ const DocumentEditor = ({ className = '' }: DocumentEditorProps) => {
         content: updated.content ?? '',
       });
       setSaveStatus('success');
+      setWsError(null);
     } catch (error) {
       console.error('Failed to save document', error);
       setSaveStatus('error');
+      setWsError('Unable to save changes');
+      pendingWsOriginRef.current = null;
     }
   };
+
+  useEffect(() => {
+    if (!documentId || !canUseWebSocket) {
+      return;
+    }
+    if (!isDirty || pendingWsSaveRef.current || !lastSaved) {
+      return;
+    }
+
+    const trimmedName = name.trim();
+    const timer = window.setTimeout(() => {
+      sendWebsocketUpdate(trimmedName, content, 'auto');
+    }, 600);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [documentId, canUseWebSocket, isDirty, name, content, sendWebsocketUpdate, lastSaved]);
 
   if (!documentId) {
     return (
@@ -240,7 +408,7 @@ const DocumentEditor = ({ className = '' }: DocumentEditorProps) => {
           />
         </Stack>
         <Button variant="contained" onClick={handleSave} disabled={isSaveDisabled}>
-          {saving ? t('documentEditor.savingButton') : t('documentEditor.saveButton')}
+          {isSaving ? t('documentEditor.savingButton') : t('documentEditor.saveButton')}
         </Button>
       </Stack>
 
@@ -255,11 +423,14 @@ const DocumentEditor = ({ className = '' }: DocumentEditorProps) => {
       {saveStatus !== 'idle' && (
         <Alert
           severity={saveStatus === 'success' ? 'success' : 'error'}
-          onClose={() => setSaveStatus('idle')}
+          onClose={() => {
+            setSaveStatus('idle');
+            setWsError(null);
+          }}
         >
           {saveStatus === 'success'
             ? t('documentEditor.saveSuccess')
-            : t('documentEditor.saveError')}
+            : wsError ?? t('documentEditor.saveError')}
         </Alert>
       )}
 
