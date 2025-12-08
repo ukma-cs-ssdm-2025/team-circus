@@ -100,3 +100,60 @@ tasks:
     desc: Show all services
     cmds:
       - docker compose ps
+
+  # Production deployment tasks
+  prod:up:
+    desc: Start production services
+    cmds:
+      - docker compose -f docker-compose.prod.yml up -d
+
+  prod:down:
+    desc: Stop production services
+    cmds:
+      - docker compose -f docker-compose.prod.yml down
+
+  prod:build:
+    desc: Build production services
+    cmds:
+      - docker compose -f docker-compose.prod.yml build
+
+  prod:deploy:
+    desc: Deploy production (build and start)
+    cmds:
+      - |
+        if [ ! -f .env ]; then
+          if [ -f .env.sample ]; then
+            echo "Warning: .env file not found. Copying from .env.sample"
+            cp .env.sample .env
+            echo "Error: Please edit .env file with your production values before continuing!"
+            exit 1
+          else
+            echo "Error: .env file not found and .env.sample does not exist."
+            exit 1
+          fi
+        fi
+      - docker compose -f docker-compose.prod.yml down || true
+      - docker compose -f docker-compose.prod.yml up -d --build
+      - echo "Waiting for services to start..."
+      - sleep 10
+      - docker compose -f docker-compose.prod.yml ps
+
+  prod:logs:
+    desc: Show production logs
+    cmds:
+      - docker compose -f docker-compose.prod.yml logs -f {{.CLI_ARGS}}
+
+  prod:restart:
+    desc: Restart production services
+    cmds:
+      - docker compose -f docker-compose.prod.yml restart
+
+  prod:health:
+    desc: Check production service health
+    cmds:
+      - bash scripts/health-check.sh
+
+  prod:status:
+    desc: Show production service status
+    cmds:
+      - docker compose -f docker-compose.prod.yml ps
