@@ -9,17 +9,16 @@
 ## Після рефакторингу
 ![SonarCloud metrics after refactoring](sonar-after.png)
 
-## Обрані метрики
+## Обрані метрики:
 
 | Метрика             | До     | Після |
 |---------------------|--------|:-----:|
-| Reliability         | 2, C   | 0, A  |
-| Maintainability     | 33, A  | 30, A |
+| Reliability         | 2, C   |   –   |
+| Maintainability     | 33, A  |   –   |
+| Security Hotspots   | 7      |   –   |
 
 ### Застосовувались наступні патерни: 
 - **Replace Magic Number** – прибрано магічні числа, що стосувалися секретного ключа та термінів придатності JSON Web Token
-- **Simplify Conditional** - перетворення складної логіки на простішу
 
-## Перевірка регресії
-![Check for regresson](regression-check.png)
-*З нового pull request-у після рефакторингу.
+## Регресія:
+![](image.png)
