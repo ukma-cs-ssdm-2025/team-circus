@@ -1,0 +1,52 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment files
+.env
+.env.*
+!.env.sample
+!env.sample
+!env.production.sample
+
+# Node modules
+node_modules/
+frontend/node_modules/
+
+# Build artifacts
+dist/
+build/
+coverage/
+*.out
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test files
+**/tests/
+**/*_test.go
+docker-compose.test.yml
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+

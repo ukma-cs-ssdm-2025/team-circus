@@ -201,6 +201,29 @@ task --list-all
    task back:test:func:down
    ```
 
+## Деплой
+
+Проєкт готовий до деплою на AWS EC2 free tier.
+
+### Швидкий старт
+
+1. Запустіть EC2 інстанс (Ubuntu 22.04, t3.micro)
+2. Підключіться через SSH та виконайте:
+   ```bash
+   git clone https://github.com/ukma-cs-ssdm-2025/team-circus.git
+   cd team-circus
+   chmod +x scripts/setup-aws.sh deploy.sh health-check.sh
+   ./scripts/setup-aws.sh
+   cp env.production.sample .env
+   nano .env  # Налаштуйте змінні оточення
+   ./deploy.sh
+   ```
+
+### Детальна документація
+
+- **[AWS Deployment Guide](./docs/deployment/AWS_DEPLOYMENT.md)** - Повний покроковий гайд
+- **[Deployment Quick Start](./README_DEPLOYMENT.md)** - Швидкий старт
+
 ## Документація
 
 ### Обов'язкові документи для перегляду
