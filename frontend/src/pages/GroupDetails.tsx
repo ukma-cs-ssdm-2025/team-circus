@@ -39,6 +39,7 @@ import type {
 	BaseComponentProps,
 	GroupItem,
 	MemberItem,
+	MemberRole,
 	MembersResponse,
 	UsersResponse,
 } from "../types";
@@ -62,7 +63,10 @@ const GroupDetails = ({ className = "" }: GroupDetailsProps) => {
 	const { uuid } = useParams<{ uuid: string }>();
 	const groupUUID = uuid ?? "";
 
-	const [memberForm, setMemberForm] = useState({
+	const [memberForm, setMemberForm] = useState<{
+		user_uuid: string;
+		role: MemberRole;
+	}>({
 		user_uuid: "",
 		role: MEMBER_ROLES[2],
 	});
