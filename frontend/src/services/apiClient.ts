@@ -1,148 +1,158 @@
-import { getApiUrl } from '../config/env';
-import { authService } from './auth';
-import type { ApiResponse } from '../types';
+import { getApiUrl } from "../config/env";
+import type { ApiResponse } from "../types";
+import { authService } from "./auth";
 
 // Enhanced API Client with automatic token refresh
 class ApiClient {
-  private isRefreshing = false;
-  private refreshPromise: Promise<boolean> | null = null;
+	private isRefreshing = false;
+	private refreshPromise: Promise<boolean> | null = null;
 
-  constructor() {
-    // API_BASE_URL is used in getApiUrl function
-  }
+	constructor() {
+		// API_BASE_URL is used in getApiUrl function
+	}
 
-  private async requestWithAuth<T>(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<ApiResponse<T>> {
-    const url = getApiUrl(endpoint);
-    
-    const defaultHeaders = {
-      'Content-Type': 'application/json',
-    };
+	private async requestWithAuth<T>(
+		endpoint: string,
+		options: RequestInit = {},
+	): Promise<ApiResponse<T>> {
+		const url = getApiUrl(endpoint);
 
-    const config: RequestInit = {
-      ...options,
-      credentials: 'include', // Important for cookies
-      headers: {
-        ...defaultHeaders,
-        ...options.headers,
-      },
-    };
+		const defaultHeaders = {
+			"Content-Type": "application/json",
+		};
 
-    try {
-      const response = await fetch(url, config);
+		const config: RequestInit = {
+			...options,
+			credentials: "include", // Important for cookies
+			headers: {
+				...defaultHeaders,
+				...options.headers,
+			},
+		};
 
-      // If token is expired, try to refresh it
-      if (response.status === 401) {
-        const refreshed = await this.handleTokenRefresh();
-        if (refreshed) {
-          // Retry the original request with refreshed token
-          return this.requestWithAuth<T>(endpoint, options);
-        } else {
-          // Refresh failed, user needs to login again
-          throw new Error('Authentication expired. Please login again.');
-        }
-      }
+		try {
+			const response = await fetch(url, config);
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-      }
+			// If token is expired, try to refresh it
+			if (response.status === 401) {
+				const refreshed = await this.handleTokenRefresh();
+				if (refreshed) {
+					// Retry the original request with refreshed token
+					return this.requestWithAuth<T>(endpoint, options);
+				} else {
+					// Refresh failed, user needs to login again
+					throw new Error("Authentication expired. Please login again.");
+				}
+			}
 
-      let parsed: unknown;
+			if (!response.ok) {
+				const errorData = await response.json().catch(() => ({}));
+				throw new Error(
+					errorData.error || `HTTP error! status: ${response.status}`,
+				);
+			}
 
-      try {
-        parsed = await response.json();
-      } catch {
-        parsed = null;
-      }
+			let parsed: unknown;
 
-      const isObject = (value: unknown): value is Record<string, unknown> => {
-        return typeof value === 'object' && value !== null;
-      };
+			try {
+				parsed = await response.json();
+			} catch {
+				parsed = null;
+			}
 
-      const parsedObject = isObject(parsed) ? parsed : null;
-      const hasData = parsedObject !== null && 'data' in parsedObject;
-      const data = hasData ? (parsedObject.data as T) : (parsed as T);
-      const success = parsedObject !== null && 'success' in parsedObject
-        ? Boolean(parsedObject.success)
-        : response.ok;
-      const message = parsedObject !== null && typeof parsedObject.message === 'string'
-        ? parsedObject.message
-        : undefined;
+			const isObject = (value: unknown): value is Record<string, unknown> => {
+				return typeof value === "object" && value !== null;
+			};
 
-      return {
-        data,
-        success,
-        message,
-      } satisfies ApiResponse<T>;
-    } catch (error) {
-      console.error('API request failed:', error);
-      throw error;
-    }
-  }
+			const parsedObject = isObject(parsed) ? parsed : null;
+			const hasData = parsedObject !== null && "data" in parsedObject;
+			const data = hasData ? (parsedObject.data as T) : (parsed as T);
+			const success =
+				parsedObject !== null && "success" in parsedObject
+					? Boolean(parsedObject.success)
+					: response.ok;
+			const message =
+				parsedObject !== null && typeof parsedObject.message === "string"
+					? parsedObject.message
+					: undefined;
 
-  private async handleTokenRefresh(): Promise<boolean> {
-    // If already refreshing, wait for the existing refresh to complete
-    if (this.isRefreshing && this.refreshPromise) {
-      return this.refreshPromise;
-    }
+			return {
+				data,
+				success,
+				message,
+			} satisfies ApiResponse<T>;
+		} catch (error) {
+			console.error("API request failed:", error);
+			throw error;
+		}
+	}
 
-    // Start a new refresh process
-    this.isRefreshing = true;
-    this.refreshPromise = authService.refreshToken();
+	private async handleTokenRefresh(): Promise<boolean> {
+		// If already refreshing, wait for the existing refresh to complete
+		if (this.isRefreshing && this.refreshPromise) {
+			return this.refreshPromise;
+		}
 
-    try {
-      const result = await this.refreshPromise;
-      return result;
-    } finally {
-      this.isRefreshing = false;
-      this.refreshPromise = null;
-    }
-  }
+		// Start a new refresh process
+		this.isRefreshing = true;
+		this.refreshPromise = authService.refreshToken();
 
-  // GET request
-  async get<T>(endpoint: string, options?: RequestInit): Promise<ApiResponse<T>> {
-    return this.requestWithAuth<T>(endpoint, {
-      method: 'GET',
-      ...options,
-    });
-  }
+		try {
+			const result = await this.refreshPromise;
+			return result;
+		} finally {
+			this.isRefreshing = false;
+			this.refreshPromise = null;
+		}
+	}
 
-  // POST request
-  async post<T, P = unknown>(
-    endpoint: string,
-    data?: P,
-    options?: RequestInit
-  ): Promise<ApiResponse<T>> {
-    return this.requestWithAuth<T>(endpoint, {
-      method: 'POST',
-      body: data !== undefined ? JSON.stringify(data) : undefined,
-      ...options,
-    });
-  }
+	// GET request
+	async get<T>(
+		endpoint: string,
+		options?: RequestInit,
+	): Promise<ApiResponse<T>> {
+		return this.requestWithAuth<T>(endpoint, {
+			method: "GET",
+			...options,
+		});
+	}
 
-  // PUT request
-  async put<T, P = unknown>(
-    endpoint: string,
-    data?: P,
-    options?: RequestInit
-  ): Promise<ApiResponse<T>> {
-    return this.requestWithAuth<T>(endpoint, {
-      method: 'PUT',
-      body: data !== undefined ? JSON.stringify(data) : undefined,
-      ...options,
-    });
-  }
+	// POST request
+	async post<T, P = unknown>(
+		endpoint: string,
+		data?: P,
+		options?: RequestInit,
+	): Promise<ApiResponse<T>> {
+		return this.requestWithAuth<T>(endpoint, {
+			method: "POST",
+			body: data !== undefined ? JSON.stringify(data) : undefined,
+			...options,
+		});
+	}
 
-  // DELETE request
-  async delete<T>(endpoint: string, options?: RequestInit): Promise<ApiResponse<T>> {
-    return this.requestWithAuth<T>(endpoint, {
-      method: 'DELETE',
-      ...options,
-    });
-  }
+	// PUT request
+	async put<T, P = unknown>(
+		endpoint: string,
+		data?: P,
+		options?: RequestInit,
+	): Promise<ApiResponse<T>> {
+		return this.requestWithAuth<T>(endpoint, {
+			method: "PUT",
+			body: data !== undefined ? JSON.stringify(data) : undefined,
+			...options,
+		});
+	}
+
+	// DELETE request
+	async delete<T>(
+		endpoint: string,
+		options?: RequestInit,
+	): Promise<ApiResponse<T>> {
+		return this.requestWithAuth<T>(endpoint, {
+			method: "DELETE",
+			...options,
+		});
+	}
 }
 
 // Export singleton instance

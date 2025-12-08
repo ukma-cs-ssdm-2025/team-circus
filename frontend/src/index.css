@@ -1,46 +1,46 @@
 /* Global styles for Material-UI */
 * {
-  box-sizing: border-box;
+	box-sizing: border-box;
 }
 
 body {
-  margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
-  font-family: 'Inter', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+	margin: 0;
+	min-width: 320px;
+	min-height: 100vh;
+	font-family: "Inter", "Roboto", "Helvetica", "Arial", sans-serif;
 }
 
 #root {
-  min-height: 100vh;
+	min-height: 100vh;
 }
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+	width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1);
+	background: rgba(255, 255, 255, 0.1);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(102, 126, 234, 0.3);
-  border-radius: 4px;
+	background: rgba(102, 126, 234, 0.3);
+	border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(102, 126, 234, 0.5);
+	background: rgba(102, 126, 234, 0.5);
 }
 
 /* Dark mode scrollbar */
 [data-mui-color-scheme="dark"] ::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.1);
+	background: rgba(0, 0, 0, 0.1);
 }
 
 [data-mui-color-scheme="dark"] ::-webkit-scrollbar-thumb {
-  background: rgba(102, 126, 234, 0.5);
+	background: rgba(102, 126, 234, 0.5);
 }
 
 [data-mui-color-scheme="dark"] ::-webkit-scrollbar-thumb:hover {
-  background: rgba(102, 126, 234, 0.7);
+	background: rgba(102, 126, 234, 0.7);
 }
