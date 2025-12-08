@@ -13,6 +13,13 @@ type Group struct {
 	CreatedAt time.Time
 }
 
+type Member struct {
+	GroupUUID uuid.UUID
+	UserUUID  uuid.UUID
+	Role      string
+	CreatedAt time.Time
+}
+
 type Document struct {
 	UUID      uuid.UUID
 	GroupUUID uuid.UUID
@@ -35,4 +42,12 @@ var (
 	ErrUserNotFound     = errors.New("user not found")
 	ErrInternal         = errors.New("internal error")
 	ErrForbidden        = errors.New("forbidden")
+	ErrAlreadyExists    = errors.New("already exists")
+	ErrOnlyAuthor       = errors.New("there should be one author")
+)
+
+const (
+	RoleAuthor = "author"
+	RoleEditor = "editor"
+	RoleViewer = "viewer"
 )

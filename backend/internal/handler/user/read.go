@@ -44,7 +44,7 @@ func NewGetUserHandler(service getUserService, logger *zap.Logger) gin.HandlerFu
 			return
 		}
 
-		user, err := service.GetByUUID(c, parsedUUID)
+		user, err := service.GetByUUID(c.Request.Context(), parsedUUID)
 		if errors.Is(err, domain.ErrUserNotFound) {
 			logger.Warn("user not found", zap.String("uuid", uuidParam))
 			c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
@@ -78,7 +78,7 @@ func NewGetUserHandler(service getUserService, logger *zap.Logger) gin.HandlerFu
 // @Router /users [get]
 func NewGetAllUsersHandler(service getAllUsersService, logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		users, err := service.GetAll(c)
+		users, err := service.GetAll(c.Request.Context())
 		if errors.Is(err, domain.ErrInternal) {
 			logger.Error("failed to get users", zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get users"})
