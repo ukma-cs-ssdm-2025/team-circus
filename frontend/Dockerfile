@@ -2,7 +2,7 @@
 # STAGE 1: Build Stage
 # ====================================================================
 # 1. ЗМІНА БАЗОВОГО ОБРАЗУ: Використовуємо образ, який містить Bun
-FROM oven/bun:1.18.1-alpine AS builder
+FROM oven/bun:alpine AS builder #
 
 WORKDIR /app
 
