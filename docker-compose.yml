@@ -4,12 +4,14 @@ x-db-env: &db-env
   DB_NAME: ${DB_NAME}
   DB_HOST: ${DB_HOST}
   DB_PORT: ${DB_PORT}
-  DB_DRIVER: ${DB_DRIVER} 
+  DB_DRIVER: ${DB_DRIVER}
 
 x-backend-env: &backend-env
   API_PORT: ${API_PORT}
   SECRET_TOKEN: ${SECRET_TOKEN}
   HASHING_COST: ${HASHING_COST}
+  ACCESS_DURATION: ${ACCESS_DURATION}
+  REFRESH_DURATION: ${REFRESH_DURATION}
 
   CORS_ALLOW_ORIGINS: ${CORS_ALLOW_ORIGINS}
   CORS_ALLOW_METHODS: ${CORS_ALLOW_METHODS}
@@ -28,16 +30,16 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
     volumes:
-      - postgres-data:/var/lib/postgresql/data     
+      - postgres-data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 2s
       timeout: 2s
       retries: 4
     restart: unless-stopped
-  
+
   migrator:
-    build: 
+    build:
       context: .
       dockerfile: backend/Dockerfile
     environment:
@@ -49,7 +51,7 @@ services:
     restart: "no"
 
   backend:
-    build: 
+    build:
       context: .
       dockerfile: backend/Dockerfile
     ports:
