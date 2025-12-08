@@ -7,7 +7,7 @@ WORKDIR /app
 COPY frontend/package*.json ./
 
 # Install dependencies
-RUN npm ci --only=production=false
+RUN npm ci 
 
 # Copy source code
 COPY frontend/ .
@@ -21,6 +21,9 @@ RUN npm run build
 
 # Production stage
 FROM nginx:alpine
+
+# Install wget for health checks
+RUN apk add --no-cache wget
 
 # Copy built files from builder
 COPY --from=builder /app/dist /usr/share/nginx/html

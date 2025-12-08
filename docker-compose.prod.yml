@@ -98,7 +98,9 @@ services:
       retries: 3
 
   nginx:
-    image: nginx:alpine
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
     container_name: mcd-nginx
     ports:
       - "80:80"
