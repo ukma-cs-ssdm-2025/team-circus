@@ -13,13 +13,13 @@ echo -e "${GREEN}Starting deployment...${NC}"
 # Check if .env file exists
 if [ ! -f .env ]; then
     echo -e "${YELLOW}Warning: .env file not found.${NC}"
-    echo -e "${YELLOW}Creating .env from .env.production.sample...${NC}"
-    if [ -f .env.production.sample ]; then
-        cp .env.production.sample .env
+    echo -e "${YELLOW}Creating .env from .env.sample...${NC}"
+    if [ -f .env.sample ]; then
+        cp .env.sample .env
         echo -e "${RED}Please edit .env file with your production values before continuing!${NC}"
         exit 1
     else
-        echo -e "${RED}Error: .env.production.sample not found.${NC}"
+        echo -e "${RED}Error: .env.sample not found.${NC}"
         exit 1
     fi
 fi

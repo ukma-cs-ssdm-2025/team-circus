@@ -212,11 +212,11 @@ task --list-all
    ```bash
    git clone https://github.com/ukma-cs-ssdm-2025/team-circus.git
    cd team-circus
-   chmod +x scripts/setup-aws.sh deploy.sh health-check.sh
+   chmod +x scripts/setup-aws.sh scripts/deploy.sh scripts/health-check.sh
    ./scripts/setup-aws.sh
-   cp env.production.sample .env
+   task copy:env
    nano .env  # Налаштуйте змінні оточення
-   ./deploy.sh
+   task docker:prod:deploy
    ```
 
 ### Детальна документація

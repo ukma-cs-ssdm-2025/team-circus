@@ -40,8 +40,8 @@ cd team-circus
 
 # Make scripts executable
 chmod +x scripts/setup-aws.sh
-chmod +x deploy.sh
-chmod +x health-check.sh
+chmod +x scripts/deploy.sh
+chmod +x scripts/health-check.sh
 
 # Run setup script
 ./scripts/setup-aws.sh
@@ -51,9 +51,14 @@ chmod +x health-check.sh
 
 ## Step 4: Configure Environment Variables
 
-1. **Copy the production environment template**:
+1. **Copy the environment template**:
    ```bash
-   cp .env.production.sample .env
+   task copy:env
+   ```
+   
+   Or manually:
+   ```bash
+   cp .env.sample .env
    ```
 
 2. **Edit the .env file** with your production values:
@@ -78,11 +83,19 @@ chmod +x health-check.sh
 
 ## Step 5: Deploy the Application
 
+Use the task command:
+
 ```bash
-./deploy.sh
+task docker:prod:deploy
 ```
 
-This script will:
+Or use the deployment script:
+
+```bash
+./scripts/deploy.sh
+```
+
+This will:
 - Build Docker images
 - Start all services (PostgreSQL, Backend, Frontend, Nginx)
 - Run database migrations
@@ -106,7 +119,12 @@ This script will:
 
 3. **Run health check**:
    ```bash
-   ./health-check.sh
+   task docker:prod:health
+   ```
+   
+   Or:
+   ```bash
+   ./scripts/health-check.sh
    ```
 
 4. **Access the application**:
@@ -157,26 +175,26 @@ This script will:
 ### View Logs
 ```bash
 # All services
-docker compose -f docker-compose.prod.yml logs -f
+task docker:prod:logs
 
 # Specific service
-docker compose -f docker-compose.prod.yml logs -f backend
-docker compose -f docker-compose.prod.yml logs -f frontend
-docker compose -f docker-compose.prod.yml logs -f postgres
+task docker:prod:logs backend
+task docker:prod:logs frontend
+task docker:prod:logs postgres
 ```
 
 ### Restart Services
 ```bash
 # All services
-docker compose -f docker-compose.prod.yml restart
+task docker:prod:restart
 
-# Specific service
+# Specific service (use docker compose directly)
 docker compose -f docker-compose.prod.yml restart backend
 ```
 
 ### Stop Services
 ```bash
-docker compose -f docker-compose.prod.yml down
+task docker:prod:down
 ```
 
 ### Update Application
@@ -185,7 +203,7 @@ docker compose -f docker-compose.prod.yml down
 git pull
 
 # Rebuild and restart
-./deploy.sh
+task docker:prod:deploy
 ```
 
 ### Backup Database
