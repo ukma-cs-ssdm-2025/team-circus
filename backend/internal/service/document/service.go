@@ -2,17 +2,17 @@ package document
 
 import (
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/repo/document"
-	grouprepo "github.com/ukma-cs-ssdm-2025/team-circus/internal/repo/group"
+	"github.com/ukma-cs-ssdm-2025/team-circus/internal/repo/member"
 )
 
 type DocumentService struct {
-	repo      *document.DocumentRepository
-	groupRepo *grouprepo.GroupRepository
+	repo       *document.DocumentRepository
+	memberRepo *member.MemberRepository
 }
 
-func NewDocumentService(repo *document.DocumentRepository, groupRepo *grouprepo.GroupRepository) *DocumentService {
+func NewDocumentService(repo *document.DocumentRepository, memberRepo *member.MemberRepository) *DocumentService {
 	return &DocumentService{
-		repo:      repo,
-		groupRepo: groupRepo,
+		repo:       repo,
+		memberRepo: memberRepo,
 	}
 }

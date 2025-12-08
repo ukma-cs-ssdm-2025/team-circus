@@ -19,12 +19,12 @@ runs:
   using: "composite"
   steps:
     - name: "Setup Go"
-      uses: actions/setup-go@v4
+      uses: actions/setup-go@19bb51245e9c80abacb2e91cc42b33fa478b8639 # v4
       with:
         go-version-file: ${{ inputs.go-version-file }}
       
     - name: "Install go-task"
-      uses: arduino/setup-task@v2
+      uses: arduino/setup-task@b91d5d2c96a56797b48ac1e0e89220bf64044611 # v2
       with:
         version: ${{ inputs.task-version }}
         repo-token: ${{ inputs.token }}

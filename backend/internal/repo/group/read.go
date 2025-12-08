@@ -32,21 +32,6 @@ func (r *GroupRepository) GetByUUID(ctx context.Context, uuid uuid.UUID) (*domai
 	return &group, nil
 }
 
-func (r *GroupRepository) IsMember(ctx context.Context, groupUUID, userUUID uuid.UUID) (bool, error) {
-	const query = `
-		SELECT EXISTS (
-			SELECT 1
-			FROM user_groups
-			WHERE group_uuid = $1 AND user_uuid = $2
-		)`
-	var exists bool
-	err := r.db.QueryRowContext(ctx, query, groupUUID, userUUID).Scan(&exists)
-	if err != nil {
-		return false, errors.Join(domain.ErrInternal, fmt.Errorf("group repository: isMember query: %w", err))
-	}
-	return exists, nil
-}
-
 func (r *GroupRepository) GetAll(ctx context.Context) ([]*domain.Group, error) {
 	query := `
 		SELECT uuid, name, created_at 

@@ -24,8 +24,8 @@ type mockUpdateGroupService struct {
 	mock.Mock
 }
 
-func (m *mockUpdateGroupService) Update(ctx context.Context, uuid uuid.UUID, name string) (*domain.Group, error) {
-	args := m.Called(ctx, uuid, name)
+func (m *mockUpdateGroupService) Update(ctx context.Context, userUUID, uuid uuid.UUID, name string) (*domain.Group, error) {
+	args := m.Called(ctx, userUUID, uuid, name)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -48,6 +48,7 @@ func TestNewUpdateGroupHandler(t *testing.T) {
 		// Arrange
 		mockService, handler := setup(t)
 
+		userUUID := uuid.New()
 		groupUUID := uuid.New()
 		expectedGroup := &domain.Group{
 			UUID:      groupUUID,
@@ -55,7 +56,7 @@ func TestNewUpdateGroupHandler(t *testing.T) {
 			CreatedAt: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
 		}
 
-		mockService.On("Update", mock.Anything, groupUUID, "Updated Group").Return(expectedGroup, nil)
+		mockService.On("Update", mock.Anything, userUUID, groupUUID, "Updated Group").Return(expectedGroup, nil)
 
 		requestBody := requests.UpdateGroupRequest{
 			Name: "Updated Group",
@@ -71,6 +72,7 @@ func TestNewUpdateGroupHandler(t *testing.T) {
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
 		c.Params = gin.Params{{Key: "uuid", Value: groupUUID.String()}}
+		c.Set("user_uid", userUUID)
 
 		// Act
 		handler(c)
@@ -90,6 +92,7 @@ func TestNewUpdateGroupHandler(t *testing.T) {
 		// Arrange
 		mockService, handler := setup(t)
 
+		userUUID := uuid.New()
 		requestBody := requests.UpdateGroupRequest{
 			Name: "Updated Group",
 		}
@@ -104,6 +107,7 @@ func TestNewUpdateGroupHandler(t *testing.T) {
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
 		c.Params = gin.Params{{Key: "uuid", Value: "invalid-uuid"}}
+		c.Set("user_uid", userUUID)
 
 		// Act
 		handler(c)
@@ -123,6 +127,7 @@ func TestNewUpdateGroupHandler(t *testing.T) {
 		// Arrange
 		mockService, handler := setup(t)
 
+		userUUID := uuid.New()
 		groupUUID := uuid.New()
 		invalidJSON := `{"name": "Updated Group"` // Missing closing brace
 
@@ -133,6 +138,7 @@ func TestNewUpdateGroupHandler(t *testing.T) {
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
 		c.Params = gin.Params{{Key: "uuid", Value: groupUUID.String()}}
+		c.Set("user_uid", userUUID)
 
 		// Act
 		handler(c)
@@ -148,10 +154,39 @@ func TestNewUpdateGroupHandler(t *testing.T) {
 		mockService.AssertNotCalled(t, "Update")
 	})
 
+	t.Run("MissingUserContext", func(t *testing.T) {
+		// Arrange
+		mockService, handler := setup(t)
+
+		groupUUID := uuid.New()
+		requestBody := requests.UpdateGroupRequest{
+			Name: "Updated Group",
+		}
+
+		jsonBody, err := json.Marshal(requestBody)
+		assert.NoError(t, err)
+
+		req := httptest.NewRequest("PUT", "/groups/"+groupUUID.String(), bytes.NewBuffer(jsonBody))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+
+		c, _ := gin.CreateTestContext(w)
+		c.Request = req
+		c.Params = gin.Params{{Key: "uuid", Value: groupUUID.String()}}
+
+		// Act
+		handler(c)
+
+		// Assert
+		assert.Equal(t, http.StatusUnauthorized, w.Code)
+		mockService.AssertNotCalled(t, "Update")
+	})
+
 	t.Run("ValidationFailed_EmptyName", func(t *testing.T) {
 		// Arrange
 		mockService, handler := setup(t)
 
+		userUUID := uuid.New()
 		groupUUID := uuid.New()
 		requestBody := requests.UpdateGroupRequest{
 			Name: "",
@@ -167,6 +202,7 @@ func TestNewUpdateGroupHandler(t *testing.T) {
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
 		c.Params = gin.Params{{Key: "uuid", Value: groupUUID.String()}}
+		c.Set("user_uid", userUUID)
 
 		// Act
 		handler(c)
@@ -186,8 +222,9 @@ func TestNewUpdateGroupHandler(t *testing.T) {
 		// Arrange
 		mockService, handler := setup(t)
 
+		userUUID := uuid.New()
 		groupUUID := uuid.New()
-		mockService.On("Update", mock.Anything, groupUUID, "Updated Group").Return(nil, domain.ErrGroupNotFound)
+		mockService.On("Update", mock.Anything, userUUID, groupUUID, "Updated Group").Return(nil, domain.ErrGroupNotFound)
 
 		requestBody := requests.UpdateGroupRequest{
 			Name: "Updated Group",
@@ -203,6 +240,7 @@ func TestNewUpdateGroupHandler(t *testing.T) {
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
 		c.Params = gin.Params{{Key: "uuid", Value: groupUUID.String()}}
+		c.Set("user_uid", userUUID)
 
 		// Act
 		handler(c)
@@ -222,8 +260,9 @@ func TestNewUpdateGroupHandler(t *testing.T) {
 		// Arrange
 		mockService, handler := setup(t)
 
+		userUUID := uuid.New()
 		groupUUID := uuid.New()
-		mockService.On("Update", mock.Anything, groupUUID, "Updated Group").Return(nil, domain.ErrInternal)
+		mockService.On("Update", mock.Anything, userUUID, groupUUID, "Updated Group").Return(nil, domain.ErrInternal)
 
 		requestBody := requests.UpdateGroupRequest{
 			Name: "Updated Group",
@@ -239,6 +278,7 @@ func TestNewUpdateGroupHandler(t *testing.T) {
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
 		c.Params = gin.Params{{Key: "uuid", Value: groupUUID.String()}}
+		c.Set("user_uid", userUUID)
 
 		// Act
 		handler(c)
@@ -258,8 +298,9 @@ func TestNewUpdateGroupHandler(t *testing.T) {
 		// Arrange
 		mockService, handler := setup(t)
 
+		userUUID := uuid.New()
 		groupUUID := uuid.New()
-		mockService.On("Update", mock.Anything, groupUUID, "Updated Group").Return(nil, errors.New("database connection failed"))
+		mockService.On("Update", mock.Anything, userUUID, groupUUID, "Updated Group").Return(nil, errors.New("database connection failed"))
 
 		requestBody := requests.UpdateGroupRequest{
 			Name: "Updated Group",
@@ -275,6 +316,7 @@ func TestNewUpdateGroupHandler(t *testing.T) {
 		c, _ := gin.CreateTestContext(w)
 		c.Request = req
 		c.Params = gin.Params{{Key: "uuid", Value: groupUUID.String()}}
+		c.Set("user_uid", userUUID)
 
 		// Act
 		handler(c)
@@ -286,6 +328,44 @@ func TestNewUpdateGroupHandler(t *testing.T) {
 		err = json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
 		assert.Equal(t, "failed to update group", response["error"])
+
+		mockService.AssertExpectations(t)
+	})
+
+	t.Run("Forbidden", func(t *testing.T) {
+		// Arrange
+		mockService, handler := setup(t)
+
+		userUUID := uuid.New()
+		groupUUID := uuid.New()
+		mockService.On("Update", mock.Anything, userUUID, groupUUID, "Updated Group").Return(nil, domain.ErrForbidden)
+
+		requestBody := requests.UpdateGroupRequest{
+			Name: "Updated Group",
+		}
+
+		jsonBody, err := json.Marshal(requestBody)
+		assert.NoError(t, err)
+
+		req := httptest.NewRequest("PUT", "/groups/"+groupUUID.String(), bytes.NewBuffer(jsonBody))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+
+		c, _ := gin.CreateTestContext(w)
+		c.Request = req
+		c.Params = gin.Params{{Key: "uuid", Value: groupUUID.String()}}
+		c.Set("user_uid", userUUID)
+
+		// Act
+		handler(c)
+
+		// Assert
+		assert.Equal(t, http.StatusForbidden, w.Code)
+
+		var response map[string]interface{}
+		err = json.Unmarshal(w.Body.Bytes(), &response)
+		assert.NoError(t, err)
+		assert.Equal(t, "access forbidden", response["error"])
 
 		mockService.AssertExpectations(t)
 	})
