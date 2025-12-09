@@ -9,8 +9,6 @@ type EditorHeaderProps = {
 	docName: string;
 	onNameChange: (name: string) => void;
 	onExport: (format: ExportFormat) => void;
-	wordCount: number;
-	readingTime: number;
 	isConnected: boolean;
 };
 
@@ -18,16 +16,10 @@ export const EditorHeader = ({
 	docName,
 	onNameChange,
 	onExport,
-	wordCount,
-	readingTime,
 	isConnected,
 }: EditorHeaderProps) => {
 	const { t } = useLanguage();
 	const [isExportOpen, setIsExportOpen] = useState(false);
-
-	const formattedWordCount = useMemo(() => {
-		return new Intl.NumberFormat().format(wordCount);
-	}, [wordCount]);
 
 	const statusLabel = useMemo(
 		() =>
@@ -102,16 +94,6 @@ export const EditorHeader = ({
 			</div>
 
 			<div className={styles.right}>
-				<div className={styles.stats}>
-					<span>
-						{t("documentEditor.wordCountLabel")}: {formattedWordCount}
-					</span>
-					<span className={styles.divider}>|</span>
-					<span>
-						{t("documentEditor.readingTimeLabel")}: {readingTime || 0}{" "}
-						{t("documentEditor.readingTimeUnit")}
-					</span>
-				</div>
 				<div
 					className={`${styles.status} ${
 						isConnected ? styles.success : styles.neutral

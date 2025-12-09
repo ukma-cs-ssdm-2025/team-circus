@@ -1,10 +1,9 @@
 .container {
 	display: grid;
-	grid-template-columns: var(--editor-left-width, 1fr) var(
-			--editor-right-width,
-			1fr
-		);
-	grid-template-rows: 1fr;
+	grid-template-columns:
+		var(--editor-left-width, 1fr)
+		var(--editor-right-width, 1fr);
+	grid-template-rows: minmax(0, 1fr);
 	gap: 0;
 	width: 100%;
 	height: 100%;
@@ -33,6 +32,7 @@
 .pane > * {
 	flex: 1;
 	min-height: 0;
+	height: 100%;
 }
 
 .divider {

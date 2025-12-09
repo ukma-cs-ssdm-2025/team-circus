@@ -1,9 +1,9 @@
-import { Compartment, EditorState } from "@codemirror/state";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
+import { Compartment, EditorState } from "@codemirror/state";
 import {
+	EditorView,
 	drawSelection,
 	dropCursor,
-	EditorView,
 	highlightActiveLine,
 	highlightActiveLineGutter,
 	keymap,
@@ -12,9 +12,8 @@ import {
 } from "@codemirror/view";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTheme } from "../../contexts/ThemeContext";
-import type { CursorLocation, EditorProps } from "./types";
+import type { EditorProps } from "./types";
 import "./editor.css";
-import { normalizeLines, toCursorLocation } from "./utils";
 
 type Palette = {
 	background: string;
@@ -74,10 +73,14 @@ const buildTheme = (mode: "light" | "dark") => {
 					'"Monaco", "Courier New", "SFMono-Regular", ui-monospace, monospace',
 				lineHeight: "1.6",
 				scrollbarColor: `${palette.border} transparent`,
+				tabSize: "4",
 			},
 			".cm-content": {
 				caretColor: palette.cursor,
 				minHeight: "320px",
+			},
+			".cm-line": {
+				position: "relative",
 			},
 			".cm-selectionBackground, .cm-content ::selection": {
 				backgroundColor: palette.selection,
@@ -128,6 +131,22 @@ export const Editor = ({
 	useEffect(() => {
 		setPresenceVisible(showPresence);
 	}, [showPresence]);
+
+	const resolvedRemoteUsers = useMemo(
+		() =>
+			remoteUsers.map((user, idx) => ({
+				...user,
+				color:
+					user.color ||
+					[
+						"var(--color-cursor-other-1)",
+						"var(--color-cursor-other-2)",
+						"var(--color-cursor-other-3)",
+						"var(--color-cursor-other-4)",
+					][idx % 4],
+			})),
+		[remoteUsers],
+	);
 
 	useEffect(() => {
 		if (!hostRef.current) {
@@ -191,9 +210,52 @@ export const Editor = ({
 		if (nextDoc === currentDoc) {
 			return;
 		}
+		const currentSelection = viewRef.current.state.selection;
+		const scrollElement = viewRef.current.scrollDOM;
+		const previousScrollTop = scrollElement.scrollTop;
+		const previousScrollLeft = scrollElement.scrollLeft;
 		updatingFromProps.current = true;
+		let start = 0;
+		while (
+			start < currentDoc.length &&
+			start < nextDoc.length &&
+			currentDoc[start] === nextDoc[start]
+		) {
+			start += 1;
+		}
+
+		let endCurrent = currentDoc.length;
+		let endNext = nextDoc.length;
+		while (
+			endCurrent > start &&
+			endNext > start &&
+			currentDoc[endCurrent - 1] === nextDoc[endNext - 1]
+		) {
+			endCurrent -= 1;
+			endNext -= 1;
+		}
+
+		if (start === endCurrent && start === endNext) {
+			updatingFromProps.current = false;
+			return;
+		}
+
+		const changeSpec = {
+			from: start,
+			to: endCurrent,
+			insert: nextDoc.slice(start, endNext),
+		};
+
+		const changeDesc = viewRef.current.state.changes(changeSpec);
+		const mappedSelection = currentSelection.map(changeDesc, 1);
+
 		viewRef.current.dispatch({
-			changes: { from: 0, to: currentDoc.length, insert: nextDoc },
+			changes: changeSpec,
+			selection: mappedSelection,
+		});
+		requestAnimationFrame(() => {
+			scrollElement.scrollTop = previousScrollTop;
+			scrollElement.scrollLeft = previousScrollLeft;
 		});
 		updatingFromProps.current = false;
 	}, [defaultValue, value]);
@@ -207,40 +269,6 @@ export const Editor = ({
 		});
 	}, [scheme]);
 
-	const resolvedRemoteUsers = useMemo(
-		() =>
-			remoteUsers.map((user, idx) => ({
-				...user,
-				color:
-					user.color ||
-					[
-						"var(--color-cursor-other-1)",
-						"var(--color-cursor-other-2)",
-						"var(--color-cursor-other-3)",
-						"var(--color-cursor-other-4)",
-					][idx % 4],
-			})),
-		[remoteUsers],
-	);
-
-	const documentLines = useMemo(
-		() => normalizeLines(value ?? defaultValue ?? ""),
-		[defaultValue, value],
-	);
-
-	const remoteCursorLocations = useMemo(() => {
-		return resolvedRemoteUsers.reduce<Record<string, CursorLocation>>(
-			(map, user) => {
-				const location = toCursorLocation(documentLines, user);
-				if (location) {
-					map[user.id] = location;
-				}
-				return map;
-			},
-			{},
-		);
-	}, [documentLines, resolvedRemoteUsers]);
-
 	const editorClass = ["editor-frame", className].filter(Boolean).join(" ");
 
 	return (
@@ -250,48 +278,29 @@ export const Editor = ({
 					<span className="editor-status-dot" />
 					{isConnected ? "Connected" : "Connecting"}
 				</div>
-				<span className="editor-toolbar-subtle">
-					CodeMirror · Multiline selection · Live line numbers
-				</span>
+				<button
+					type="button"
+					className="remote-panel-toggle"
+					onClick={() => setPresenceVisible((prev) => !prev)}
+					aria-label={
+						presenceVisible
+							? "Hide collaborators panel"
+							: "Show collaborators panel"
+					}
+				>
+					<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+						<path
+							d="M18 6L6 18M6 6l12 12"
+							stroke="currentColor"
+							strokeWidth="2"
+							strokeLinecap="round"
+						/>
+					</svg>
+				</button>
 			</header>
 			<div className="editor-body">
-				<div className="editor-pane">
-					<div className="editor-host" ref={hostRef} role="presentation" />
-				</div>
-
-				{showPresence && presenceVisible && (
-					<aside className="remote-preview-panel">
-						<div className="remote-panel-header">
-							<div className="remote-panel-labels">
-								<span
-									className={`remote-badge ${isConnected ? "connected" : ""}`}
-								>
-									{isConnected ? "Connected" : "Connecting"}
-								</span>
-								<span
-									className={`remote-badge just-you ${remoteUsers.length === 0 ? "active" : ""}`}
-								>
-									{remoteUsers.length === 0
-										? "Just you"
-										: `${remoteUsers.length} collaborators`}
-								</span>
-							</div>
-							<button
-								type="button"
-								className="remote-panel-toggle"
-								onClick={() => setPresenceVisible(false)}
-								aria-label="Hide collaborators panel"
-							>
-								<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-									<path
-										d="M18 6L6 18M6 6l12 12"
-										stroke="currentColor"
-										strokeWidth="2"
-										strokeLinecap="round"
-									/>
-								</svg>
-							</button>
-						</div>
+				{presenceVisible && (
+					<div className="remote-preview-panel">
 						<ul className="remote-users">
 							{remoteUsers.length === 0 && (
 								<li className="remote-user" aria-label="No remote users">
@@ -305,7 +314,6 @@ export const Editor = ({
 								</li>
 							)}
 							{resolvedRemoteUsers.map((user) => {
-								const cursor = remoteCursorLocations[user.id];
 								const status = user.status ?? "online";
 								return (
 									<li key={user.id} className="remote-user">
@@ -323,44 +331,16 @@ export const Editor = ({
 												{user.role ?? "Editor"}
 											</span>
 										</div>
-										{cursor && (
-											<span className="user-cursor-chip">
-												<span
-													className="user-color"
-													style={{ background: user.color }}
-													aria-hidden="true"
-												/>
-												Line {cursor.line + 1}, Col {cursor.column + 1}
-											</span>
-										)}
 									</li>
 								);
 							})}
 						</ul>
-					</aside>
-				)}
-
-				{showPresence && !presenceVisible && (
-					<div className="remote-panel-collapsed">
-						<button
-							type="button"
-							className="remote-panel-toggle"
-							onClick={() => setPresenceVisible(true)}
-							aria-label="Show collaborators panel"
-						>
-							<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-								<path
-									d="M4 7a4 4 0 118 0 4 4 0 01-8 0zm8.5 6c-3.5 0-6.5 1.7-6.5 3.8V19h13v-2.2C19 14.7 16 13 12.5 13zm5-2a2.5 2.5 0 100-5 2.5 2.5 0 000 5zm-1 1a4.3 4.3 0 014 2.3 4.2 4.2 0 01.5 2.1V18h-3"
-									stroke="currentColor"
-									strokeWidth="1.6"
-									fill="none"
-									strokeLinecap="round"
-									strokeLinejoin="round"
-								/>
-							</svg>
-						</button>
 					</div>
 				)}
+
+				<div className="editor-pane">
+					<div className="editor-host" ref={hostRef} role="presentation" />
+				</div>
 			</div>
 		</section>
 	);
