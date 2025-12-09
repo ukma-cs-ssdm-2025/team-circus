@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import styles from "./DocumentEditor.module.css";
 import {
@@ -15,11 +15,7 @@ import {
 import { ROUTES } from "../constants";
 import { useAuth } from "../contexts/AuthContextBase";
 import { useLanguage } from "../contexts/LanguageContext";
-import {
-	useCollaborativeEditor,
-	useDebounce,
-	useDocumentSync,
-} from "../hooks";
+import { useCollaborativeEditor, useDebounce, useDocumentSync } from "../hooks";
 import type { BaseComponentProps } from "../types";
 
 type DocumentEditorProps = BaseComponentProps;
@@ -39,12 +35,36 @@ const DocumentEditor = ({ className = "" }: DocumentEditorProps) => {
 	const documentId = uuid ?? "";
 	const { user } = useAuth();
 
+	// Generate a stable anonymous session ID
+	const anonymousIdRef = useRef<string | null>(null);
+	const getAnonymousId = useCallback(() => {
+		if (anonymousIdRef.current) {
+			return anonymousIdRef.current;
+		}
+
+		// Try to get from sessionStorage first
+		const stored = sessionStorage.getItem("anonymous-session-id");
+		if (stored) {
+			anonymousIdRef.current = stored;
+			return stored;
+		}
+
+		// Generate new unique ID
+		const newId = crypto.randomUUID();
+		sessionStorage.setItem("anonymous-session-id", newId);
+		anonymousIdRef.current = newId;
+		return newId;
+	}, []);
+
 	const collaborativeUser = useMemo(
 		() => ({
-			id: user?.uuid ?? "anonymous",
-			name: user?.login ?? user?.email ?? "anonymous",
+			id: user?.uuid ?? getAnonymousId(),
+			name:
+				user?.login ??
+				user?.email ??
+				`Anonymous (${getAnonymousId().slice(0, 8)})`,
 		}),
-		[user?.email, user?.login, user?.uuid],
+		[user?.email, user?.login, user?.uuid, getAnonymousId],
 	);
 
 	const {

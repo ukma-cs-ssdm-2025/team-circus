@@ -30,6 +30,15 @@ type UpdateRecord struct {
 	CreatedAt  time.Time
 }
 
+// PresenceRecord represents a user's current presence in a document.
+type PresenceRecord struct {
+	ID             int64
+	DocumentID     uuid.UUID
+	UserID         uuid.UUID
+	CursorPosition *int
+	LastSeen       time.Time
+}
+
 // DocumentPersistence stores and retrieves collaborative state.
 type DocumentPersistence struct {
 	db *sql.DB
@@ -148,4 +157,83 @@ func (p *DocumentPersistence) GetUpdates(ctx context.Context, documentID uuid.UU
 	}
 
 	return updates, nil
+}
+
+// UpsertPresence updates or inserts a user's presence in a document.
+// Uses ON CONFLICT to ensure only one presence row per (document_id, user_id).
+func (p *DocumentPersistence) UpsertPresence(ctx context.Context, documentID, userID uuid.UUID, cursorPosition *int) error {
+	query := `
+		INSERT INTO document_presence (document_id, user_id, cursor_position, last_seen)
+		VALUES ($1, $2, $3, NOW())
+		ON CONFLICT (document_id, user_id) DO UPDATE
+		SET cursor_position = EXCLUDED.cursor_position,
+		    last_seen = NOW()
+	`
+
+	_, err := p.db.ExecContext(ctx, query, documentID, userID, cursorPosition)
+	if err != nil {
+		return errors.Join(domain.ErrInternal, fmt.Errorf("document persistence: upsertPresence: %w", err))
+	}
+
+	return nil
+}
+
+// GetPresence retrieves all active presence records for a document.
+func (p *DocumentPersistence) GetPresence(ctx context.Context, documentID uuid.UUID) ([]PresenceRecord, error) {
+	query := `
+		SELECT id, document_id, user_id, cursor_position, last_seen
+		FROM document_presence
+		WHERE document_id = $1
+		ORDER BY last_seen DESC
+	`
+
+	rows, err := p.db.QueryContext(ctx, query, documentID)
+	if err != nil {
+		return nil, errors.Join(domain.ErrInternal, fmt.Errorf("document persistence: getPresence: %w", err))
+	}
+	defer rows.Close() //nolint:errcheck
+
+	var presences []PresenceRecord
+	for rows.Next() {
+		var presence PresenceRecord
+		var cursorPos sql.NullInt32
+		err = rows.Scan(
+			&presence.ID,
+			&presence.DocumentID,
+			&presence.UserID,
+			&cursorPos,
+			&presence.LastSeen,
+		)
+		if err != nil {
+			return nil, errors.Join(domain.ErrInternal, fmt.Errorf("document persistence: getPresence scan: %w", err))
+		}
+
+		if cursorPos.Valid {
+			pos := int(cursorPos.Int32)
+			presence.CursorPosition = &pos
+		}
+
+		presences = append(presences, presence)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, errors.Join(domain.ErrInternal, fmt.Errorf("document persistence: getPresence rows: %w", err))
+	}
+
+	return presences, nil
+}
+
+// RemovePresence removes a user's presence from a document (e.g., when they disconnect).
+func (p *DocumentPersistence) RemovePresence(ctx context.Context, documentID, userID uuid.UUID) error {
+	query := `
+		DELETE FROM document_presence
+		WHERE document_id = $1 AND user_id = $2
+	`
+
+	_, err := p.db.ExecContext(ctx, query, documentID, userID)
+	if err != nil {
+		return errors.Join(domain.ErrInternal, fmt.Errorf("document persistence: removePresence: %w", err))
+	}
+
+	return nil
 }

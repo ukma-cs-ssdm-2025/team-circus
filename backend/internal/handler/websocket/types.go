@@ -1,17 +1,17 @@
 package websocket
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
-	"time"
 )
 
-// Message type constants for Yjs protocol
+// Message type constants for Yjs protocol (y-protocols spec)
 const (
-	YjsMessageSync       = 0
+	YjsSyncStep1         = 0
 	YjsSyncStep2         = 1
-	YjsSyncStep1         = 2
-	YjsUpdate            = 3
+	YjsUpdate            = 2
 	MessageTypeAwareness = 101
 )
 

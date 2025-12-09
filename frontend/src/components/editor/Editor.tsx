@@ -11,11 +11,7 @@ import {
 	useState,
 } from "react";
 import { useTheme } from "../../contexts/ThemeContext";
-import type {
-	CursorLocation,
-	EditorProps,
-	RemoteUserPresence,
-} from "./types";
+import type { CursorLocation, EditorProps, RemoteUserPresence } from "./types";
 import "./editor.css";
 
 const ZERO_WIDTH_SPACE = "\u200b";
@@ -61,7 +57,9 @@ const getActiveLineIndex = (container: HTMLElement): number | null => {
 	}
 
 	const index = Number.parseInt(
-		lineElement.dataset.lineIndex ?? lineElement.getAttribute("data-line-index") ?? "",
+		lineElement.dataset.lineIndex ??
+			lineElement.getAttribute("data-line-index") ??
+			"",
 		10,
 	);
 	return Number.isNaN(index) ? null : index;
@@ -118,7 +116,23 @@ export const toCursorLocation = (
 		return undefined;
 	}
 
-	let remaining = user.cursorPosition;
+	// Handle empty lines array
+	if (lines.length === 0) {
+		return { line: 0, column: 0 };
+	}
+
+	// Calculate total characters including newlines
+	const totalChars =
+		lines.reduce((sum, line) => sum + line.length, 0) +
+		Math.max(0, lines.length - 1);
+
+	// Clamp cursor position to valid range
+	const clampedPosition = Math.max(
+		0,
+		Math.min(user.cursorPosition, totalChars),
+	);
+
+	let remaining = clampedPosition;
 	for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
 		const length = lines[lineIndex]?.length ?? 0;
 		if (remaining <= length) {
@@ -127,9 +141,12 @@ export const toCursorLocation = (
 		remaining -= length + 1; // +1 for newline
 	}
 
+	// Fallback: clamp to last line's length
+	const lastLineIndex = lines.length - 1;
+	const lastLineLength = lines[lastLineIndex]?.length ?? 0;
 	return {
-		line: lines.length - 1,
-		column: lines[lines.length - 1]?.length ?? 0,
+		line: lastLineIndex,
+		column: Math.min(remaining, lastLineLength),
 	};
 };
 
@@ -219,7 +236,8 @@ export const Editor = ({
 
 	useEffect(() => {
 		document.addEventListener("selectionchange", syncSelectionState);
-		return () => document.removeEventListener("selectionchange", syncSelectionState);
+		return () =>
+			document.removeEventListener("selectionchange", syncSelectionState);
 	}, [syncSelectionState]);
 
 	useEffect(() => {
@@ -304,7 +322,9 @@ export const Editor = ({
 		(index: number, event: KeyboardEvent<HTMLDivElement>) => {
 			event.preventDefault();
 			const target = event.currentTarget;
-			const text = (target.innerText ?? "").replace(/\n/g, "").replaceAll(ZERO_WIDTH_SPACE, "");
+			const text = (target.innerText ?? "")
+				.replace(/\n/g, "")
+				.replaceAll(ZERO_WIDTH_SPACE, "");
 			const caret = caretOffsetWithin(target);
 			pendingCaret.current = { line: index + 1, offset: 0 };
 
@@ -362,7 +382,9 @@ export const Editor = ({
 			const caret = caretOffsetWithin(target);
 			const clean = raw.replaceAll(ZERO_WIDTH_SPACE, "");
 			const parts = normalizeLines(clean);
-			const current = (target.innerText ?? "").replace(/\n/g, "").replaceAll(ZERO_WIDTH_SPACE, "");
+			const current = (target.innerText ?? "")
+				.replace(/\n/g, "")
+				.replaceAll(ZERO_WIDTH_SPACE, "");
 			const before = current.slice(0, caret);
 			const after = current.slice(caret);
 			pendingCaret.current = {
@@ -397,7 +419,9 @@ export const Editor = ({
 	const handleDelete = useCallback(
 		(index: number, event: KeyboardEvent<HTMLDivElement>) => {
 			const target = event.currentTarget;
-			const text = (target.innerText ?? "").replace(/\n/g, "").replaceAll(ZERO_WIDTH_SPACE, "");
+			const text = (target.innerText ?? "")
+				.replace(/\n/g, "")
+				.replaceAll(ZERO_WIDTH_SPACE, "");
 			const caret = caretOffsetWithin(target);
 			const hasNextLine = Boolean(target.nextElementSibling);
 			if (!hasNextLine || caret !== text.length) {
@@ -440,15 +464,12 @@ export const Editor = ({
 		[handleBackspace, handleDelete, handleEnter],
 	);
 
-	const handleScroll = useCallback(
-		(event: UIEvent<HTMLDivElement>) => {
-			if (!lineNumberRef.current) {
-				return;
-			}
-			lineNumberRef.current.scrollTop = event.currentTarget.scrollTop;
-		},
-		[],
-	);
+	const handleScroll = useCallback((event: UIEvent<HTMLDivElement>) => {
+		if (!lineNumberRef.current) {
+			return;
+		}
+		lineNumberRef.current.scrollTop = event.currentTarget.scrollTop;
+	}, []);
 
 	const resolvedRemoteUsers = useMemo(
 		() =>
@@ -467,13 +488,16 @@ export const Editor = ({
 	);
 
 	const remoteCursorLocations = useMemo(() => {
-		return resolvedRemoteUsers.reduce<Record<string, CursorLocation>>((map, user) => {
-			const location = toCursorLocation(lines, user);
-			if (location) {
-				map[user.id] = location;
-			}
-			return map;
-		}, {});
+		return resolvedRemoteUsers.reduce<Record<string, CursorLocation>>(
+			(map, user) => {
+				const location = toCursorLocation(lines, user);
+				if (location) {
+					map[user.id] = location;
+				}
+				return map;
+			},
+			{},
+		);
 	}, [lines, resolvedRemoteUsers]);
 
 	const renderRemoteCursorIndicators = () => {
@@ -504,7 +528,10 @@ export const Editor = ({
 							}}
 							aria-label={`${user.name} cursor`}
 						>
-							<span className="editor-cursor-label" style={{ borderColor: user.color }}>
+							<span
+								className="editor-cursor-label"
+								style={{ borderColor: user.color }}
+							>
 								{user.name}
 							</span>
 						</div>
@@ -536,15 +563,15 @@ export const Editor = ({
 					aria-hidden="true"
 					ref={lineNumberRef}
 					style={{ lineHeight: "var(--editor-line-height)" }}
-					>
-						{lines.map((_, index) => (
-							<div
-								key={lineKey(index)}
-								className={`editor-line-number ${index === activeLine ? "active" : ""}`}
-							>
-								{index + 1}
-							</div>
-						))}
+				>
+					{lines.map((_, index) => (
+						<div
+							key={lineKey(index)}
+							className={`editor-line-number ${index === activeLine ? "active" : ""}`}
+						>
+							{index + 1}
+						</div>
+					))}
 				</div>
 
 				<div className="editor-content-column">
@@ -565,6 +592,7 @@ export const Editor = ({
 								suppressContentEditableWarning
 								onInput={(event) => handleInput(index, event)}
 								onKeyDown={(event) => handleKeyDown(index, event)}
+								onPaste={(event) => handlePaste(index, event)}
 								onFocus={() => {
 									setActiveLine(index);
 									requestAnimationFrame(syncSelectionState);
@@ -586,11 +614,17 @@ export const Editor = ({
 					<aside className="remote-preview-panel">
 						<div className="remote-panel-header">
 							<div className="remote-panel-labels">
-								<span className={`remote-badge ${isConnected ? "connected" : ""}`}>
+								<span
+									className={`remote-badge ${isConnected ? "connected" : ""}`}
+								>
 									{isConnected ? "Connected" : "Connecting"}
 								</span>
-								<span className={`remote-badge just-you ${remoteUsers.length === 0 ? "active" : ""}`}>
-									{remoteUsers.length === 0 ? "Just you" : `${remoteUsers.length} collaborators`}
+								<span
+									className={`remote-badge just-you ${remoteUsers.length === 0 ? "active" : ""}`}
+								>
+									{remoteUsers.length === 0
+										? "Just you"
+										: `${remoteUsers.length} collaborators`}
 								</span>
 							</div>
 							<button

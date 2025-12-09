@@ -5,6 +5,7 @@ import (
 	"errors"
 	"math/rand"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -21,12 +22,47 @@ const (
 	maxMessageSize = 65536
 )
 
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  maxMessageSize,
-	WriteBufferSize: maxMessageSize,
-	CheckOrigin: func(r *http.Request) bool {
-		return true
-	},
+// createUpgrader creates a websocket upgrader with secure origin checking.
+func createUpgrader(allowedOrigins []string) websocket.Upgrader {
+	return websocket.Upgrader{
+		ReadBufferSize:  maxMessageSize,
+		WriteBufferSize: maxMessageSize,
+		CheckOrigin: func(r *http.Request) bool {
+			origin := r.Header.Get("Origin")
+
+			// Deny empty or missing Origin header by default
+			if origin == "" {
+				return false
+			}
+
+			// Never allow wildcard in production
+			for _, allowed := range allowedOrigins {
+				if allowed == "*" {
+					// Only allow "*" if explicitly configured (not recommended for production)
+					return true
+				}
+
+				// Exact match
+				if origin == allowed {
+					return true
+				}
+
+				// Support wildcard subdomain matching (e.g., "*.example.com")
+				if strings.HasPrefix(allowed, "*.") {
+					domain := allowed[2:] // Remove "*."
+					if strings.HasSuffix(origin, domain) {
+						// Ensure it's actually a subdomain match, not just a suffix match
+						if origin == "http://"+domain || origin == "https://"+domain ||
+							strings.HasSuffix(origin, "."+domain) {
+							return true
+						}
+					}
+				}
+			}
+
+			return false
+		},
+	}
 }
 
 type documentAccessService interface {
@@ -38,7 +74,10 @@ func NewWebSocketHandler(
 	documentService documentAccessService,
 	hubManager *HubManager,
 	logger *zap.Logger,
+	allowedOrigins []string,
 ) gin.HandlerFunc {
+	upgrader := createUpgrader(allowedOrigins)
+
 	return func(c *gin.Context) {
 		docParam := c.Param("uuid")
 		documentID, err := uuid.Parse(docParam)
@@ -96,7 +135,14 @@ func NewWebSocketHandler(
 		select {
 		case hub.Register <- client:
 		case <-c.Request.Context().Done():
-			_ = conn.Close()
+			if err := conn.Close(); err != nil {
+				logger.Warn("failed to close websocket connection on context cancellation",
+					zap.Error(err),
+					zap.String("document_id", documentID.String()),
+					zap.String("user_id", userUUID.String()),
+					zap.String("path", c.Request.URL.Path),
+				)
+			}
 			return
 		}
 
@@ -121,13 +167,29 @@ func writePump(client *ClientConnection, logger *zap.Logger) {
 				return
 			}
 
-			_ = client.Conn.SetWriteDeadline(time.Now().Add(writeWait))
+			if err := client.Conn.SetWriteDeadline(time.Now().Add(writeWait)); err != nil {
+				logger.Warn("failed to set write deadline for binary message",
+					zap.Error(err),
+					zap.String("client_id", client.ID.String()),
+					zap.String("user_id", client.UserID.String()),
+					zap.String("document_id", client.DocumentID.String()),
+				)
+				return
+			}
 			if err := client.Conn.WriteMessage(websocket.BinaryMessage, message); err != nil {
 				logger.Warn("failed to write websocket message", zap.Error(err))
 				return
 			}
 		case <-ticker.C:
-			_ = client.Conn.SetWriteDeadline(time.Now().Add(writeWait))
+			if err := client.Conn.SetWriteDeadline(time.Now().Add(writeWait)); err != nil {
+				logger.Warn("failed to set write deadline for ping message",
+					zap.Error(err),
+					zap.String("client_id", client.ID.String()),
+					zap.String("user_id", client.UserID.String()),
+					zap.String("document_id", client.DocumentID.String()),
+				)
+				return
+			}
 			if err := client.Conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 				return
 			}
@@ -154,9 +216,25 @@ func readPump(
 	}()
 
 	client.Conn.SetReadLimit(maxMessageSize)
-	_ = client.Conn.SetReadDeadline(time.Now().Add(pongWait))
+	if err := client.Conn.SetReadDeadline(time.Now().Add(pongWait)); err != nil {
+		logger.Warn("failed to set initial read deadline",
+			zap.Error(err),
+			zap.String("client_id", client.ID.String()),
+			zap.String("user_id", client.UserID.String()),
+			zap.String("document_id", client.DocumentID.String()),
+		)
+		return
+	}
 	client.Conn.SetPongHandler(func(string) error {
-		_ = client.Conn.SetReadDeadline(time.Now().Add(pongWait))
+		if err := client.Conn.SetReadDeadline(time.Now().Add(pongWait)); err != nil {
+			logger.Warn("failed to set read deadline in pong handler",
+				zap.Error(err),
+				zap.String("client_id", client.ID.String()),
+				zap.String("user_id", client.UserID.String()),
+				zap.String("document_id", client.DocumentID.String()),
+			)
+			return err
+		}
 		client.LastSeen = time.Now()
 		return nil
 	})
@@ -191,7 +269,7 @@ func readPump(
 				if versionToStore < 1 {
 					versionToStore = defaultHubVersion
 				}
-				err = hubManager.persistence.SaveUpdate(context.Background(), hub.DocumentID, client.UserID, message, versionToStore+1)
+				err = hubManager.persistence.SaveUpdate(requestCtx, hub.DocumentID, client.UserID, message, versionToStore+1)
 				if err != nil {
 					logger.Warn("failed to persist update", zap.Error(err), zap.String("document_id", hub.DocumentID.String()))
 				}

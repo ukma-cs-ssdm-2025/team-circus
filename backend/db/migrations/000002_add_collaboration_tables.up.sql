@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS document_updates (
 
 CREATE INDEX idx_document_updates_document_id ON document_updates(document_id);
 CREATE INDEX idx_document_updates_created_at ON document_updates(created_at);
+CREATE INDEX idx_document_updates_document_id_version ON document_updates(document_id, version);
 
 -- Presence table: track who's currently editing
 CREATE TABLE IF NOT EXISTS document_presence (
@@ -29,7 +30,8 @@ CREATE TABLE IF NOT EXISTS document_presence (
     document_id UUID NOT NULL REFERENCES documents(uuid) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES users(uuid),
     cursor_position INTEGER,
-    last_seen TIMESTAMP DEFAULT NOW()
+    last_seen TIMESTAMP DEFAULT NOW(),
+    UNIQUE (document_id, user_id)
 );
 
 CREATE INDEX idx_document_presence_document_id ON document_presence(document_id);

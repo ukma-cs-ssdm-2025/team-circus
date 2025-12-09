@@ -119,6 +119,7 @@ func (a *App) setupRouter() *gin.Engine {
 			documentService,
 			wsHubManager,
 			a.l,
+			a.cfg.CORS.AllowOrigins,
 		))
 	}
 	return router
