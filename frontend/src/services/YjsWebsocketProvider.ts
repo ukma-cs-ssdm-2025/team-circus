@@ -6,6 +6,8 @@ export type CollaborativeUser = {
   id: string;
   name?: string;
   color?: string;
+  cursor?: number;
+  cursorPosition?: number;
 };
 
 export class YjsCollaborativeEditor {
@@ -46,7 +48,7 @@ export class YjsCollaborativeEditor {
     this.doc.destroy();
   }
 
-  private buildWebsocketUrl(documentId: string, baseUrl?: string) {
+  private buildWebsocketUrl(_documentId: string, baseUrl?: string) {
     const endpoint = baseUrl || ENV.API_BASE_URL;
     const url = new URL(endpoint);
     url.protocol = url.protocol === "https:" ? "wss:" : "ws:";

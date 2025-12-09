@@ -20,6 +20,7 @@ export interface RemoteUser {
 }
 
 export function useCollaborativeEditor(options: UseCollaborativeEditorOptions) {
+  const { documentId, user, baseUrl } = options;
   const [content, setContentState] = useState("");
   const [isConnected, setIsConnected] = useState(false);
   const [remoteUsers, setRemoteUsers] = useState<RemoteUser[]>([]);
@@ -29,30 +30,38 @@ export function useCollaborativeEditor(options: UseCollaborativeEditorOptions) {
 
   const syncRemoteUsers = useCallback(
     (awareness: Awareness) => {
-      const states = Array.from(awareness.getStates().values());
-      const others = states
-        .map((state: any) => state?.user)
-        .filter((user) => user && user.id !== options.user.id)
-        .map((user) => ({
-          id: user.id,
-          name: user.name,
-          color: user.color,
-          cursorPosition: user.cursor ?? user.cursorPosition,
-        }));
-      setRemoteUsers(others);
+      const entries = Array.from(awareness.getStates().entries());
+      const unique = new Map<string, RemoteUser>();
+
+      entries
+        .filter(([clientId]) => clientId !== awareness.clientID)
+        .forEach(([, state]: [number, Record<string, unknown> | undefined]) => {
+          const user = state?.user as CollaborativeUser | undefined;
+          if (!user || !user.id) {
+            return;
+          }
+          unique.set(user.id, {
+            id: user.id,
+            name: user.name,
+            color: user.color,
+            cursorPosition: user.cursor ?? user.cursorPosition,
+          });
+        });
+
+      setRemoteUsers(Array.from(unique.values()));
     },
-    [options.user.id],
+    [],
   );
 
   useEffect(() => {
-    if (!options.documentId || !options.user?.id) {
+    if (!documentId || !user?.id) {
       return;
     }
 
     const collaborativeProvider = new YjsCollaborativeEditor(
-      options.documentId,
-      options.user,
-      options.baseUrl,
+      documentId,
+      user,
+      baseUrl,
     );
     providerRef.current = collaborativeProvider;
     const text = collaborativeProvider.getText();
@@ -70,7 +79,7 @@ export function useCollaborativeEditor(options: UseCollaborativeEditorOptions) {
     const handleAwarenessChange = () => syncRemoteUsers(awareness);
     awareness.on("change", handleAwarenessChange);
 
-    const handleStatusChange = (event: any) => {
+    const handleStatusChange = (event: { status?: string }) => {
       setIsConnected(event?.status === "connected");
     };
     collaborativeProvider.getProvider().on("status", handleStatusChange);
@@ -85,18 +94,16 @@ export function useCollaborativeEditor(options: UseCollaborativeEditorOptions) {
       setIsConnected(false);
       setRemoteUsers([]);
     };
-  }, [
-    options.baseUrl,
-    options.documentId,
-    options.user.id,
-    options.user.name,
-    syncRemoteUsers,
-  ]);
+  }, [baseUrl, documentId, syncRemoteUsers, user?.color, user?.id, user?.name]);
 
   const setContent = useCallback((value: string) => {
     const target = providerRef.current?.getText();
     if (!target) {
       setContentState(value);
+      return;
+    }
+    const current = target.toString();
+    if (current === value) {
       return;
     }
     target.delete(0, target.length);
@@ -125,6 +132,9 @@ export function useCollaborativeEditor(options: UseCollaborativeEditorOptions) {
       return;
     }
     const currentState = awareness.getLocalState() || {};
+    if (currentState.cursor === position) {
+      return;
+    }
     awareness.setLocalState({
       ...currentState,
       cursor: position,

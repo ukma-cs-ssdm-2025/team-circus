@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import styles from "./DocumentEditor.module.css";
 import {
-	CollaborativeMarkdownEditor,
+	Editor,
 	EditorHeader,
 	EditorLayout,
 	ErrorAlert,
@@ -39,6 +39,14 @@ const DocumentEditor = ({ className = "" }: DocumentEditorProps) => {
 	const documentId = uuid ?? "";
 	const { user } = useAuth();
 
+	const collaborativeUser = useMemo(
+		() => ({
+			id: user?.uuid ?? "anonymous",
+			name: user?.login ?? user?.email ?? "anonymous",
+		}),
+		[user?.email, user?.login, user?.uuid],
+	);
+
 	const {
 		document: documentData,
 		loading,
@@ -50,16 +58,13 @@ const DocumentEditor = ({ className = "" }: DocumentEditorProps) => {
 
 	const {
 		content,
+		setContent,
 		isConnected,
 		remoteUsers,
-		yDoc,
-		awareness,
+		updateCursorPosition,
 	} = useCollaborativeEditor({
 		documentId,
-		user: {
-			id: user?.uuid ?? "anonymous",
-			name: user?.login ?? user?.email ?? "anonymous",
-		},
+		user: collaborativeUser,
 	});
 
 	useEffect(() => {
@@ -191,11 +196,15 @@ const DocumentEditor = ({ className = "" }: DocumentEditorProps) => {
 
 					<div className={styles.editorShell}>
 						<EditorLayout resizable={false} className={styles.editorLayout}>
-							<CollaborativeMarkdownEditor
-								yDoc={yDoc}
-								awareness={awareness}
+							<Editor
+								value={content}
+								onChange={setContent}
+								onCursorChange={updateCursorPosition}
 								isConnected={isConnected}
-								remoteUsers={remoteUsers}
+								remoteUsers={remoteUsers.map((user) => ({
+									...user,
+									name: user.name ?? user.id,
+								}))}
 							/>
 							<MarkdownPreview
 								content={debouncedContent}
