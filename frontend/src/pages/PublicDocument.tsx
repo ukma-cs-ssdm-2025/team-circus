@@ -7,7 +7,7 @@ import {
 	Stack,
 	Typography,
 } from "@mui/material";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { LoadingSpinner, MarkdownPreview } from "../components";
 import { useLanguage } from "../contexts/LanguageContext";
@@ -35,6 +35,13 @@ const formatDateTime = (value: string | number) => {
 };
 
 const PublicDocument = () => {
+	const createFallbackGuestId = useCallback(() => {
+		if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+			return crypto.randomUUID().slice(0, 8);
+		}
+		return `${Date.now().toString(16)}${Math.floor(Math.random() * 1e6).toString(16)}`.slice(0, 8);
+	}, []);
+
 	const { t } = useLanguage();
 	const theme = useTheme();
 	const location = useLocation();
@@ -61,11 +68,11 @@ const PublicDocument = () => {
 	);
 	const guestUser = useMemo(
 		() => ({
-			id: `guest-${sigParam.slice(0, 8) || Math.random().toString(16).slice(2, 10)}`,
+			id: `guest-${sigParam.slice(0, 8) || createFallbackGuestId()}`,
 			name: "Guest",
 			role: "viewer",
 		}),
-		[sigParam],
+		[createFallbackGuestId, sigParam],
 	);
 
 	const { content: liveContent } = useCollaborativeEditor({
