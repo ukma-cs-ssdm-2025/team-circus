@@ -1,8 +1,9 @@
 FROM golang:1.22 AS builder
 WORKDIR /app
 
-# Install task runner
-RUN go install github.com/go-task/task/v3/cmd/task@latest
+# Install a Task version compatible with Go 1.22 and the migrator binary directly
+ARG TASK_VERSION=v3.31.0
+RUN go install github.com/go-task/task/v3/cmd/task@${TASK_VERSION}
 
 # Copy go mod files first for better caching
 COPY backend/go.mod backend/go.sum ./
@@ -18,8 +19,8 @@ COPY backend/ .
 # Build the application
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags '-extldflags "-static"' -o ./bin/backend cmd/main.go
 
-# Install migrator
-RUN task install:migrator
+# Install migrator binary (avoids needing Task during build)
+RUN go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@v4.16.2
 
 # Production stage
 FROM debian:bookworm-slim

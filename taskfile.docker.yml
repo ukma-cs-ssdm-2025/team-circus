@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 
 tasks:
   default:
@@ -10,7 +10,7 @@ tasks:
     desc: Start all services
     cmds:
       - docker compose up -d
-  
+
   postgres:up:
     desc: Start postgres database
     cmds:
@@ -25,7 +25,7 @@ tasks:
     desc: Start backend
     cmds:
       - docker compose up -d backend
-  
+
   down:
     desc: Stop all services
     cmds:
@@ -45,12 +45,12 @@ tasks:
     desc: Stop backend
     cmds:
       - docker compose down backend
-  
+
   build:
     desc: Build all services
     cmds:
       - docker compose build
-  
+
   postgres:build:
     desc: Build postgres database
     cmds:
@@ -80,22 +80,22 @@ tasks:
     desc: Show backend logs
     cmds:
       - docker compose logs backend
-  
+
   postgres:inside:
     desc: Open postgres database shell
     cmds:
       - docker compose exec -it postgres bash
-    
+
   migrator:inside:
     desc: Open migrator shell
     cmds:
       - docker compose exec -it migrator bash
-    
+
   backend:inside:
     desc: Open backend shell
     cmds:
       - docker compose exec -it backend bash
-    
+
   ps:
     desc: Show all services
     cmds:
@@ -125,8 +125,7 @@ tasks:
           if [ -f .env.sample ]; then
             echo "Warning: .env file not found. Copying from .env.sample"
             cp .env.sample .env
-            echo "Error: Please edit .env file with your production values before continuing!"
-            exit 1
+            echo "Note: Please edit .env with your production values if you haven't already."
           else
             echo "Error: .env file not found and .env.sample does not exist."
             exit 1
