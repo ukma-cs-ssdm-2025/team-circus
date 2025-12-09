@@ -26,6 +26,9 @@ docs/
 node_modules/
 frontend/node_modules/
 
+# Go vendor directory (regenerated in Docker build)
+backend/vendor/
+
 # Build artifacts
 dist/
 build/
@@ -49,4 +52,3 @@ docker-compose.test.yml
 tmp/
 temp/
 *.tmp
-

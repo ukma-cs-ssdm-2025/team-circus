@@ -8,25 +8,19 @@ type ExportFormat = "md" | "html" | "pdf";
 type EditorHeaderProps = {
 	docName: string;
 	onNameChange: (name: string) => void;
-	onSave: () => void | Promise<void>;
 	onExport: (format: ExportFormat) => void;
-	isSaving: boolean;
-	isDirty: boolean;
 	wordCount: number;
 	readingTime: number;
-	saveStatus: "idle" | "saving" | "success" | "error";
+	isConnected: boolean;
 };
 
 export const EditorHeader = ({
 	docName,
 	onNameChange,
-	onSave,
 	onExport,
-	isSaving,
-	isDirty,
 	wordCount,
 	readingTime,
-	saveStatus,
+	isConnected,
 }: EditorHeaderProps) => {
 	const { t } = useLanguage();
 	const [isExportOpen, setIsExportOpen] = useState(false);
@@ -35,23 +29,13 @@ export const EditorHeader = ({
 		return new Intl.NumberFormat().format(wordCount);
 	}, [wordCount]);
 
-	const statusLabel = useMemo(() => {
-		if (saveStatus === "saving") {
-			return t("documentEditor.savingButton");
-		}
-		if (saveStatus === "success") {
-			return t("documentEditor.saveStatusSaved");
-		}
-		if (saveStatus === "error") {
-			return t("documentEditor.saveStatusError");
-		}
-		if (isDirty) {
-			return t("documentEditor.unsavedChanges");
-		}
-		return t("documentEditor.saveStatusIdle");
-	}, [isDirty, saveStatus, t]);
-
-	const isSaveDisabled = isSaving || !isDirty || docName.trim().length === 0;
+	const statusLabel = useMemo(
+		() =>
+			isConnected
+				? t("documentEditor.liveStatusConnected")
+				: t("documentEditor.liveStatusConnecting"),
+		[isConnected, t],
+	);
 
 	const exportOptions: { value: ExportFormat; label: string }[] = useMemo(
 		() => [
@@ -115,17 +99,6 @@ export const EditorHeader = ({
 						</div>
 					)}
 				</div>
-
-				<button
-					type="button"
-					className={styles.saveButton}
-					disabled={isSaveDisabled}
-					onClick={() => onSave()}
-				>
-					{isSaving
-						? t("documentEditor.savingButton")
-						: t("documentEditor.saveButton")}
-				</button>
 			</div>
 
 			<div className={styles.right}>
@@ -141,17 +114,11 @@ export const EditorHeader = ({
 				</div>
 				<div
 					className={`${styles.status} ${
-						saveStatus === "success"
-							? styles.success
-							: saveStatus === "error"
-								? styles.error
-								: styles.neutral
+						isConnected ? styles.success : styles.neutral
 					}`}
 					role="status"
 					aria-live="polite"
 				>
-					{saveStatus === "success" && <span className={styles.dot} aria-hidden />}
-					{saveStatus === "error" && <span className={styles.dot} aria-hidden />}
 					{statusLabel}
 				</div>
 			</div>

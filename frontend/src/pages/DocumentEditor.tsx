@@ -1,20 +1,21 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { useCallback } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import styles from "./DocumentEditor.module.css";
 import {
+	Editor,
 	EditorHeader,
 	EditorLayout,
 	ErrorAlert,
 	LoadingSpinner,
-	MarkdownEditor,
 	MarkdownPreview,
 } from "../components";
 import { ROUTES } from "../constants";
+import { useAuth } from "../contexts/AuthContextBase";
 import { useLanguage } from "../contexts/LanguageContext";
-import { useDebounce, useDocumentSync, useEditorState } from "../hooks";
+import { useCollaborativeEditor, useDebounce, useDocumentSync } from "../hooks";
 import type { BaseComponentProps } from "../types";
 
 type DocumentEditorProps = BaseComponentProps;
@@ -32,33 +33,97 @@ const DocumentEditor = ({ className = "" }: DocumentEditorProps) => {
 	const navigate = useNavigate();
 	const { uuid } = useParams<{ uuid: string }>();
 	const documentId = uuid ?? "";
+	const { user } = useAuth();
+
+	// Generate a stable anonymous session ID
+	const anonymousIdRef = useRef<string | null>(null);
+	const getAnonymousId = useCallback(() => {
+		if (anonymousIdRef.current) {
+			return anonymousIdRef.current;
+		}
+
+		// Try to get from sessionStorage first
+		const stored = sessionStorage.getItem("anonymous-session-id");
+		if (stored) {
+			anonymousIdRef.current = stored;
+			return stored;
+		}
+
+		// Generate new unique ID
+		const newId = crypto.randomUUID();
+		sessionStorage.setItem("anonymous-session-id", newId);
+		anonymousIdRef.current = newId;
+		return newId;
+	}, []);
+
+	const collaborativeUser = useMemo(
+		() => ({
+			id: user?.uuid ?? getAnonymousId(),
+			name:
+				user?.login ??
+				user?.email ??
+				`Anonymous (${getAnonymousId().slice(0, 8)})`,
+		}),
+		[user?.email, user?.login, user?.uuid, getAnonymousId],
+	);
 
 	const {
 		document: documentData,
 		loading,
 		error,
-		saveDocument,
 		refetch,
 	} = useDocumentSync(documentId);
 
-	const { state, handlers, computed } = useEditorState(documentData);
-	const debouncedContent = useDebounce(state.content, 300);
+	const [docName, setDocName] = useState(documentData?.name ?? "");
+
+	const {
+		content,
+		setContent,
+		isConnected,
+		remoteUsers,
+		updateCursorPosition,
+	} = useCollaborativeEditor({
+		documentId,
+		user: collaborativeUser,
+	});
+
+	useEffect(() => {
+		if (documentData?.name) {
+			setDocName(documentData.name);
+		}
+	}, [documentData?.name]);
+
+	const debouncedContent = useDebounce(content, 300);
+	const wordCount = useMemo(() => {
+		const trimmed = content.trim();
+		if (!trimmed) {
+			return 0;
+		}
+		return trimmed.split(/\s+/).filter(Boolean).length;
+	}, [content]);
+
+	const readingTime = useMemo(() => {
+		if (wordCount === 0) {
+			return 0;
+		}
+		return Math.ceil(wordCount / 200);
+	}, [wordCount]);
 
 	const buildFileName = useCallback(
 		(extension: string) => {
-			const safeTitle = state.name.trim() || t("documentEditor.fallbackTitle");
+			const safeTitle = docName.trim() || t("documentEditor.fallbackTitle");
 			const sanitized =
 				safeTitle.replace(/[\\/:*?"<>|]+/g, "").trim() || "document";
 			return `${sanitized}.${extension}`;
 		},
-		[state.name, t],
+		[docName, t],
 	);
 
 	const handleExport = useCallback(
 		(format: "md" | "html" | "pdf") => {
 			const fileName = buildFileName(format);
-			const markdown = state.content || "";
-			const rawTitle = state.name || t("documentEditor.fallbackTitle");
+			const markdown = content || "";
+			const rawTitle = docName || t("documentEditor.fallbackTitle");
 			const escapedTitle = escapeHtml(rawTitle);
 
 			const downloadFile = (content: string, type: string) => {
@@ -78,7 +143,7 @@ const DocumentEditor = ({ className = "" }: DocumentEditorProps) => {
 
 			const htmlBody = renderToStaticMarkup(
 				<article>
-					<h1>{state.name || t("documentEditor.fallbackTitle")}</h1>
+					<h1>{docName || t("documentEditor.fallbackTitle")}</h1>
 					<ReactMarkdown remarkPlugins={[remarkGfm]}>{markdown}</ReactMarkdown>
 				</article>,
 			);
@@ -98,38 +163,8 @@ const DocumentEditor = ({ className = "" }: DocumentEditorProps) => {
 			printable.focus();
 			printable.print();
 		},
-		[buildFileName, state.content, state.name, t],
+		[buildFileName, content, docName, t],
 	);
-
-	const handleSave = useCallback(async () => {
-		if (computed.isSaveDisabled || !documentId) {
-			return;
-		}
-
-		handlers.setSaveStatus("saving");
-		try {
-			const saved = await saveDocument({
-				name: state.name.trim(),
-				content: state.content,
-			});
-
-			handlers.markSaved({
-				name: saved.name ?? state.name.trim(),
-				content: saved.content ?? state.content,
-			});
-			handlers.setSaveStatus("success");
-		} catch (saveError) {
-			console.error("Failed to save document", saveError);
-			handlers.setSaveStatus("error");
-		}
-	}, [
-		computed.isSaveDisabled,
-		documentId,
-		handlers,
-		saveDocument,
-		state.content,
-		state.name,
-	]);
 
 	if (!documentId) {
 		return (
@@ -171,24 +206,25 @@ const DocumentEditor = ({ className = "" }: DocumentEditorProps) => {
 			{!loading && documentData && (
 				<div className={styles.content}>
 					<EditorHeader
-						docName={state.name}
-						onNameChange={handlers.setName}
-						onSave={handleSave}
+						docName={docName}
+						onNameChange={setDocName}
 						onExport={handleExport}
-						isSaving={state.saveStatus === "saving"}
-						isDirty={state.isDirty}
-						wordCount={state.wordCount}
-						readingTime={state.readingTime}
-						saveStatus={state.saveStatus}
+						isConnected={isConnected}
+						wordCount={wordCount}
+						readingTime={readingTime}
 					/>
 
 					<div className={styles.editorShell}>
 						<EditorLayout resizable={false} className={styles.editorLayout}>
-							<MarkdownEditor
-								value={state.content}
-								onChange={handlers.setContent}
-								placeholder={t("documentEditor.contentPlaceholder")}
-								onSave={handleSave}
+							<Editor
+								value={content}
+								onChange={setContent}
+								onCursorChange={updateCursorPosition}
+								isConnected={isConnected}
+								remoteUsers={remoteUsers.map((user) => ({
+									...user,
+									name: user.name ?? user.id,
+								}))}
 							/>
 							<MarkdownPreview
 								content={debouncedContent}

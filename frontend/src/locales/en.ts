@@ -140,6 +140,8 @@ export const en = {
 	"documentEditor.saveStatusIdle": "Up to date",
 	"documentEditor.unsavedChanges": "Unsaved changes",
 	"documentEditor.shortcutSave": "Ctrl/Cmd + S",
+	"documentEditor.liveStatusConnected": "Live sync via WebSocket",
+	"documentEditor.liveStatusConnecting": "Connecting live sync...",
 
 	// Group details page
 	"groupDetails.titleFallback": "Group",

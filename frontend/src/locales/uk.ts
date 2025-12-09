@@ -143,6 +143,8 @@ export const uk = {
 	"documentEditor.saveStatusIdle": "Актуально",
 	"documentEditor.unsavedChanges": "Є незбережені зміни",
 	"documentEditor.shortcutSave": "Ctrl/Cmd + S",
+	"documentEditor.liveStatusConnected": "Живий синхрон через WebSocket",
+	"documentEditor.liveStatusConnecting": "Підключення живого синхрону...",
 
 	// Group details page
 	"groupDetails.titleFallback": "Група",

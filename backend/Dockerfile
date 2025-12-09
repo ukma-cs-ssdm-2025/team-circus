@@ -9,11 +9,13 @@ COPY backend/go.mod backend/go.sum ./
 WORKDIR /app/backend
 
 # Download dependencies
-RUN go mod download 
-RUN go mod vendor
+RUN go mod download
 
 # Copy source code
 COPY backend/ .
+
+# Ensure vendor directory is up-to-date after copying source
+RUN go mod vendor
 
 # Build the application
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags '-extldflags "-static"' -o ./bin/backend cmd/main.go
