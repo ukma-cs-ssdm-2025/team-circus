@@ -27,6 +27,8 @@ type ClientConnection struct {
 	LastSeen   time.Time
 	// AwarenessID is the client id assigned by y-protocols/awareness
 	AwarenessID uint32
+	// CanEdit controls whether the client is allowed to apply document updates.
+	CanEdit bool
 }
 
 // DocumentHub manages all connections for single document

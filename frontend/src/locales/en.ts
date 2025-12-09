@@ -117,7 +117,7 @@ export const en = {
 	"documentEditor.contentLabel": "Document content",
 	"documentEditor.contentPlaceholder": "Write your Markdown content here...",
 	"documentEditor.previewTitle": "Live preview",
-	"documentEditor.previewEmpty": "Start typing to see a formatted preview.",
+	"documentEditor.previewEmpty": "Empty text.",
 	"documentEditor.createdAtLabel": "Created",
 	"documentEditor.saveButton": "Save changes",
 	"documentEditor.savingButton": "Saving...",

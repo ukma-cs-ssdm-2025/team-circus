@@ -11,6 +11,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { LoadingSpinner, MarkdownPreview } from "../components";
 import { useLanguage } from "../contexts/LanguageContext";
+import { useCollaborativeEditor } from "../hooks";
 import { fetchPublicDocument } from "../services";
 import type { DocumentItem } from "../types";
 import { useTheme } from "@mui/material/styles";
@@ -50,6 +51,32 @@ const PublicDocument = () => {
 	const docParam = params.get("doc") ?? "";
 	const sigParam = params.get("sig") ?? "";
 	const expParam = params.get("exp") ?? "";
+	const hasValidParams = Boolean(docParam && sigParam && expParam);
+	const roomParams = useMemo(
+		() => ({
+			sig: sigParam,
+			exp: expParam,
+		}),
+		[sigParam, expParam],
+	);
+	const guestUser = useMemo(
+		() => ({
+			id: `guest-${sigParam.slice(0, 8) || Math.random().toString(16).slice(2, 10)}`,
+			name: "Guest",
+			role: "viewer",
+		}),
+		[sigParam],
+	);
+
+	const { content: liveContent } = useCollaborativeEditor({
+		documentId: docParam || "unknown",
+		user: guestUser,
+		wsPath: "/ws/public/documents",
+		roomParams,
+		enabled: hasValidParams,
+	});
+	const displayContent =
+		(liveContent ?? "") !== "" ? liveContent : document?.content ?? "";
 
 	const expiresLabel = useMemo(() => {
 		if (!expParam) {
@@ -203,7 +230,7 @@ const PublicDocument = () => {
 									}}
 								>
 									<MarkdownPreview
-										content={document.content || ""}
+										content={displayContent}
 										emptyText={t("documentEditor.previewEmpty")}
 									/>
 								</Paper>

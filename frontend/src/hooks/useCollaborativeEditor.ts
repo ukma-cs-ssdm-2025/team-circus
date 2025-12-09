@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Awareness } from "y-protocols/awareness";
 import type * as Y from "yjs";
 import {
@@ -10,6 +10,10 @@ export interface UseCollaborativeEditorOptions {
 	documentId: string;
 	user: CollaborativeUser;
 	baseUrl?: string;
+	wsPath?: string;
+	wsParams?: Record<string, string>;
+	roomParams?: Record<string, string>;
+	enabled?: boolean;
 }
 
 export interface AwarenessState {
@@ -17,6 +21,7 @@ export interface AwarenessState {
 		id: string;
 		name?: string;
 		color?: string;
+		role?: string;
 	};
 	cursor?: number;
 	cursorPosition?: number;
@@ -27,10 +32,29 @@ export interface RemoteUser {
 	name?: string;
 	color?: string;
 	cursorPosition?: number;
+	role?: string;
 }
 
 export function useCollaborativeEditor(options: UseCollaborativeEditorOptions) {
-	const { documentId, user, baseUrl } = options;
+	const {
+		documentId,
+		user,
+		baseUrl,
+		wsPath,
+		wsParams,
+		roomParams,
+		enabled = true,
+	} = options;
+	const wsParamsKey = useMemo(
+		() => JSON.stringify(wsParams ?? {}),
+		[wsParams],
+	);
+	const roomParamsKey = useMemo(
+		() => JSON.stringify(roomParams ?? {}),
+		[roomParams],
+	);
+	const normalizedWsParams = useMemo(() => wsParams, [wsParamsKey]);
+	const normalizedRoomParams = useMemo(() => roomParams, [roomParamsKey]);
 	const [content, setContentState] = useState("");
 	const [isConnected, setIsConnected] = useState(false);
 	const [remoteUsers, setRemoteUsers] = useState<RemoteUser[]>([]);
@@ -56,6 +80,7 @@ export function useCollaborativeEditor(options: UseCollaborativeEditorOptions) {
 					name: user.name,
 					color: user.color,
 					cursorPosition: state.cursor ?? state.cursorPosition,
+					role: user.role,
 				});
 			});
 
@@ -63,15 +88,28 @@ export function useCollaborativeEditor(options: UseCollaborativeEditorOptions) {
 	}, []);
 
 	useEffect(() => {
+		if (!enabled) {
+			if (providerRef.current) {
+				providerRef.current.destroy();
+				providerRef.current = null;
+			}
+			setContentState("");
+			setRemoteUsers([]);
+			setIsConnected(false);
+			setYDoc(null);
+			return;
+		}
+
 		if (!documentId || !user?.id) {
 			return;
 		}
 
-		const collaborativeProvider = new YjsCollaborativeEditor(
-			documentId,
-			user,
+		const collaborativeProvider = new YjsCollaborativeEditor(documentId, user, {
 			baseUrl,
-		);
+			path: wsPath,
+			queryParams: normalizedWsParams,
+			roomParams: normalizedRoomParams,
+		});
 		providerRef.current = collaborativeProvider;
 		const text = collaborativeProvider.getText();
 		const awareness = collaborativeProvider.getProvider().awareness;
@@ -103,7 +141,18 @@ export function useCollaborativeEditor(options: UseCollaborativeEditorOptions) {
 			setIsConnected(false);
 			setRemoteUsers([]);
 		};
-	}, [baseUrl, documentId, syncRemoteUsers, user]);
+	}, [
+		baseUrl,
+		documentId,
+		enabled,
+		syncRemoteUsers,
+		user,
+		normalizedWsParams,
+		wsParamsKey,
+		wsPath,
+		normalizedRoomParams,
+		roomParamsKey,
+	]);
 
 	const setContent = useCallback((value: string) => {
 		const target = providerRef.current?.getText();

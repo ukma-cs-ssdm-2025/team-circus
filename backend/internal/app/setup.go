@@ -133,5 +133,15 @@ func (a *App) setupRouter() *gin.Engine {
 			a.cfg.CORS.AllowOrigins,
 		))
 	}
+
+	wsPublic := router.Group("/ws/public")
+	{
+		wsPublic.GET("/documents/:uuid", websockethandler.NewPublicWebSocketHandler(
+			documentService,
+			wsHubManager,
+			a.l,
+			a.cfg.CORS.AllowOrigins,
+		))
+	}
 	return router
 }

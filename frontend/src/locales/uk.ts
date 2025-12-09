@@ -120,8 +120,7 @@ export const uk = {
 	"documentEditor.contentLabel": "Вміст документа",
 	"documentEditor.contentPlaceholder": "Напишіть текст у форматі Markdown...",
 	"documentEditor.previewTitle": "Попередній перегляд",
-	"documentEditor.previewEmpty":
-		"Почніть вводити текст, щоб побачити попередній перегляд.",
+	"documentEditor.previewEmpty": "Порожній текст.",
 	"documentEditor.createdAtLabel": "Створено",
 	"documentEditor.saveButton": "Зберегти зміни",
 	"documentEditor.savingButton": "Збереження...",

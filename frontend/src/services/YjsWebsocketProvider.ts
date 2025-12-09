@@ -8,6 +8,14 @@ export type CollaborativeUser = {
   color?: string;
   cursor?: number;
   cursorPosition?: number;
+  role?: string;
+};
+
+type ProviderOptions = {
+  baseUrl?: string;
+  path?: string;
+  queryParams?: Record<string, string>;
+  roomParams?: Record<string, string>;
 };
 
 export class YjsCollaborativeEditor {
@@ -15,12 +23,18 @@ export class YjsCollaborativeEditor {
   private text: Y.Text;
   private provider: WebsocketProvider;
 
-  constructor(documentId: string, user: CollaborativeUser, baseUrl?: string) {
+  constructor(
+    documentId: string,
+    user: CollaborativeUser,
+    options?: ProviderOptions,
+  ) {
     this.doc = new Y.Doc();
     this.text = this.doc.getText("content");
-    const wsUrl = this.buildWebsocketUrl(documentId, baseUrl);
+    const { roomParams, ...restOptions } = options || {};
+    const wsUrl = this.buildWebsocketUrl(documentId, restOptions);
+    const roomName = this.buildRoomName(documentId, roomParams);
 
-    this.provider = new WebsocketProvider(wsUrl, documentId, this.doc, {
+    this.provider = new WebsocketProvider(wsUrl, roomName, this.doc, {
       connect: true,
     });
 
@@ -28,6 +42,7 @@ export class YjsCollaborativeEditor {
       id: user.id,
       name: user.name || user.id,
       color: user.color || randomColor(user.id),
+      role: user.role,
     });
   }
 
@@ -48,13 +63,29 @@ export class YjsCollaborativeEditor {
     this.doc.destroy();
   }
 
-  private buildWebsocketUrl(_documentId: string, baseUrl?: string) {
+  private buildWebsocketUrl(
+    _documentId: string,
+    options: ProviderOptions = {},
+  ) {
+    const { baseUrl, path, queryParams } = options;
     const endpoint = baseUrl || ENV.API_BASE_URL;
     const url = new URL(endpoint);
     url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
     // y-websocket appends the room to the URL; keep base path without the id
-    url.pathname = "/ws/documents";
+    url.pathname = path || "/ws/documents";
+    if (queryParams && Object.keys(queryParams).length > 0) {
+      const search = new URLSearchParams(queryParams);
+      url.search = search.toString();
+    }
     return url.toString();
+  }
+
+  private buildRoomName(documentId: string, roomParams?: Record<string, string>) {
+    if (!roomParams || Object.keys(roomParams).length === 0) {
+      return documentId;
+    }
+    const search = new URLSearchParams(roomParams);
+    return `${documentId}?${search.toString()}`;
   }
 }
 

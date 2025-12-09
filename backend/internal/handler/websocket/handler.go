@@ -78,6 +78,7 @@ func createUpgrader(allowedOrigins []string) websocket.Upgrader {
 
 type documentAccessService interface {
 	GetByUUIDForUser(ctx context.Context, documentUUID, userUUID uuid.UUID) (*domain.Document, error)
+	GetMemberRole(ctx context.Context, documentUUID, userUUID uuid.UUID) (string, error)
 }
 
 // NewWebSocketHandler upgrades HTTP connections to collaborative WebSocket sessions.
@@ -136,6 +137,20 @@ func NewWebSocketHandler(
 			awarenessID = crc32.ChecksumIEEE([]byte(strconv.FormatInt(time.Now().UnixNano(), 10)))
 		}
 
+	role, err := documentService.GetMemberRole(c.Request.Context(), documentID, userUUID)
+	if err != nil {
+		if errors.Is(err, domain.ErrForbidden) {
+			c.JSON(http.StatusForbidden, gin.H{"error": "access forbidden"})
+			return
+		}
+		if !errors.Is(err, domain.ErrDocumentNotFound) {
+			logger.Error("failed to resolve member role for websocket client", zap.Error(err))
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to open websocket"})
+			return
+		}
+	}
+	canEdit := role != domain.RoleViewer
+
 		client := &ClientConnection{
 			ID:          uuid.New(),
 			UserID:      userUUID,
@@ -146,6 +161,7 @@ func NewWebSocketHandler(
 			Done:        make(chan struct{}),
 			LastSeen:    time.Now(),
 			AwarenessID: awarenessID,
+			CanEdit:     canEdit,
 		}
 
 		hub := hubManager.GetOrCreateHub(documentID)
@@ -309,6 +325,15 @@ func handleClientMessage(
 	case MessageTypeAwareness:
 		handleAwareness(hub, client, message)
 	default:
+		if msgType == YjsUpdate && !client.CanEdit {
+			logger.Debug(
+				"blocking update from read-only client",
+				zap.String("document_id", hub.DocumentID.String()),
+				zap.String("client_id", client.ID.String()),
+			)
+			return
+		}
+
 		select {
 		case hub.Broadcast <- message:
 		default:
