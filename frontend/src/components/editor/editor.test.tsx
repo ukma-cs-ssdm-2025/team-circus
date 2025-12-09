@@ -1,4 +1,4 @@
-import { normalizeLines, toCursorLocation } from "./Editor";
+import { normalizeLines, toCursorLocation } from "./utils";
 import type { RemoteUserPresence } from "./types";
 
 type TestCase = {
@@ -8,7 +8,9 @@ type TestCase = {
 
 const assertEqual = (received: unknown, expected: unknown) => {
 	if (received !== expected) {
-		throw new Error(`Expected ${expected as string}, got ${received as string}`);
+		throw new Error(
+			`Expected ${expected as string}, got ${received as string}`,
+		);
 	}
 };
 
@@ -82,7 +84,10 @@ const tests: TestCase[] = [
 				name: "Taylor",
 				cursorPosition: 200,
 			};
-			assertDeepEqual(toCursorLocation(["short"], user), { line: 0, column: 5 });
+			assertDeepEqual(toCursorLocation(["short"], user), {
+				line: 0,
+				column: 5,
+			});
 		},
 	},
 ];
@@ -91,10 +96,8 @@ const tests: TestCase[] = [
 tests.forEach((testCase) => {
 	try {
 		testCase.run();
-		// eslint-disable-next-line no-console
 		console.info(`[editor.test] ✅ ${testCase.name}`);
 	} catch (error) {
-		// eslint-disable-next-line no-console
 		console.error(`[editor.test] ❌ ${testCase.name}`, error);
 		throw error;
 	}

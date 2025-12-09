@@ -103,7 +103,7 @@ export function useCollaborativeEditor(options: UseCollaborativeEditorOptions) {
 			setIsConnected(false);
 			setRemoteUsers([]);
 		};
-	}, [baseUrl, documentId, syncRemoteUsers, user?.color, user?.id, user?.name]);
+	}, [baseUrl, documentId, syncRemoteUsers, user]);
 
 	const setContent = useCallback((value: string) => {
 		const target = providerRef.current?.getText();

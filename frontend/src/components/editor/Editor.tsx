@@ -11,8 +11,9 @@ import {
 	useState,
 } from "react";
 import { useTheme } from "../../contexts/ThemeContext";
-import type { CursorLocation, EditorProps, RemoteUserPresence } from "./types";
+import type { CursorLocation, EditorProps } from "./types";
 import "./editor.css";
+import { normalizeLines, toCursorLocation } from "./utils";
 
 const ZERO_WIDTH_SPACE = "\u200b";
 const computeAbsoluteOffset = (
@@ -25,16 +26,6 @@ const computeAbsoluteOffset = (
 		offset += (currentLines[i]?.length ?? 0) + 1;
 	}
 	return offset;
-};
-
-export const normalizeLines = (value: string | string[]): string[] => {
-	if (Array.isArray(value)) {
-		return value.length > 0 ? value : [""];
-	}
-
-	const safeValue = value ?? "";
-	const rows = safeValue.replace(/\r\n/g, "\n").split("\n");
-	return rows.length > 0 ? rows : [""];
 };
 
 const getActiveLineIndex = (container: HTMLElement): number | null => {
@@ -103,51 +94,6 @@ const moveCaretTo = (element: HTMLElement, offset: number) => {
 	range.collapse(true);
 	selection.removeAllRanges();
 	selection.addRange(range);
-};
-
-export const toCursorLocation = (
-	lines: string[],
-	user: RemoteUserPresence,
-): CursorLocation | undefined => {
-	if (user.cursorLocation) {
-		return user.cursorLocation;
-	}
-	if (typeof user.cursorPosition !== "number") {
-		return undefined;
-	}
-
-	// Handle empty lines array
-	if (lines.length === 0) {
-		return { line: 0, column: 0 };
-	}
-
-	// Calculate total characters including newlines
-	const totalChars =
-		lines.reduce((sum, line) => sum + line.length, 0) +
-		Math.max(0, lines.length - 1);
-
-	// Clamp cursor position to valid range
-	const clampedPosition = Math.max(
-		0,
-		Math.min(user.cursorPosition, totalChars),
-	);
-
-	let remaining = clampedPosition;
-	for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
-		const length = lines[lineIndex]?.length ?? 0;
-		if (remaining <= length) {
-			return { line: lineIndex, column: remaining };
-		}
-		remaining -= length + 1; // +1 for newline
-	}
-
-	// Fallback: clamp to last line's length
-	const lastLineIndex = lines.length - 1;
-	const lastLineLength = lines[lastLineIndex]?.length ?? 0;
-	return {
-		line: lastLineIndex,
-		column: Math.min(remaining, lastLineLength),
-	};
 };
 
 const lineKey = (index: number) => index;
