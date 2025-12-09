@@ -137,19 +137,19 @@ func NewWebSocketHandler(
 			awarenessID = crc32.ChecksumIEEE([]byte(strconv.FormatInt(time.Now().UnixNano(), 10)))
 		}
 
-	role, err := documentService.GetMemberRole(c.Request.Context(), documentID, userUUID)
-	if err != nil {
-		if errors.Is(err, domain.ErrForbidden) {
-			c.JSON(http.StatusForbidden, gin.H{"error": "access forbidden"})
-			return
+		role, err := documentService.GetMemberRole(c.Request.Context(), documentID, userUUID)
+		if err != nil {
+			if errors.Is(err, domain.ErrForbidden) {
+				c.JSON(http.StatusForbidden, gin.H{"error": "access forbidden"})
+				return
+			}
+			if !errors.Is(err, domain.ErrDocumentNotFound) {
+				logger.Error("failed to resolve member role for websocket client", zap.Error(err))
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to open websocket"})
+				return
+			}
 		}
-		if !errors.Is(err, domain.ErrDocumentNotFound) {
-			logger.Error("failed to resolve member role for websocket client", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to open websocket"})
-			return
-		}
-	}
-	canEdit := role != domain.RoleViewer
+		canEdit := role != domain.RoleViewer
 
 		client := &ClientConnection{
 			ID:          uuid.New(),
