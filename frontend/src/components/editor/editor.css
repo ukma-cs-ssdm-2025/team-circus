@@ -46,7 +46,6 @@
 .editor-frame {
 	display: flex;
 	flex-direction: column;
-	gap: 12px;
 	height: 100%;
 	background: var(--color-bg-primary);
 	border: 1px solid var(--color-border-primary);
@@ -67,6 +66,26 @@
 	border-bottom: 1px solid var(--color-border-primary);
 }
 
+.editor-body {
+	display: flex;
+	height: 100%;
+	background: var(--color-bg-primary);
+	color: var(--color-text-primary);
+	min-height: 380px;
+}
+
+.editor-pane {
+	flex: 1;
+	min-width: 0;
+	padding: 12px;
+	background: var(--color-bg-primary);
+}
+
+.editor-host {
+	height: 100%;
+	min-height: 360px;
+}
+
 .editor-status-badge {
 	display: inline-flex;
 	align-items: center;
@@ -78,7 +97,8 @@
 	text-transform: uppercase;
 	color: var(--color-text-primary);
 	background: color-mix(in srgb, var(--color-cursor-other-2) 18%, transparent);
-	border: 1px solid color-mix(in srgb, var(--color-cursor-other-2) 35%, transparent);
+	border: 1px solid
+		color-mix(in srgb, var(--color-cursor-other-2) 35%, transparent);
 }
 
 .editor-status-dot {
@@ -86,7 +106,8 @@
 	height: 8px;
 	border-radius: 50%;
 	background: var(--color-cursor-other-2);
-	box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-cursor-other-2) 15%, transparent);
+	box-shadow: 0 0 0 4px
+		color-mix(in srgb, var(--color-cursor-other-2) 15%, transparent);
 }
 
 .editor-toolbar-subtle {
@@ -118,7 +139,8 @@
 }
 
 .editor-line-number {
-	font-family: "Monaco", "Courier New", "SFMono-Regular", ui-monospace, monospace;
+	font-family:
+		"Monaco", "Courier New", "SFMono-Regular", ui-monospace, monospace;
 	font-size: 14px;
 	line-height: var(--editor-line-height);
 	height: var(--editor-line-height);
@@ -127,13 +149,19 @@
 	justify-content: flex-end;
 	padding-right: 6px;
 	border-radius: 6px;
-	transition: background-color var(--editor-transition), color var(--editor-transition);
+	transition:
+		background-color var(--editor-transition),
+		color var(--editor-transition);
 	font-variant-numeric: tabular-nums;
 }
 
 .editor-line-number.active {
 	color: var(--color-line-number-active);
-	background: color-mix(in srgb, var(--color-line-number-active) 18%, transparent);
+	background: color-mix(
+		in srgb,
+		var(--color-line-number-active) 18%,
+		transparent
+	);
 	font-weight: 700;
 }
 
@@ -149,7 +177,8 @@
 	flex: 1;
 	padding: 12px 16px;
 	overflow: auto;
-	font-family: "Monaco", "Courier New", "SFMono-Regular", ui-monospace, monospace;
+	font-family:
+		"Monaco", "Courier New", "SFMono-Regular", ui-monospace, monospace;
 	font-size: 14px;
 	line-height: var(--editor-line-height);
 	white-space: pre-wrap;
@@ -177,7 +206,9 @@
 	border-radius: 6px;
 	position: relative;
 	outline: none;
-	transition: background-color var(--editor-transition), border-color var(--editor-transition);
+	transition:
+		background-color var(--editor-transition),
+		border-color var(--editor-transition);
 }
 
 .editor-line:focus-visible {
@@ -186,7 +217,11 @@
 }
 
 .editor-line.active {
-	background: color-mix(in srgb, var(--color-line-number-active) 12%, transparent);
+	background: color-mix(
+		in srgb,
+		var(--color-line-number-active) 12%,
+		transparent
+	);
 }
 
 .editor-line:hover {
@@ -208,12 +243,20 @@
 }
 
 .editor-content-area::-webkit-scrollbar-thumb {
-	background: color-mix(in srgb, var(--color-border-secondary) 70%, transparent);
+	background: color-mix(
+		in srgb,
+		var(--color-border-secondary) 70%,
+		transparent
+	);
 	border-radius: 10px;
 }
 
 .editor-content-area::-webkit-scrollbar-thumb:hover {
-	background: color-mix(in srgb, var(--color-border-secondary) 90%, transparent);
+	background: color-mix(
+		in srgb,
+		var(--color-border-secondary) 90%,
+		transparent
+	);
 }
 
 .editor-content-overlay {
@@ -242,7 +285,8 @@
 	color: var(--color-text-primary);
 	background: color-mix(in srgb, var(--color-bg-secondary) 80%, transparent);
 	backdrop-filter: blur(6px);
-	border: 1px solid color-mix(in srgb, var(--color-border-secondary) 70%, transparent);
+	border: 1px solid
+		color-mix(in srgb, var(--color-border-secondary) 70%, transparent);
 	white-space: nowrap;
 }
 
@@ -406,7 +450,8 @@
 	color: var(--color-text-primary);
 	border-color: var(--color-border-primary);
 	background: color-mix(in srgb, var(--color-bg-tertiary) 70%, transparent);
-	box-shadow: 0 6px 20px color-mix(in srgb, var(--color-bg-tertiary) 35%, transparent);
+	box-shadow: 0 6px 20px
+		color-mix(in srgb, var(--color-bg-tertiary) 35%, transparent);
 }
 
 .remote-panel-toggle svg {

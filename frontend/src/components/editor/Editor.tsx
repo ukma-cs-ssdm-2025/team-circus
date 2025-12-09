@@ -1,102 +1,106 @@
+import { Compartment, EditorState } from "@codemirror/state";
+import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import {
-	type ClipboardEvent,
-	type FormEvent,
-	type KeyboardEvent,
-	type UIEvent,
-	useLayoutEffect,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from "react";
+	drawSelection,
+	dropCursor,
+	EditorView,
+	highlightActiveLine,
+	highlightActiveLineGutter,
+	keymap,
+	lineNumbers,
+	rectangularSelection,
+} from "@codemirror/view";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTheme } from "../../contexts/ThemeContext";
 import type { CursorLocation, EditorProps } from "./types";
 import "./editor.css";
 import { normalizeLines, toCursorLocation } from "./utils";
 
-const ZERO_WIDTH_SPACE = "\u200b";
-const computeAbsoluteOffset = (
-	lineIndex: number,
-	caretOffset: number,
-	currentLines: string[],
-) => {
-	let offset = caretOffset;
-	for (let i = 0; i < lineIndex; i += 1) {
-		offset += (currentLines[i]?.length ?? 0) + 1;
-	}
-	return offset;
+type Palette = {
+	background: string;
+	foreground: string;
+	gutterBackground: string;
+	gutterText: string;
+	gutterActive: string;
+	border: string;
+	selection: string;
+	cursor: string;
+	activeLine: string;
 };
 
-const getActiveLineIndex = (container: HTMLElement): number | null => {
-	const selection = window.getSelection();
-	if (!selection?.anchorNode) {
-		return null;
-	}
+const createPalette = (mode: "light" | "dark"): Palette =>
+	mode === "light"
+		? {
+				background: "#ffffff",
+				foreground: "#18181b",
+				gutterBackground: "#f9fafb",
+				gutterText: "#a1a1a6",
+				gutterActive: "#3b82f6",
+				border: "#e4e4e7",
+				selection: "rgba(59, 130, 246, 0.28)",
+				cursor: "#3b82f6",
+				activeLine: "rgba(59, 130, 246, 0.12)",
+			}
+		: {
+				background: "#0f172a",
+				foreground: "#e2e8f0",
+				gutterBackground: "#0a0a0a",
+				gutterText: "#64748b",
+				gutterActive: "#60a5fa",
+				border: "#334155",
+				selection: "rgba(96, 165, 250, 0.4)",
+				cursor: "#60a5fa",
+				activeLine: "rgba(96, 165, 250, 0.12)",
+			};
 
-	const anchorElement =
-		selection.anchorNode instanceof HTMLElement
-			? selection.anchorNode
-			: selection.anchorNode?.parentElement;
-	if (!anchorElement) {
-		return null;
-	}
-
-	const lineElement = anchorElement.closest<HTMLElement>(".editor-line");
-	if (!lineElement || !container.contains(lineElement)) {
-		return null;
-	}
-
-	const index = Number.parseInt(
-		lineElement.dataset.lineIndex ??
-			lineElement.getAttribute("data-line-index") ??
-			"",
-		10,
+const buildTheme = (mode: "light" | "dark") => {
+	const palette = createPalette(mode);
+	return EditorView.theme(
+		{
+			"&": {
+				backgroundColor: palette.background,
+				color: palette.foreground,
+			},
+			"&.cm-editor": {
+				border: `1px solid ${palette.border}`,
+				borderRadius: "12px",
+			},
+			"&.cm-editor.cm-focused": {
+				outline: `1px solid ${palette.gutterActive}`,
+				outlineOffset: "2px",
+			},
+			".cm-scroller": {
+				fontFamily:
+					'"Monaco", "Courier New", "SFMono-Regular", ui-monospace, monospace',
+				lineHeight: "1.6",
+				scrollbarColor: `${palette.border} transparent`,
+			},
+			".cm-content": {
+				caretColor: palette.cursor,
+				minHeight: "320px",
+			},
+			".cm-selectionBackground, .cm-content ::selection": {
+				backgroundColor: palette.selection,
+			},
+			".cm-activeLine": {
+				backgroundColor: palette.activeLine,
+			},
+			".cm-cursor": {
+				borderLeftColor: palette.cursor,
+			},
+			".cm-gutters": {
+				backgroundColor: palette.gutterBackground,
+				color: palette.gutterText,
+				borderRight: `1px solid ${palette.border}`,
+			},
+			".cm-activeLineGutter": {
+				color: palette.gutterActive,
+				fontWeight: "700",
+			},
+		},
+		{ dark: mode === "dark" },
 	);
-	return Number.isNaN(index) ? null : index;
 };
-
-const caretOffsetWithin = (element: HTMLElement): number => {
-	const selection = window.getSelection();
-	if (!selection || selection.rangeCount === 0) {
-		return element.innerText.replaceAll(ZERO_WIDTH_SPACE, "").length;
-	}
-
-	const range = selection.getRangeAt(0);
-	const preSelectionRange = range.cloneRange();
-	preSelectionRange.selectNodeContents(element);
-	preSelectionRange.setEnd(range.endContainer, range.endOffset);
-	return preSelectionRange.toString().replaceAll(ZERO_WIDTH_SPACE, "").length;
-};
-
-const moveCaretTo = (element: HTMLElement, offset: number) => {
-	if (!element) {
-		return;
-	}
-	const selection = window.getSelection();
-	if (!selection) {
-		return;
-	}
-
-	const targetNode = element.firstChild ?? element;
-	if (!targetNode) {
-		return;
-	}
-	const textLength = element.textContent?.length ?? 0;
-	const clampedOffset = Math.max(0, Math.min(offset, textLength));
-
-	const range = document.createRange();
-	try {
-		range.setStart(targetNode, clampedOffset);
-	} catch {
-		range.setStart(element, element.childNodes.length);
-	}
-	range.collapse(true);
-	selection.removeAllRanges();
-	selection.addRange(range);
-};
-
-const lineKey = (index: number) => index;
 
 export const Editor = ({
 	value,
@@ -111,311 +115,97 @@ export const Editor = ({
 	colorScheme,
 }: EditorProps) => {
 	const { theme } = useTheme();
-	const scheme = colorScheme ?? theme ?? "light";
+	const scheme = colorScheme ?? theme ?? "dark";
 
-	const [lines, setLines] = useState<string[]>(() =>
-		normalizeLines(value ?? defaultValue),
-	);
-	const [activeLine, setActiveLine] = useState(0);
 	const [presenceVisible, setPresenceVisible] = useState(showPresence);
-
-	const contentRef = useRef<HTMLDivElement | null>(null);
-	const lineNumberRef = useRef<HTMLDivElement | null>(null);
-	const lastEmittedValue = useRef(lines.join("\n"));
-	const linesRef = useRef(lines);
-	const lastCursorOffset = useRef<number | null>(null);
-	const pendingCaret = useRef<{ line: number; offset: number } | null>(null);
+	const hostRef = useRef<HTMLDivElement | null>(null);
+	const viewRef = useRef<EditorView | null>(null);
+	const themeCompartmentRef = useRef(new Compartment());
+	const updatingFromProps = useRef(false);
+	const lastCursorPosition = useRef<number | null>(null);
+	const initialDocRef = useRef(value ?? defaultValue ?? "");
 
 	useEffect(() => {
 		setPresenceVisible(showPresence);
 	}, [showPresence]);
 
-	// keep external value in sync
 	useEffect(() => {
-		if (value === undefined) {
-			return;
-		}
-		const nextLines = normalizeLines(value);
-		const joined = nextLines.join("\n");
-		if (joined !== lastEmittedValue.current) {
-			setLines(nextLines);
-			lastEmittedValue.current = joined;
-		}
-	}, [value]);
-
-	useEffect(() => {
-		linesRef.current = lines;
-	}, [lines]);
-
-	const syncSelectionState = useCallback(() => {
-		if (!contentRef.current) {
-			return;
-		}
-		const next = getActiveLineIndex(contentRef.current);
-		if (next === null) {
-			return;
-		}
-		const clamped = Math.min(next, Math.max(linesRef.current.length - 1, 0));
-		setActiveLine(clamped);
-
-		if (!onCursorChange) {
-			return;
+		if (!hostRef.current) {
+			return undefined;
 		}
 
-		const lineElement = contentRef.current.querySelector<HTMLElement>(
-			`.editor-line[data-line-index="${clamped}"]`,
-		);
-		const caret = lineElement ? caretOffsetWithin(lineElement) : 0;
-		const absolute = computeAbsoluteOffset(clamped, caret, linesRef.current);
-		if (lastCursorOffset.current !== absolute) {
-			lastCursorOffset.current = absolute;
-			requestAnimationFrame(() => onCursorChange(absolute));
-		}
-	}, [onCursorChange]);
+		const themeCompartment = themeCompartmentRef.current;
+		const state = EditorState.create({
+			doc: initialDocRef.current,
+			extensions: [
+				lineNumbers(),
+				highlightActiveLine(),
+				highlightActiveLineGutter(),
+				drawSelection(),
+				dropCursor(),
+				rectangularSelection(),
+				history(),
+				keymap.of([...defaultKeymap, ...historyKeymap]),
+				themeCompartment.of(buildTheme(scheme)),
+				EditorView.contentAttributes.of({
+					"aria-label": ariaLabel,
+					spellcheck: "false",
+					"data-testid": "team-circus-editor",
+				}),
+				EditorView.updateListener.of((update) => {
+					if (update.docChanged && onChange && !updatingFromProps.current) {
+						onChange(update.state.doc.toString());
+					}
 
-	useEffect(() => {
-		const lastIndex = Math.max(lines.length - 1, 0);
-		if (activeLine > lastIndex) {
-			setActiveLine(lastIndex);
-		}
-	}, [activeLine, lines.length]);
+					if (!onCursorChange) {
+						return;
+					}
+					if (update.selectionSet || update.docChanged) {
+						const position = update.state.selection.main.head;
+						if (lastCursorPosition.current !== position) {
+							lastCursorPosition.current = position;
+							onCursorChange(position);
+						}
+					}
+				}),
+			],
+		});
 
-	useEffect(() => {
-		document.addEventListener("selectionchange", syncSelectionState);
-		return () =>
-			document.removeEventListener("selectionchange", syncSelectionState);
-	}, [syncSelectionState]);
+		viewRef.current = new EditorView({
+			state,
+			parent: hostRef.current,
+		});
+
+		return () => {
+			viewRef.current?.destroy();
+			viewRef.current = null;
+		};
+	}, [ariaLabel, onChange, onCursorChange, scheme]);
 
 	useEffect(() => {
-		if (!contentRef.current || !lineNumberRef.current) {
+		if (!viewRef.current) {
 			return;
 		}
-		lineNumberRef.current.scrollTop = contentRef.current.scrollTop;
-	}, [lines.length]);
+		const nextDoc = value ?? defaultValue ?? "";
+		const currentDoc = viewRef.current.state.doc.toString();
+		if (nextDoc === currentDoc) {
+			return;
+		}
+		updatingFromProps.current = true;
+		viewRef.current.dispatch({
+			changes: { from: 0, to: currentDoc.length, insert: nextDoc },
+		});
+		updatingFromProps.current = false;
+	}, [defaultValue, value]);
 
 	useEffect(() => {
-		requestAnimationFrame(syncSelectionState);
-	}, [lines.length, syncSelectionState]);
-
-	useLayoutEffect(() => {
-		if (!pendingCaret.current || !contentRef.current) {
+		if (!viewRef.current) {
 			return;
 		}
-		const { line, offset } = pendingCaret.current;
-		const target = contentRef.current.querySelector<HTMLElement>(
-			`.editor-line[data-line-index="${line}"]`,
-		);
-		if (target) {
-			target.focus();
-			moveCaretTo(target, offset);
-		}
-		pendingCaret.current = null;
-	}, [lines]);
-
-	const emitChange = useCallback(
-		(nextLines: string[]) => {
-			const joined = nextLines.join("\n");
-			lastEmittedValue.current = joined;
-			onChange?.(joined);
-		},
-		[onChange],
-	);
-
-	const updateLines = useCallback(
-		(updater: (prev: string[]) => string[]) => {
-			setLines((prev) => {
-				const next = updater(prev);
-				emitChange(next);
-				return next;
-			});
-		},
-		[emitChange],
-	);
-
-	const focusLine = useCallback((index: number, offset = 0) => {
-		const target = contentRef.current?.querySelector<HTMLElement>(
-			`.editor-line[data-line-index="${index}"]`,
-		);
-		if (!target) {
-			return;
-		}
-		target.focus();
-		requestAnimationFrame(() => moveCaretTo(target, offset));
-	}, []);
-
-	const handleInput = useCallback(
-		(index: number, event: FormEvent<HTMLDivElement>) => {
-			const caret = caretOffsetWithin(event.currentTarget);
-			const text = (event.currentTarget.innerText ?? "")
-				.replace(/\n/g, "")
-				.replaceAll(ZERO_WIDTH_SPACE, "");
-			pendingCaret.current = { line: index, offset: caret };
-			updateLines((prev) => {
-				const next = [...prev];
-				next[index] = text;
-				return normalizeLines(next);
-			});
-			setActiveLine(index);
-			requestAnimationFrame(() => {
-				moveCaretTo(event.currentTarget, caret);
-				requestAnimationFrame(syncSelectionState);
-			});
-		},
-		[syncSelectionState, updateLines],
-	);
-
-	const handleEnter = useCallback(
-		(index: number, event: KeyboardEvent<HTMLDivElement>) => {
-			event.preventDefault();
-			const target = event.currentTarget;
-			const text = (target.innerText ?? "")
-				.replace(/\n/g, "")
-				.replaceAll(ZERO_WIDTH_SPACE, "");
-			const caret = caretOffsetWithin(target);
-			pendingCaret.current = { line: index + 1, offset: 0 };
-
-			updateLines((prev) => {
-				const next = [...prev];
-				const before = text.slice(0, caret);
-				const after = text.slice(caret);
-				next[index] = before;
-				next.splice(index + 1, 0, after);
-				return normalizeLines(next);
-			});
-
-			requestAnimationFrame(() => {
-				focusLine(index + 1, 0);
-				requestAnimationFrame(syncSelectionState);
-			});
-		},
-		[focusLine, syncSelectionState, updateLines],
-	);
-
-	const handleBackspace = useCallback(
-		(index: number, event: KeyboardEvent<HTMLDivElement>) => {
-			const target = event.currentTarget;
-			const caret = caretOffsetWithin(target);
-			if (caret !== 0 || index === 0) {
-				return;
-			}
-
-			event.preventDefault();
-			let nextCaretOffset = 0;
-			pendingCaret.current = { line: index - 1, offset: 0 };
-			updateLines((prev) => {
-				const next = [...prev];
-				const previous = next[index - 1] ?? "";
-				const current = next[index] ?? "";
-				nextCaretOffset = previous.length;
-				next[index - 1] = `${previous}${current}`;
-				next.splice(index, 1);
-				return normalizeLines(next);
-			});
-			requestAnimationFrame(() => {
-				focusLine(index - 1, nextCaretOffset);
-				requestAnimationFrame(syncSelectionState);
-			});
-			pendingCaret.current = { line: index - 1, offset: nextCaretOffset };
-		},
-		[focusLine, syncSelectionState, updateLines],
-	);
-
-	const handlePaste = useCallback(
-		(index: number, event: ClipboardEvent<HTMLDivElement>) => {
-			event.preventDefault();
-			const raw = event.clipboardData?.getData("text/plain") ?? "";
-			const target = event.currentTarget;
-			const caret = caretOffsetWithin(target);
-			const clean = raw.replaceAll(ZERO_WIDTH_SPACE, "");
-			const parts = normalizeLines(clean);
-			const current = (target.innerText ?? "")
-				.replace(/\n/g, "")
-				.replaceAll(ZERO_WIDTH_SPACE, "");
-			const before = current.slice(0, caret);
-			const after = current.slice(caret);
-			pendingCaret.current = {
-				line: index + parts.length - 1,
-				offset: parts[parts.length - 1].length,
-			};
-
-			updateLines((prev) => {
-				const next = [...prev];
-				if (parts.length === 1) {
-					next[index] = `${before}${parts[0]}${after}`;
-					return normalizeLines(next);
-				}
-
-				const head = `${before}${parts[0]}`;
-				const tail = `${parts[parts.length - 1]}${after}`;
-				const middle = parts.slice(1, -1);
-
-				next[index] = head;
-				next.splice(index + 1, 0, ...middle, tail);
-				return normalizeLines(next);
-			});
-
-			requestAnimationFrame(() => {
-				focusLine(index + parts.length - 1, parts[parts.length - 1].length);
-				requestAnimationFrame(syncSelectionState);
-			});
-		},
-		[focusLine, syncSelectionState, updateLines],
-	);
-
-	const handleDelete = useCallback(
-		(index: number, event: KeyboardEvent<HTMLDivElement>) => {
-			const target = event.currentTarget;
-			const text = (target.innerText ?? "")
-				.replace(/\n/g, "")
-				.replaceAll(ZERO_WIDTH_SPACE, "");
-			const caret = caretOffsetWithin(target);
-			const hasNextLine = Boolean(target.nextElementSibling);
-			if (!hasNextLine || caret !== text.length) {
-				return;
-			}
-
-			event.preventDefault();
-			pendingCaret.current = { line: index, offset: caret };
-			updateLines((prev) => {
-				const next = [...prev];
-				const current = next[index] ?? "";
-				const following = next[index + 1] ?? "";
-				next[index] = `${current}${following}`;
-				next.splice(index + 1, 1);
-				return normalizeLines(next);
-			});
-
-			requestAnimationFrame(() => {
-				focusLine(index, caret);
-				requestAnimationFrame(syncSelectionState);
-			});
-		},
-		[focusLine, syncSelectionState, updateLines],
-	);
-
-	const handleKeyDown = useCallback(
-		(index: number, event: KeyboardEvent<HTMLDivElement>) => {
-			if (event.key === "Enter") {
-				handleEnter(index, event);
-				return;
-			}
-			if (event.key === "Backspace") {
-				handleBackspace(index, event);
-				return;
-			}
-			if (event.key === "Delete") {
-				handleDelete(index, event);
-			}
-		},
-		[handleBackspace, handleDelete, handleEnter],
-	);
-
-	const handleScroll = useCallback((event: UIEvent<HTMLDivElement>) => {
-		if (!lineNumberRef.current) {
-			return;
-		}
-		lineNumberRef.current.scrollTop = event.currentTarget.scrollTop;
-	}, []);
+		viewRef.current.dispatch({
+			effects: themeCompartmentRef.current.reconfigure(buildTheme(scheme)),
+		});
+	}, [scheme]);
 
 	const resolvedRemoteUsers = useMemo(
 		() =>
@@ -433,10 +223,15 @@ export const Editor = ({
 		[remoteUsers],
 	);
 
+	const documentLines = useMemo(
+		() => normalizeLines(value ?? defaultValue ?? ""),
+		[defaultValue, value],
+	);
+
 	const remoteCursorLocations = useMemo(() => {
 		return resolvedRemoteUsers.reduce<Record<string, CursorLocation>>(
 			(map, user) => {
-				const location = toCursorLocation(lines, user);
+				const location = toCursorLocation(documentLines, user);
 				if (location) {
 					map[user.id] = location;
 				}
@@ -444,116 +239,24 @@ export const Editor = ({
 			},
 			{},
 		);
-	}, [lines, resolvedRemoteUsers]);
-
-	const renderRemoteCursorIndicators = () => {
-		const scrollTop = contentRef.current?.scrollTop ?? 0;
-		const scrollLeft = contentRef.current?.scrollLeft ?? 0;
-		const lineHeightPx = 1.6 * 14; // matches CSS line-height and font size
-		const paddingY = 12;
-		const paddingX = 16;
-		const characterWidth = 8;
-
-		return (
-			<div className="editor-content-overlay" aria-hidden="true">
-				{resolvedRemoteUsers.map((user) => {
-					const location = remoteCursorLocations[user.id];
-					if (!location) {
-						return null;
-					}
-					const top = paddingY + location.line * lineHeightPx - scrollTop;
-					const left = paddingX + location.column * characterWidth - scrollLeft;
-					return (
-						<div
-							key={user.id}
-							className="editor-cursor-indicator"
-							style={{
-								top,
-								left,
-								background: user.color,
-							}}
-							aria-label={`${user.name} cursor`}
-						>
-							<span
-								className="editor-cursor-label"
-								style={{ borderColor: user.color }}
-							>
-								{user.name}
-							</span>
-						</div>
-					);
-				})}
-			</div>
-		);
-	};
+	}, [documentLines, resolvedRemoteUsers]);
 
 	const editorClass = ["editor-frame", className].filter(Boolean).join(" ");
 
 	return (
 		<section className={editorClass} data-color-scheme={scheme}>
-			<div className="sr-only" aria-live="polite">
-				Line {activeLine + 1} of {lines.length}
-			</div>
 			<header className="editor-toolbar">
 				<div className="editor-status-badge">
 					<span className="editor-status-dot" />
 					{isConnected ? "Connected" : "Connecting"}
 				</div>
 				<span className="editor-toolbar-subtle">
-					Monospace · Inline selection · Live line numbers
+					CodeMirror · Multiline selection · Live line numbers
 				</span>
 			</header>
-			<div className="editor-container">
-				<div
-					className="editor-line-numbers"
-					aria-hidden="true"
-					ref={lineNumberRef}
-					style={{ lineHeight: "var(--editor-line-height)" }}
-				>
-					{lines.map((_, index) => (
-						<div
-							key={lineKey(index)}
-							className={`editor-line-number ${index === activeLine ? "active" : ""}`}
-						>
-							{index + 1}
-						</div>
-					))}
-				</div>
-
-				<div className="editor-content-column">
-					<div
-						ref={contentRef}
-						className="editor-content-area"
-						role="textbox"
-						aria-multiline="true"
-						aria-label={ariaLabel}
-						onScroll={handleScroll}
-					>
-						{lines.map((line, index) => (
-							<div
-								key={lineKey(index)}
-								className={`editor-line ${index === activeLine ? "active" : ""}`}
-								data-line-index={index}
-								contentEditable
-								suppressContentEditableWarning
-								onInput={(event) => handleInput(index, event)}
-								onKeyDown={(event) => handleKeyDown(index, event)}
-								onPaste={(event) => handlePaste(index, event)}
-								onFocus={() => {
-									setActiveLine(index);
-									requestAnimationFrame(syncSelectionState);
-								}}
-								onClick={() => {
-									setActiveLine(index);
-									requestAnimationFrame(syncSelectionState);
-								}}
-								spellCheck={false}
-							>
-								{line || ZERO_WIDTH_SPACE}
-							</div>
-						))}
-					</div>
-					{renderRemoteCursorIndicators()}
+			<div className="editor-body">
+				<div className="editor-pane">
+					<div className="editor-host" ref={hostRef} role="presentation" />
 				</div>
 
 				{showPresence && presenceVisible && (
