@@ -1,0 +1,115 @@
+.collaborative-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.06);
+}
+
+[data-mui-color-scheme="dark"] .collaborative-editor {
+  border-color: rgba(255, 255, 255, 0.08);
+  background: linear-gradient(135deg, #0b1220 0%, #151c2c 100%);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.35);
+}
+
+.editor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.connection-status {
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.01em;
+  background: rgba(34, 197, 94, 0.12);
+  color: #15803d;
+  border: 1px solid rgba(34, 197, 94, 0.22);
+  text-transform: uppercase;
+}
+
+.connection-status.disconnected {
+  background: rgba(239, 68, 68, 0.14);
+  color: #b91c1c;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.remote-users {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.user-pill {
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.9);
+  font-size: 0.8rem;
+  font-weight: 600;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+}
+
+.user-pill.muted {
+  color: #475569;
+  border-color: rgba(148, 163, 184, 0.6);
+}
+
+[data-mui-color-scheme="dark"] .user-pill {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #e2e8f0;
+}
+
+.editor-container {
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  min-height: 360px;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+[data-mui-color-scheme="dark"] .editor-container {
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.editor-container .cm-editor {
+  height: 100%;
+  background: transparent;
+}
+
+.editor-container .cm-content {
+  font-family: "JetBrains Mono", "Fira Code", "SFMono-Regular", ui-monospace,
+    monospace;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.editor-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  color: #475569;
+  font-size: 0.85rem;
+  letter-spacing: 0.01em;
+}
+
+[data-mui-color-scheme="dark"] .editor-footer {
+  color: #cbd5e1;
+}
