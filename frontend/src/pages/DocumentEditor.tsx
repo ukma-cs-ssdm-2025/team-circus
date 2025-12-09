@@ -19,6 +19,14 @@ import type { BaseComponentProps } from "../types";
 
 type DocumentEditorProps = BaseComponentProps;
 
+const escapeHtml = (value: string): string =>
+	value
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;")
+		.replace(/'/g, "&#39;");
+
 const DocumentEditor = ({ className = "" }: DocumentEditorProps) => {
 	const { t } = useLanguage();
 	const navigate = useNavigate();
@@ -50,6 +58,8 @@ const DocumentEditor = ({ className = "" }: DocumentEditorProps) => {
 		(format: "md" | "html" | "pdf") => {
 			const fileName = buildFileName(format);
 			const markdown = state.content || "";
+			const rawTitle = state.name || t("documentEditor.fallbackTitle");
+			const escapedTitle = escapeHtml(rawTitle);
 
 			const downloadFile = (content: string, type: string) => {
 				const blob = new Blob([content], { type });
@@ -72,7 +82,7 @@ const DocumentEditor = ({ className = "" }: DocumentEditorProps) => {
 					<ReactMarkdown remarkPlugins={[remarkGfm]}>{markdown}</ReactMarkdown>
 				</article>,
 			);
-			const htmlDocument = `<!doctype html><html><head><meta charset="utf-8" /><title>${state.name}</title></head><body>${htmlBody}</body></html>`;
+			const htmlDocument = `<!doctype html><html><head><meta charset="utf-8" /><title>${escapedTitle}</title></head><body>${htmlBody}</body></html>`;
 
 			if (format === "html") {
 				downloadFile(htmlDocument, "text/html");

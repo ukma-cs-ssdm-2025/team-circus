@@ -23,11 +23,11 @@
 
 .shortcut {
 	font-size: 12px;
-	color: #64748b;
+	color: #475569;
 	border: 1px solid var(--editor-border, #e2e8f0);
 	border-radius: 6px;
 	padding: 4px 8px;
-	background: rgba(148, 163, 184, 0.1);
+	background: rgba(148, 163, 184, 0.18);
 }
 
 .textarea {

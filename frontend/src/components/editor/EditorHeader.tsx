@@ -120,7 +120,7 @@ export const EditorHeader = ({
 					type="button"
 					className={styles.saveButton}
 					disabled={isSaveDisabled}
-					onClick={() => void onSave()}
+					onClick={() => onSave()}
 				>
 					{isSaving
 						? t("documentEditor.savingButton")
@@ -150,12 +150,8 @@ export const EditorHeader = ({
 					role="status"
 					aria-live="polite"
 				>
-					{saveStatus === "success" && (
-						<span className={styles.dot} aria-hidden />
-					)}
-					{saveStatus === "error" && (
-						<span className={styles.dot} aria-hidden />
-					)}
+					{saveStatus === "success" && <span className={styles.dot} aria-hidden />}
+					{saveStatus === "error" && <span className={styles.dot} aria-hidden />}
 					{statusLabel}
 				</div>
 			</div>

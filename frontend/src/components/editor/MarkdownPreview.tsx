@@ -20,7 +20,12 @@ type CodeProps = HTMLAttributes<HTMLElement> & {
 const componentsMap: Components = {
 	code: (props) => {
 		const { inline, children, className } = props as CodeProps;
-		return inline ? (
+		const inferredInline =
+			typeof inline === "boolean"
+				? inline
+				: !className || !className.includes("language-");
+
+		return inferredInline ? (
 			<code className={styles.inlineCode}>{children}</code>
 		) : (
 			<pre className={styles.codeBlock}>

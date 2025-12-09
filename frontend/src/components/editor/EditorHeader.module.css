@@ -120,9 +120,9 @@
 }
 
 .success {
-	color: #16a34a;
-	border-color: rgba(22, 163, 74, 0.4);
-	background: rgba(22, 163, 74, 0.08);
+	color: #0f5132;
+	border-color: rgba(16, 185, 129, 0.55);
+	background: rgba(16, 185, 129, 0.18);
 }
 
 .error {
@@ -174,9 +174,7 @@
 }
 
 :global([data-mui-color-scheme="dark"]) .nameInput,
-:global([data-mui-color-scheme="dark"]) .select,
-:global([data-theme="dark"]) .nameInput,
-:global([data-theme="dark"]) .select {
+:global([data-theme="dark"]) .nameInput {
 	background: #121212;
 	border-color: rgba(148, 163, 184, 0.35);
 	color: #e5e7eb;
