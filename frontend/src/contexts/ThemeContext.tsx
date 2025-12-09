@@ -135,6 +135,13 @@ export const ThemeProvider = ({ children }: ThemeProviderProps) => {
 		setStoredTheme(theme);
 	}, [theme]);
 
+	// Sync data attributes for CSS modules (light/dark)
+	useEffect(() => {
+		const root = document.documentElement;
+		root.setAttribute("data-theme", theme);
+		root.setAttribute("data-mui-color-scheme", theme);
+	}, [theme]);
+
 	// Слухач змін теми системи
 	useEffect(() => {
 		const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");

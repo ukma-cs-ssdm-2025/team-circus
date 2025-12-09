@@ -31,6 +31,12 @@ const ProtectedLayout = () => (
 	</Layout>
 );
 
+const EditorLayoutShell = () => (
+	<Layout hideFooter noPadding>
+		<Outlet />
+	</Layout>
+);
+
 function App() {
 	return (
 		<ThemeProvider>
@@ -51,10 +57,6 @@ function App() {
 										element={<Documents />}
 									/>
 									<Route
-										path={`${stripLeadingSlash(ROUTES.DOCUMENTS)}/:uuid`}
-										element={<DocumentEditor />}
-									/>
-									<Route
 										path={stripLeadingSlash(ROUTES.GROUPS)}
 										element={<Groups />}
 									/>
@@ -67,6 +69,14 @@ function App() {
 										element={<Settings />}
 									/>
 									<Route path="auth-test" element={<AuthTest />} />
+								</Route>
+								<Route element={<EditorLayoutShell />}>
+									<Route
+										path={`${stripLeadingSlash(ROUTES.DOCUMENTS)}/:uuid`}
+										element={<DocumentEditor />}
+									/>
+								</Route>
+								<Route element={<ProtectedLayout />}>
 									<Route path="*" element={<NotFound />} />
 								</Route>
 							</Route>

@@ -1,0 +1,118 @@
+.editor {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	height: 100%;
+	min-height: 0;
+	padding: 16px;
+	background: var(--editor-surface, #ffffff);
+}
+
+.labelRow {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+.label {
+	font-weight: 700;
+	color: #334155;
+	font-size: 14px;
+}
+
+.shortcut {
+	font-size: 12px;
+	color: #64748b;
+	border: 1px solid var(--editor-border, #e2e8f0);
+	border-radius: 6px;
+	padding: 4px 8px;
+	background: rgba(148, 163, 184, 0.1);
+}
+
+.textarea {
+	width: 100%;
+	border: 1px solid var(--editor-border, #e0e0e0);
+	border-radius: 12px;
+	padding: 16px;
+	flex: 1;
+	min-height: 0;
+	height: 100%;
+	font-family:
+		"SFMono-Regular",
+		Menlo,
+		Monaco,
+		Consolas,
+		"Courier New",
+		monospace;
+	font-size: 14px;
+	line-height: 1.6;
+	resize: none;
+	outline: none;
+	background: var(--editor-surface, #ffffff);
+	color: var(--editor-text, #0f172a);
+	box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
+	scrollbar-width: thin;
+}
+
+.textarea:focus {
+	border-color: #1976d2;
+	box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.18);
+}
+
+.textarea::placeholder {
+	color: #94a3b8;
+}
+
+.textarea::-webkit-scrollbar {
+	width: 8px;
+}
+
+.textarea::-webkit-scrollbar-track {
+	background: var(--editor-scrollbar-track, rgba(148, 163, 184, 0.15));
+	border-radius: 6px;
+}
+
+.textarea::-webkit-scrollbar-thumb {
+	background: var(--editor-scrollbar-thumb, rgba(102, 126, 234, 0.35));
+	border-radius: 6px;
+}
+
+.textarea::-webkit-scrollbar-thumb:hover {
+	background: var(
+		--editor-scrollbar-thumb-hover,
+		rgba(102, 126, 234, 0.55)
+	);
+}
+
+@media (max-width: 768px) {
+	.textarea {
+		min-height: 320px;
+	}
+}
+
+:global([data-mui-color-scheme="dark"]) .editor,
+:global([data-theme="dark"]) .editor {
+	background: #1e1e1e;
+}
+
+:global([data-mui-color-scheme="dark"]) .label,
+:global([data-theme="dark"]) .label {
+	color: #e2e8f0;
+}
+
+:global([data-mui-color-scheme="dark"]) .shortcut,
+:global([data-theme="dark"]) .shortcut {
+	border-color: rgba(148, 163, 184, 0.4);
+	background: rgba(255, 255, 255, 0.04);
+	color: #cbd5e1;
+}
+
+:global([data-mui-color-scheme="dark"]) .textarea,
+:global([data-theme="dark"]) .textarea {
+	background: #121212;
+	border-color: rgba(148, 163, 184, 0.35);
+	color: #e5e7eb;
+	scrollbar-color: var(--editor-scrollbar-thumb, rgba(102, 126, 234, 0.5))
+		var(--editor-scrollbar-track, rgba(0, 0, 0, 0.1));
+}
