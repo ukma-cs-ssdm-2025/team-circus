@@ -94,10 +94,6 @@ func NewShareDocumentHandler(service shareDocumentService, logger *zap.Logger) g
 		case errors.Is(err, documentservice.ErrInvalidExpiration):
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid expiration range"})
 			return
-		case errors.Is(err, domain.ErrInternal):
-			logger.Error("failed to generate share link", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to generate share link"})
-			return
 		case err != nil:
 			logger.Error("failed to generate share link", zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to generate share link"})
@@ -149,10 +145,6 @@ func NewGetPublicDocumentHandler(service publicDocumentService, logger *zap.Logg
 			return
 		case errors.Is(err, domain.ErrDocumentNotFound):
 			c.JSON(http.StatusNotFound, gin.H{"error": "document not found"})
-			return
-		case errors.Is(err, domain.ErrInternal):
-			logger.Error("failed to validate share link", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to load document"})
 			return
 		case err != nil:
 			logger.Error("failed to validate share link", zap.Error(err))
