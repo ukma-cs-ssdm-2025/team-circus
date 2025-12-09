@@ -3,6 +3,7 @@ import {
 	type FormEvent,
 	type KeyboardEvent,
 	type UIEvent,
+	useLayoutEffect,
 	useCallback,
 	useEffect,
 	useMemo,
@@ -80,12 +81,18 @@ const caretOffsetWithin = (element: HTMLElement): number => {
 };
 
 const moveCaretTo = (element: HTMLElement, offset: number) => {
+	if (!element) {
+		return;
+	}
 	const selection = window.getSelection();
 	if (!selection) {
 		return;
 	}
 
 	const targetNode = element.firstChild ?? element;
+	if (!targetNode) {
+		return;
+	}
 	const textLength = element.textContent?.length ?? 0;
 	const clampedOffset = Math.max(0, Math.min(offset, textLength));
 
@@ -154,6 +161,7 @@ export const Editor = ({
 	const lastEmittedValue = useRef(lines.join("\n"));
 	const linesRef = useRef(lines);
 	const lastCursorOffset = useRef<number | null>(null);
+	const pendingCaret = useRef<{ line: number; offset: number } | null>(null);
 
 	useEffect(() => {
 		setPresenceVisible(showPresence);
@@ -198,7 +206,7 @@ export const Editor = ({
 		const absolute = computeAbsoluteOffset(clamped, caret, linesRef.current);
 		if (lastCursorOffset.current !== absolute) {
 			lastCursorOffset.current = absolute;
-			onCursorChange(absolute);
+			requestAnimationFrame(() => onCursorChange(absolute));
 		}
 	}, [onCursorChange]);
 
@@ -224,6 +232,21 @@ export const Editor = ({
 	useEffect(() => {
 		requestAnimationFrame(syncSelectionState);
 	}, [lines.length, syncSelectionState]);
+
+	useLayoutEffect(() => {
+		if (!pendingCaret.current || !contentRef.current) {
+			return;
+		}
+		const { line, offset } = pendingCaret.current;
+		const target = contentRef.current.querySelector<HTMLElement>(
+			`.editor-line[data-line-index="${line}"]`,
+		);
+		if (target) {
+			target.focus();
+			moveCaretTo(target, offset);
+		}
+		pendingCaret.current = null;
+	}, [lines]);
 
 	const emitChange = useCallback(
 		(nextLines: string[]) => {
@@ -262,6 +285,7 @@ export const Editor = ({
 			const text = (event.currentTarget.innerText ?? "")
 				.replace(/\n/g, "")
 				.replaceAll(ZERO_WIDTH_SPACE, "");
+			pendingCaret.current = { line: index, offset: caret };
 			updateLines((prev) => {
 				const next = [...prev];
 				next[index] = text;
@@ -282,6 +306,7 @@ export const Editor = ({
 			const target = event.currentTarget;
 			const text = (target.innerText ?? "").replace(/\n/g, "").replaceAll(ZERO_WIDTH_SPACE, "");
 			const caret = caretOffsetWithin(target);
+			pendingCaret.current = { line: index + 1, offset: 0 };
 
 			updateLines((prev) => {
 				const next = [...prev];
@@ -310,6 +335,7 @@ export const Editor = ({
 
 			event.preventDefault();
 			let nextCaretOffset = 0;
+			pendingCaret.current = { line: index - 1, offset: 0 };
 			updateLines((prev) => {
 				const next = [...prev];
 				const previous = next[index - 1] ?? "";
@@ -323,6 +349,7 @@ export const Editor = ({
 				focusLine(index - 1, nextCaretOffset);
 				requestAnimationFrame(syncSelectionState);
 			});
+			pendingCaret.current = { line: index - 1, offset: nextCaretOffset };
 		},
 		[focusLine, syncSelectionState, updateLines],
 	);
@@ -338,6 +365,10 @@ export const Editor = ({
 			const current = (target.innerText ?? "").replace(/\n/g, "").replaceAll(ZERO_WIDTH_SPACE, "");
 			const before = current.slice(0, caret);
 			const after = current.slice(caret);
+			pendingCaret.current = {
+				line: index + parts.length - 1,
+				offset: parts[parts.length - 1].length,
+			};
 
 			updateLines((prev) => {
 				const next = [...prev];
@@ -374,6 +405,7 @@ export const Editor = ({
 			}
 
 			event.preventDefault();
+			pendingCaret.current = { line: index, offset: caret };
 			updateLines((prev) => {
 				const next = [...prev];
 				const current = next[index] ?? "";
@@ -541,7 +573,6 @@ export const Editor = ({
 									setActiveLine(index);
 									requestAnimationFrame(syncSelectionState);
 								}}
-								onPaste={(event) => handlePaste(index, event)}
 								spellCheck={false}
 							>
 								{line || ZERO_WIDTH_SPACE}
