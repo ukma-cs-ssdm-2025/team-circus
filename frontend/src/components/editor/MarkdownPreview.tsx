@@ -1,6 +1,7 @@
 import { memo, useMemo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import type { Components } from "react-markdown";
 import styles from "./MarkdownPreview.module.css";
 import { useLanguage } from "../../contexts/LanguageContext";
 
@@ -14,6 +15,35 @@ export const MarkdownPreview = memo(
 		const { t } = useLanguage();
 		const trimmedContent = content.trim();
 
+		const components = useMemo<Components>(
+			() => ({
+				code: ({ inline, children }) =>
+					inline ? (
+						<code className={styles.inlineCode}>{children}</code>
+					) : (
+						<pre className={styles.codeBlock}>
+							<code>{children}</code>
+						</pre>
+					),
+				a: ({ href, children }) => (
+					<a className={styles.link} href={href} target="_blank" rel="noreferrer">
+						{children}
+					</a>
+				),
+				blockquote: ({ children }) => (
+					<blockquote className={styles.blockquote}>{children}</blockquote>
+				),
+				table: ({ children }) => (
+					<div className={styles.tableWrapper}>
+						<table>{children}</table>
+					</div>
+				),
+				th: ({ children }) => <th className={styles.tableHeader}>{children}</th>,
+				td: ({ children }) => <td className={styles.tableCell}>{children}</td>,
+			}),
+			[],
+		);
+
 		const rendered = useMemo(() => {
 			if (!trimmedContent) {
 				return null;
@@ -23,41 +53,12 @@ export const MarkdownPreview = memo(
 				<ReactMarkdown
 					remarkPlugins={[remarkGfm]}
 					className={styles.markdown}
-					components={{
-						code: ({ inline, children }) =>
-							inline ? (
-								<code className={styles.inlineCode}>{children}</code>
-							) : (
-								<pre className={styles.codeBlock}>
-									<code>{children}</code>
-								</pre>
-							),
-						a: ({ href, children }) => (
-							<a
-								className={styles.link}
-								href={href}
-								target="_blank"
-								rel="noreferrer"
-							>
-								{children}
-							</a>
-						),
-						blockquote: ({ children }) => (
-							<blockquote className={styles.blockquote}>{children}</blockquote>
-						),
-						table: ({ children }) => (
-							<div className={styles.tableWrapper}>
-								<table>{children}</table>
-							</div>
-						),
-						th: ({ children }) => <th className={styles.tableHeader}>{children}</th>,
-						td: ({ children }) => <td className={styles.tableCell}>{children}</td>,
-					}}
+					components={components}
 				>
 					{trimmedContent}
 				</ReactMarkdown>
 			);
-		}, [trimmedContent]);
+		}, [components, trimmedContent]);
 
 		if (!trimmedContent) {
 			return (
