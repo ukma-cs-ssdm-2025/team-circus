@@ -187,9 +187,7 @@ const DocumentEditor = ({ className = "" }: DocumentEditorProps) => {
 				setShareLink(result);
 			} catch (shareErr) {
 				const message =
-					shareErr instanceof Error
-						? shareErr.message
-						: t("shareDialog.error");
+					shareErr instanceof Error ? shareErr.message : t("shareDialog.error");
 				setShareError(message || t("shareDialog.error"));
 			} finally {
 				setShareLoading(false);
@@ -242,8 +240,6 @@ const DocumentEditor = ({ className = "" }: DocumentEditorProps) => {
 						onNameChange={setDocName}
 						onExport={handleExport}
 						isConnected={isConnected}
-						wordCount={wordCount}
-						readingTime={readingTime}
 						onShare={documentData ? handleShareOpen : undefined}
 						shareDisabled={shareLoading || !documentData}
 					/>

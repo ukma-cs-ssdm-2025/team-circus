@@ -29,10 +29,12 @@ export const generateShareLink = async (
 	documentUUID: string,
 	expirationDays: number,
 ): Promise<ShareLinkResponse> => {
-	const response = await apiClient.post<ShareLinkResponse, { expiration_days: number }>(
-		API_ENDPOINTS.DOCUMENTS.SHARE(documentUUID),
-		{ expiration_days: expirationDays },
-	);
+	const response = await apiClient.post<
+		ShareLinkResponse,
+		{ expiration_days: number }
+	>(API_ENDPOINTS.DOCUMENTS.SHARE(documentUUID), {
+		expiration_days: expirationDays,
+	});
 
 	return response.data;
 };
@@ -78,7 +80,7 @@ export const fetchPublicDocument = async (
 				(parsed as Record<string, unknown>).error) ||
 			"Failed to load document";
 
-		const error = new Error(errorMessage) as PublicDocumentError;
+		const error = new Error(String(errorMessage)) as PublicDocumentError;
 		error.status = response.status;
 		throw error;
 	}
