@@ -96,8 +96,8 @@
 :global([data-mui-color-scheme="dark"]) .shortcut,
 :global([data-theme="dark"]) .shortcut {
 	border-color: rgba(148, 163, 184, 0.4);
-	background: rgba(255, 255, 255, 0.04);
-	color: #cbd5e1;
+	background: rgba(255, 255, 255, 0.12);
+	color: #e6eef8;
 }
 
 :global([data-mui-color-scheme="dark"]) .textarea,

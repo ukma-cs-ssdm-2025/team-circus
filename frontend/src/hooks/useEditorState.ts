@@ -92,10 +92,12 @@ export function useEditorState(
 	}, [wordCount]);
 
 	const isNameValid = name.trim().length > 0;
+	const lastKnownSaved = lastSaved ?? initialStateRef.current;
 	const isDirty =
-		lastSaved !== null &&
-		(lastSaved.name !== name || lastSaved.content !== content);
-	const isSaveDisabled = !isNameValid || !isDirty || saveStatus === "saving";
+		lastKnownSaved !== null &&
+		(lastKnownSaved.name !== name || lastKnownSaved.content !== content);
+	const isSaveDisabled =
+		!isNameValid || !isDirty || saveStatus === "saving";
 
 	const markSaved = useCallback((savedState: SavedState) => {
 		setLastSaved(savedState);
