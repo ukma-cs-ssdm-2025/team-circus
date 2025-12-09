@@ -73,9 +73,9 @@
 				
 				<option value="file8">github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/auth/requests/login.go (0.0%)</option>
 				
-				<option value="file9">github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/document/create.go (100.0%)</option>
+				<option value="file9">github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/document/create.go (82.4%)</option>
 				
-				<option value="file10">github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/document/delete.go (100.0%)</option>
+				<option value="file10">github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/document/delete.go (82.4%)</option>
 				
 				<option value="file11">github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/document/handlers.go (100.0%)</option>
 				
@@ -85,11 +85,11 @@
 				
 				<option value="file14">github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/document/requests/update.go (0.0%)</option>
 				
-				<option value="file15">github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/document/update.go (100.0%)</option>
+				<option value="file15">github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/document/update.go (86.7%)</option>
 				
 				<option value="file16">github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/group/create.go (87.1%)</option>
 				
-				<option value="file17">github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/group/delete.go (100.0%)</option>
+				<option value="file17">github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/group/delete.go (94.1%)</option>
 				
 				<option value="file18">github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/group/handlers.go (100.0%)</option>
 				
@@ -99,7 +99,7 @@
 				
 				<option value="file21">github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/group/requests/update.go (0.0%)</option>
 				
-				<option value="file22">github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/group/update.go (100.0%)</option>
+				<option value="file22">github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/group/update.go (95.6%)</option>
 				
 				<option value="file23">github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/member/create.go (100.0%)</option>
 				
@@ -1666,7 +1666,7 @@ func (a *App) setupRouter() *gin.Engine <span class="cov0" title="0">{
         groupService := groupservice.NewGroupService(groupRepo, memberRepo)
 
         documentRepo := documentrepo.NewDocumentRepository(a.DB)
-        documentService := documentservice.NewDocumentService(documentRepo, groupRepo)
+        documentService := documentservice.NewDocumentService(documentRepo, memberRepo)
 
         userRepo := userrepo.NewUserRepository(a.DB)
         userService := userservice.NewUserService(userRepo, a.cfg.HashingCost)
@@ -1837,7 +1837,7 @@ func NewLogInHandler(userRepo userRepository, logger *zap.Logger, secretToken st
                         return
                 }</span>
 
-                <span class="cov9" title="5">user, err := userRepo.GetByLogin(c, req.Login)
+                <span class="cov9" title="5">user, err := userRepo.GetByLogin(c.Request.Context(), req.Login)
                 if errors.Is(err, domain.ErrInternal) </span><span class="cov1" title="1">{
                         logger.Error("failed to log in", zap.Error(err))
                         c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to log in"})
@@ -2098,7 +2098,7 @@ import (
 )
 
 type createDocumentService interface {
-        Create(ctx context.Context, groupUUID uuid.UUID, name, content string) (*domain.Document, error)
+        Create(ctx context.Context, userUUID, groupUUID uuid.UUID, name, content string) (*domain.Document, error)
 }
 
 // NewCreateDocumentHandler creates a new document
@@ -2110,11 +2110,25 @@ type createDocumentService interface {
 // @Param request body requests.CreateDocumentRequest true "Document creation request"
 // @Success 201 {object} responses.CreateDocumentResponse "Document created successfully"
 // @Failure 400 {object} map[string]interface{} "Invalid request format or validation failed"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
+// @Failure 403 {object} map[string]interface{} "Access forbidden"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /documents [post]
 func NewCreateDocumentHandler(service createDocumentService, logger *zap.Logger) gin.HandlerFunc <span class="cov10" title="6">{
         return func(c *gin.Context) </span><span class="cov10" title="6">{
-                var req requests.CreateDocumentRequest
+                userUUIDValue, exists := c.Get("user_uid")
+                if !exists </span><span class="cov0" title="0">{
+                        c.JSON(http.StatusUnauthorized, gin.H{"error": "user context missing"})
+                        return
+                }</span>
+
+                <span class="cov10" title="6">userUUID, ok := userUUIDValue.(uuid.UUID)
+                if !ok </span><span class="cov0" title="0">{
+                        c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid user context"})
+                        return
+                }</span>
+
+                <span class="cov10" title="6">var req requests.CreateDocumentRequest
                 if err := c.ShouldBindJSON(&amp;req); err != nil </span><span class="cov4" title="2">{
                         err = fmt.Errorf("create document handler: failed to bind request: %v", err)
                         logger.Error("failed to bind request", zap.Error(err))
@@ -2129,8 +2143,12 @@ func NewCreateDocumentHandler(service createDocumentService, logger *zap.Logger)
                         return
                 }</span>
 
-                <span class="cov6" title="3">document, err := service.Create(c, req.GroupUUID, req.Name, req.Content)
-                if errors.Is(err, domain.ErrInternal) </span><span class="cov1" title="1">{
+                <span class="cov6" title="3">document, err := service.Create(c.Request.Context(), userUUID, req.GroupUUID, req.Name, req.Content)
+                if errors.Is(err, domain.ErrForbidden) </span><span class="cov0" title="0">{
+                        c.JSON(http.StatusForbidden, gin.H{"error": "access forbidden"})
+                        return
+                }</span>
+                <span class="cov6" title="3">if errors.Is(err, domain.ErrInternal) </span><span class="cov1" title="1">{
                         logger.Error("failed to create document",
                                 zap.Error(err),
                                 zap.String("group_uuid", req.GroupUUID.String()),
@@ -2172,7 +2190,7 @@ import (
 )
 
 type deleteDocumentService interface {
-        Delete(ctx context.Context, uuid uuid.UUID) error
+        Delete(ctx context.Context, docUUID, userUUID uuid.UUID) error
 }
 
 // NewDeleteDocumentHandler deletes a document by UUID
@@ -2184,13 +2202,15 @@ type deleteDocumentService interface {
 // @Param uuid path string true "Document UUID"
 // @Success 200 {object} responses.DeleteDocumentResponse "Document deleted successfully"
 // @Failure 400 {object} map[string]interface{} "Invalid UUID format"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
+// @Failure 403 {object} map[string]interface{} "Access forbidden"
 // @Failure 404 {object} map[string]interface{} "Document not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /documents/{uuid} [delete]
 func NewDeleteDocumentHandler(service deleteDocumentService, logger *zap.Logger) gin.HandlerFunc <span class="cov10" title="5">{
         return func(c *gin.Context) </span><span class="cov10" title="5">{
                 uuidParam := c.Param("uuid")
-                parsedUUID, err := uuid.Parse(uuidParam)
+                docUUID, err := uuid.Parse(uuidParam)
                 if err != nil </span><span class="cov1" title="1">{
                         err = fmt.Errorf("delete document handler: failed to parse uuid: %v", err)
                         logger.Error("failed to parse uuid", zap.Error(err))
@@ -2198,10 +2218,26 @@ func NewDeleteDocumentHandler(service deleteDocumentService, logger *zap.Logger)
                         return
                 }</span>
 
-                <span class="cov8" title="4">err = service.Delete(c, parsedUUID)
+                <span class="cov8" title="4">userUUIDValue, exists := c.Get("user_uid")
+                if !exists </span><span class="cov0" title="0">{
+                        c.JSON(http.StatusUnauthorized, gin.H{"error": "user context missing"})
+                        return
+                }</span>
+
+                <span class="cov8" title="4">userUUID, ok := userUUIDValue.(uuid.UUID)
+                if !ok </span><span class="cov0" title="0">{
+                        c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid user context"})
+                        return
+                }</span>
+
+                <span class="cov8" title="4">err = service.Delete(c.Request.Context(), docUUID, userUUID)
                 if errors.Is(err, domain.ErrDocumentNotFound) </span><span class="cov1" title="1">{
                         logger.Warn("document not found", zap.String("uuid", uuidParam))
                         c.JSON(http.StatusNotFound, gin.H{"error": "document not found"})
+                        return
+                }</span>
+                <span class="cov7" title="3">if errors.Is(err, domain.ErrForbidden) </span><span class="cov0" title="0">{
+                        c.JSON(http.StatusForbidden, gin.H{"error": "access forbidden"})
                         return
                 }</span>
                 <span class="cov7" title="3">if errors.Is(err, domain.ErrInternal) </span><span class="cov1" title="1">{
@@ -2330,7 +2366,7 @@ func NewGetDocumentHandler(service getDocumentService, logger *zap.Logger) gin.H
                         return
                 }</span>
 
-                <span class="cov8" title="5">document, err := service.GetByUUIDForUser(c, parsedUUID, userUUID)
+                <span class="cov8" title="5">document, err := service.GetByUUIDForUser(c.Request.Context(), parsedUUID, userUUID)
                 if errors.Is(err, domain.ErrDocumentNotFound) </span><span class="cov1" title="1">{
                         logger.Warn("document not found", zap.String("uuid", uuidParam))
                         c.JSON(http.StatusNotFound, gin.H{"error": "document not found"})
@@ -2381,7 +2417,7 @@ func NewGetAllDocumentsHandler(service getAllDocumentsService, logger *zap.Logge
                         return
                 }</span>
 
-                <span class="cov7" title="4">documents, err := service.GetAllForUser(c, userUUID)
+                <span class="cov7" title="4">documents, err := service.GetAllForUser(c.Request.Context(), userUUID)
                 if errors.Is(err, domain.ErrInternal) </span><span class="cov1" title="1">{
                         logger.Error("failed to get documents", zap.Error(err))
                         c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get documents"})
@@ -2438,7 +2474,7 @@ type UpdateDocumentRequest struct {
 func (r UpdateDocumentRequest) Validate() error <span class="cov0" title="0">{
         return validation.ValidateStruct(&amp;r,
                 validation.Field(&amp;r.Name, validation.Required, validation.Length(1, 255)),
-                validation.Field(&amp;r.Content, validation.Required),
+                validation.Field(&amp;r.Content),
         )
 }</span>
 </pre>
@@ -2459,7 +2495,7 @@ import (
 )
 
 type updateDocumentService interface {
-        Update(ctx context.Context, uuid uuid.UUID, name, content string) (*domain.Document, error)
+        Update(ctx context.Context, docUUID, userUUID uuid.UUID, name, content string) (*domain.Document, error)
 }
 
 // NewUpdateDocumentHandler updates a document by UUID
@@ -2472,17 +2508,31 @@ type updateDocumentService interface {
 // @Param request body requests.UpdateDocumentRequest true "Document update request"
 // @Success 200 {object} responses.UpdateDocumentResponse "Document updated successfully"
 // @Failure 400 {object} map[string]interface{} "Invalid UUID format or validation failed"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
+// @Failure 403 {object} map[string]interface{} "Access forbidden"
 // @Failure 404 {object} map[string]interface{} "Document not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /documents/{uuid} [put]
 func NewUpdateDocumentHandler(service updateDocumentService, logger *zap.Logger) gin.HandlerFunc <span class="cov10" title="7">{
         return func(c *gin.Context) </span><span class="cov10" title="7">{
                 uuidParam := c.Param("uuid")
-                parsedUUID, err := uuid.Parse(uuidParam)
+                docUUID, err := uuid.Parse(uuidParam)
                 if err != nil </span><span class="cov1" title="1">{
                         err = fmt.Errorf("update document handler: failed to parse uuid: %v", err)
                         logger.Error("failed to parse uuid", zap.Error(err))
                         c.JSON(http.StatusBadRequest, gin.H{"error": "invalid uuid format"})
+                        return
+                }</span>
+
+                <span class="cov9" title="6">userUUIDValue, exists := c.Get("user_uid")
+                if !exists </span><span class="cov0" title="0">{
+                        c.JSON(http.StatusUnauthorized, gin.H{"error": "user context missing"})
+                        return
+                }</span>
+
+                <span class="cov9" title="6">userUUID, ok := userUUIDValue.(uuid.UUID)
+                if !ok </span><span class="cov0" title="0">{
+                        c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid user context"})
                         return
                 }</span>
 
@@ -2501,10 +2551,14 @@ func NewUpdateDocumentHandler(service updateDocumentService, logger *zap.Logger)
                         return
                 }</span>
 
-                <span class="cov7" title="4">document, err := service.Update(c, parsedUUID, req.Name, req.Content)
+                <span class="cov7" title="4">document, err := service.Update(c.Request.Context(), docUUID, userUUID, req.Name, req.Content)
                 if errors.Is(err, domain.ErrDocumentNotFound) </span><span class="cov1" title="1">{
                         logger.Warn("document not found", zap.String("uuid", uuidParam))
                         c.JSON(http.StatusNotFound, gin.H{"error": "document not found"})
+                        return
+                }</span>
+                <span class="cov6" title="3">if errors.Is(err, domain.ErrForbidden) </span><span class="cov0" title="0">{
+                        c.JSON(http.StatusForbidden, gin.H{"error": "access forbidden"})
                         return
                 }</span>
                 <span class="cov6" title="3">if errors.Is(err, domain.ErrInternal) </span><span class="cov1" title="1">{
@@ -2590,7 +2644,7 @@ func NewCreateGroupHandler(service createGroupService, logger *zap.Logger) gin.H
                         return
                 }</span>
 
-                <span class="cov7" title="3">group, err := service.Create(c, userUUID, req.Name)
+                <span class="cov7" title="3">group, err := service.Create(c.Request.Context(), userUUID, req.Name)
                 if errors.Is(err, domain.ErrInternal) </span><span class="cov1" title="1">{
                         logger.Error("failed to create group", zap.Error(err), zap.String("name", req.Name))
                         c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create group"})
@@ -2625,7 +2679,7 @@ import (
 )
 
 type deleteGroupService interface {
-        Delete(ctx context.Context, uuid uuid.UUID) error
+        Delete(ctx context.Context, userUUID, uuid uuid.UUID) error
 }
 
 // NewDeleteGroupHandler deletes a group by UUID
@@ -2637,12 +2691,25 @@ type deleteGroupService interface {
 // @Param uuid path string true "Group UUID"
 // @Success 200 {object} responses.DeleteGroupResponse "Group deleted successfully"
 // @Failure 400 {object} map[string]interface{} "Invalid UUID format"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
+// @Failure 403 {object} map[string]interface{} "Access forbidden"
 // @Failure 404 {object} map[string]interface{} "Group not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /groups/{uuid} [delete]
-func NewDeleteGroupHandler(service deleteGroupService, logger *zap.Logger) gin.HandlerFunc <span class="cov10" title="5">{
-        return func(c *gin.Context) </span><span class="cov10" title="5">{
-                uuidParam := c.Param("uuid")
+func NewDeleteGroupHandler(service deleteGroupService, logger *zap.Logger) gin.HandlerFunc <span class="cov10" title="7">{
+        return func(c *gin.Context) </span><span class="cov10" title="7">{
+                userUUIDValue, exists := c.Get("user_uid")
+                if !exists </span><span class="cov1" title="1">{
+                        c.JSON(http.StatusUnauthorized, gin.H{"error": "user context missing"})
+                        return
+                }</span>
+                <span class="cov9" title="6">userUUID, ok := userUUIDValue.(uuid.UUID)
+                if !ok </span><span class="cov0" title="0">{
+                        c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid user context"})
+                        return
+                }</span>
+
+                <span class="cov9" title="6">uuidParam := c.Param("uuid")
                 parsedUUID, err := uuid.Parse(uuidParam)
                 if err != nil </span><span class="cov1" title="1">{
                         err = fmt.Errorf("delete group handler: failed to parse uuid: %v", err)
@@ -2651,13 +2718,17 @@ func NewDeleteGroupHandler(service deleteGroupService, logger *zap.Logger) gin.H
                         return
                 }</span>
 
-                <span class="cov8" title="4">err = service.Delete(c, parsedUUID)
+                <span class="cov8" title="5">err = service.Delete(c.Request.Context(), userUUID, parsedUUID)
                 if errors.Is(err, domain.ErrGroupNotFound) </span><span class="cov1" title="1">{
                         logger.Warn("group not found", zap.String("uuid", uuidParam))
                         c.JSON(http.StatusNotFound, gin.H{"error": "group not found"})
                         return
                 }</span>
-                <span class="cov7" title="3">if errors.Is(err, domain.ErrInternal) </span><span class="cov1" title="1">{
+                <span class="cov7" title="4">if errors.Is(err, domain.ErrForbidden) </span><span class="cov1" title="1">{
+                        c.JSON(http.StatusForbidden, gin.H{"error": "access forbidden"})
+                        return
+                }</span>
+                <span class="cov6" title="3">if errors.Is(err, domain.ErrInternal) </span><span class="cov1" title="1">{
                         logger.Error("failed to delete group", zap.Error(err))
                         c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete group"})
                         return
@@ -2776,7 +2847,7 @@ func NewGetGroupHandler(service getGroupService, logger *zap.Logger) gin.Handler
                         return
                 }</span>
 
-                <span class="cov7" title="5">group, err := service.GetByUUIDForUser(c, parsedUUID, userUUID)
+                <span class="cov7" title="5">group, err := service.GetByUUIDForUser(c.Request.Context(), parsedUUID, userUUID)
                 if errors.Is(err, domain.ErrGroupNotFound) </span><span class="cov1" title="1">{
                         logger.Warn("group not found", zap.String("uuid", uuidParam))
                         c.JSON(http.StatusNotFound, gin.H{"error": "group not found"})
@@ -2826,7 +2897,7 @@ func NewGetAllGroupsHandler(service getAllGroupsService, logger *zap.Logger) gin
                         return
                 }</span>
 
-                <span class="cov7" title="4">groups, err := service.GetAllForUser(c, userUUID)
+                <span class="cov7" title="4">groups, err := service.GetAllForUser(c.Request.Context(), userUUID)
                 if errors.Is(err, domain.ErrInternal) </span><span class="cov1" title="1">{
                         logger.Error("failed to get groups", zap.Error(err))
                         c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get groups"})
@@ -2897,7 +2968,7 @@ import (
 )
 
 type updateGroupService interface {
-        Update(ctx context.Context, uuid uuid.UUID, name string) (*domain.Group, error)
+        Update(ctx context.Context, userUUID, uuid uuid.UUID, name string) (*domain.Group, error)
 }
 
 // NewUpdateGroupHandler updates a group by UUID
@@ -2910,12 +2981,25 @@ type updateGroupService interface {
 // @Param request body requests.UpdateGroupRequest true "Group update request"
 // @Success 200 {object} responses.UpdateGroupResponse "Group updated successfully"
 // @Failure 400 {object} map[string]interface{} "Invalid UUID format or validation failed"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
+// @Failure 403 {object} map[string]interface{} "Access forbidden"
 // @Failure 404 {object} map[string]interface{} "Group not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /groups/{uuid} [put]
-func NewUpdateGroupHandler(service updateGroupService, logger *zap.Logger) gin.HandlerFunc <span class="cov10" title="7">{
-        return func(c *gin.Context) </span><span class="cov10" title="7">{
-                uuidParam := c.Param("uuid")
+func NewUpdateGroupHandler(service updateGroupService, logger *zap.Logger) gin.HandlerFunc <span class="cov10" title="9">{
+        return func(c *gin.Context) </span><span class="cov10" title="9">{
+                userUUIDValue, exists := c.Get("user_uid")
+                if !exists </span><span class="cov1" title="1">{
+                        c.JSON(http.StatusUnauthorized, gin.H{"error": "user context missing"})
+                        return
+                }</span>
+                <span class="cov9" title="8">userUUID, ok := userUUIDValue.(uuid.UUID)
+                if !ok </span><span class="cov0" title="0">{
+                        c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid user context"})
+                        return
+                }</span>
+
+                <span class="cov9" title="8">uuidParam := c.Param("uuid")
                 parsedUUID, err := uuid.Parse(uuidParam)
                 if err != nil </span><span class="cov1" title="1">{
                         err = fmt.Errorf("update group handler: failed to parse uuid: %v", err)
@@ -2924,7 +3008,7 @@ func NewUpdateGroupHandler(service updateGroupService, logger *zap.Logger) gin.H
                         return
                 }</span>
 
-                <span class="cov9" title="6">var req requests.UpdateGroupRequest
+                <span class="cov8" title="7">var req requests.UpdateGroupRequest
                 if err := c.ShouldBindJSON(&amp;req); err != nil </span><span class="cov1" title="1">{
                         err = fmt.Errorf("update group handler: failed to bind request: %v", err)
                         logger.Error("failed to bind request", zap.Error(err))
@@ -2932,25 +3016,29 @@ func NewUpdateGroupHandler(service updateGroupService, logger *zap.Logger) gin.H
                         return
                 }</span>
 
-                <span class="cov8" title="5">if err := req.Validate(); err != nil </span><span class="cov1" title="1">{
+                <span class="cov8" title="6">if err := req.Validate(); err != nil </span><span class="cov1" title="1">{
                         err = fmt.Errorf("update group handler: validation failed: %v", err)
                         logger.Error("validation failed", zap.Error(err))
                         c.JSON(http.StatusBadRequest, gin.H{"error": "validation failed", "details": err.Error()})
                         return
                 }</span>
 
-                <span class="cov7" title="4">group, err := service.Update(c, parsedUUID, req.Name)
+                <span class="cov7" title="5">group, err := service.Update(c.Request.Context(), userUUID, parsedUUID, req.Name)
                 if errors.Is(err, domain.ErrGroupNotFound) </span><span class="cov1" title="1">{
                         logger.Warn("group not found", zap.String("uuid", uuidParam))
                         c.JSON(http.StatusNotFound, gin.H{"error": "group not found"})
                         return
                 }</span>
-                <span class="cov6" title="3">if errors.Is(err, domain.ErrInternal) </span><span class="cov1" title="1">{
+                <span class="cov6" title="4">if errors.Is(err, domain.ErrForbidden) </span><span class="cov1" title="1">{
+                        c.JSON(http.StatusForbidden, gin.H{"error": "access forbidden"})
+                        return
+                }</span>
+                <span class="cov5" title="3">if errors.Is(err, domain.ErrInternal) </span><span class="cov1" title="1">{
                         logger.Error("failed to update group", zap.Error(err))
                         c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update group"})
                         return
                 }</span>
-                <span class="cov4" title="2">if err != nil </span><span class="cov1" title="1">{
+                <span class="cov3" title="2">if err != nil </span><span class="cov1" title="1">{
                         logger.Error("failed to update group", zap.Error(err))
                         c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update group"})
                         return
@@ -3440,7 +3528,7 @@ func NewRegHandler(service regService, logger *zap.Logger) gin.HandlerFunc <span
                         return
                 }</span>
 
-                <span class="cov6" title="3">user, err := service.Register(c, req.Login, req.Email, req.Password)
+                <span class="cov6" title="3">user, err := service.Register(c.Request.Context(), req.Login, req.Email, req.Password)
                 if errors.Is(err, domain.ErrInternal) </span><span class="cov1" title="1">{
                         logger.Error("failed to register",
                                 zap.Error(err),
@@ -3530,7 +3618,7 @@ func NewDeleteUserHandler(service deleteUserService, logger *zap.Logger) gin.Han
                         return
                 }</span>
 
-                <span class="cov8" title="4">err = service.Delete(c, parsedUUID)
+                <span class="cov8" title="4">err = service.Delete(c.Request.Context(), parsedUUID)
                 if errors.Is(err, domain.ErrUserNotFound) </span><span class="cov1" title="1">{
                         logger.Warn("user not found", zap.String("uuid", uuidParam))
                         c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
@@ -3636,7 +3724,7 @@ func NewGetUserHandler(service getUserService, logger *zap.Logger) gin.HandlerFu
                         return
                 }</span>
 
-                <span class="cov8" title="4">user, err := service.GetByUUID(c, parsedUUID)
+                <span class="cov8" title="4">user, err := service.GetByUUID(c.Request.Context(), parsedUUID)
                 if errors.Is(err, domain.ErrUserNotFound) </span><span class="cov1" title="1">{
                         logger.Warn("user not found", zap.String("uuid", uuidParam))
                         c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
@@ -3670,7 +3758,7 @@ func NewGetUserHandler(service getUserService, logger *zap.Logger) gin.HandlerFu
 // @Router /users [get]
 func NewGetAllUsersHandler(service getAllUsersService, logger *zap.Logger) gin.HandlerFunc <span class="cov8" title="4">{
         return func(c *gin.Context) </span><span class="cov8" title="4">{
-                users, err := service.GetAll(c)
+                users, err := service.GetAll(c.Request.Context())
                 if errors.Is(err, domain.ErrInternal) </span><span class="cov1" title="1">{
                         logger.Error("failed to get users", zap.Error(err))
                         c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get users"})
@@ -3770,7 +3858,7 @@ func NewUpdateUserHandler(service updateUserService, logger *zap.Logger) gin.Han
                         return
                 }</span>
 
-                <span class="cov6" title="4">user, err := service.Update(c, parsedUUID, req.Login, req.Email, req.Password)
+                <span class="cov6" title="4">user, err := service.Update(c.Request.Context(), parsedUUID, req.Login, req.Email, req.Password)
                 if errors.Is(err, domain.ErrUserNotFound) </span><span class="cov1" title="1">{
                         logger.Warn("user not found", zap.String("uuid", uuidParam))
                         c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
@@ -4202,21 +4290,6 @@ func (r *GroupRepository) GetByUUID(ctx context.Context, uuid uuid.UUID) (*domai
         }
 
         <span class="cov0" title="0">return &amp;group, nil</span>
-}
-
-func (r *GroupRepository) IsMember(ctx context.Context, groupUUID, userUUID uuid.UUID) (bool, error) <span class="cov0" title="0">{
-        const query = `
-                SELECT EXISTS (
-                        SELECT 1
-                        FROM user_groups
-                        WHERE group_uuid = $1 AND user_uuid = $2
-                )`
-        var exists bool
-        err := r.db.QueryRowContext(ctx, query, groupUUID, userUUID).Scan(&amp;exists)
-        if err != nil </span><span class="cov0" title="0">{
-                return false, errors.Join(domain.ErrInternal, fmt.Errorf("group repository: isMember query: %w", err))
-        }</span>
-        <span class="cov0" title="0">return exists, nil</span>
 }
 
 func (r *GroupRepository) GetAll(ctx context.Context) ([]*domain.Group, error) <span class="cov0" title="0">{
@@ -4776,8 +4849,19 @@ import (
         "github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 )
 
-func (s *DocumentService) Create(ctx context.Context, groupUUID uuid.UUID, name, content string) (*domain.Document, error) <span class="cov0" title="0">{
-        document, err := s.repo.Create(ctx, groupUUID, name, content)
+func (s *DocumentService) Create(ctx context.Context, userUUID, groupUUID uuid.UUID, name, content string) (*domain.Document, error) <span class="cov0" title="0">{
+        member, err := s.memberRepo.GetMember(ctx, groupUUID, userUUID)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("document service: create: %w", err)
+        }</span>
+        <span class="cov0" title="0">if member == nil </span><span class="cov0" title="0">{
+                return nil, domain.ErrForbidden
+        }</span>
+        <span class="cov0" title="0">if member.Role == domain.RoleViewer </span><span class="cov0" title="0">{
+                return nil, domain.ErrForbidden
+        }</span>
+
+        <span class="cov0" title="0">document, err := s.repo.Create(ctx, groupUUID, name, content)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, fmt.Errorf("document service: create: %w", err)
         }</span>
@@ -4797,8 +4881,24 @@ import (
         "github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 )
 
-func (s *DocumentService) Delete(ctx context.Context, uuid uuid.UUID) error <span class="cov0" title="0">{
-        err := s.repo.Delete(ctx, uuid)
+func (s *DocumentService) Delete(ctx context.Context, docUUID, userUUID uuid.UUID) error <span class="cov0" title="0">{
+        doc, err := s.GetByUUID(ctx, docUUID)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov0" title="0">member, err := s.memberRepo.GetMember(ctx, doc.GroupUUID, userUUID)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("document service: delete: %w", err)
+        }</span>
+        <span class="cov0" title="0">if member == nil </span><span class="cov0" title="0">{
+                return domain.ErrForbidden
+        }</span>
+        <span class="cov0" title="0">if member.Role == domain.RoleViewer </span><span class="cov0" title="0">{
+                return domain.ErrForbidden
+        }</span>
+
+        <span class="cov0" title="0">err = s.repo.Delete(ctx, docUUID)
         if err != nil </span><span class="cov0" title="0">{
                 if err == sql.ErrNoRows </span><span class="cov0" title="0">{
                         return domain.ErrDocumentNotFound
@@ -4839,12 +4939,11 @@ func (s *DocumentService) GetByUUIDForUser(ctx context.Context, documentUUID, us
                 return nil, err
         }</span>
 
-        <span class="cov0" title="0">isMember, err := s.groupRepo.IsMember(ctx, document.GroupUUID, userUUID)
+        <span class="cov0" title="0">member, err := s.memberRepo.GetMember(ctx, document.GroupUUID, userUUID)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, fmt.Errorf("document service: getByUUIDForUser: %w", err)
         }</span>
-
-        <span class="cov0" title="0">if !isMember </span><span class="cov0" title="0">{
+        <span class="cov0" title="0">if member == nil </span><span class="cov0" title="0">{
                 return nil, domain.ErrForbidden
         }</span>
 
@@ -4874,18 +4973,18 @@ func (s *DocumentService) GetAllForUser(ctx context.Context, userUUID uuid.UUID)
 
 import (
         "github.com/ukma-cs-ssdm-2025/team-circus/internal/repo/document"
-        grouprepo "github.com/ukma-cs-ssdm-2025/team-circus/internal/repo/group"
+        "github.com/ukma-cs-ssdm-2025/team-circus/internal/repo/member"
 )
 
 type DocumentService struct {
-        repo      *document.DocumentRepository
-        groupRepo *grouprepo.GroupRepository
+        repo       *document.DocumentRepository
+        memberRepo *member.MemberRepository
 }
 
-func NewDocumentService(repo *document.DocumentRepository, groupRepo *grouprepo.GroupRepository) *DocumentService <span class="cov0" title="0">{
+func NewDocumentService(repo *document.DocumentRepository, memberRepo *member.MemberRepository) *DocumentService <span class="cov0" title="0">{
         return &amp;DocumentService{
-                repo:      repo,
-                groupRepo: groupRepo,
+                repo:       repo,
+                memberRepo: memberRepo,
         }
 }</span>
 </pre>
@@ -4900,17 +4999,32 @@ import (
         "github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 )
 
-func (s *DocumentService) Update(ctx context.Context, uuid uuid.UUID, name, content string) (*domain.Document, error) <span class="cov0" title="0">{
-        document, err := s.repo.Update(ctx, uuid, name, content)
+func (s *DocumentService) Update(ctx context.Context, docUUID, userUUID uuid.UUID, name, content string) (*domain.Document, error) <span class="cov0" title="0">{
+        doc, err := s.GetByUUID(ctx, docUUID)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">member, err := s.memberRepo.GetMember(ctx, doc.GroupUUID, userUUID)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, fmt.Errorf("document service: update: %w", err)
         }</span>
+        <span class="cov0" title="0">if member == nil </span><span class="cov0" title="0">{
+                return nil, domain.ErrForbidden
+        }</span>
+        <span class="cov0" title="0">if member.Role == domain.RoleViewer </span><span class="cov0" title="0">{
+                return nil, domain.ErrForbidden
+        }</span>
 
-        <span class="cov0" title="0">if document == nil </span><span class="cov0" title="0">{
+        <span class="cov0" title="0">updatedDoc, err := s.repo.Update(ctx, docUUID, name, content)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("document service: update: %w", err)
+        }</span>
+        <span class="cov0" title="0">if updatedDoc == nil </span><span class="cov0" title="0">{
                 return nil, domain.ErrDocumentNotFound
         }</span>
 
-        <span class="cov0" title="0">return document, nil</span>
+        <span class="cov0" title="0">return updatedDoc, nil</span>
 }
 </pre>
 		
@@ -4948,8 +5062,19 @@ import (
         "github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 )
 
-func (s *GroupService) Delete(ctx context.Context, uuid uuid.UUID) error <span class="cov0" title="0">{
-        err := s.repo.Delete(ctx, uuid)
+func (s *GroupService) Delete(ctx context.Context, userUUID, groupUUID uuid.UUID) error <span class="cov0" title="0">{
+        member, err := s.memberRepo.GetMember(ctx, groupUUID, userUUID)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("group service: delete: %w", err)
+        }</span>
+        <span class="cov0" title="0">if member == nil </span><span class="cov0" title="0">{
+                return domain.ErrForbidden
+        }</span>
+        <span class="cov0" title="0">if member.Role != domain.RoleAuthor </span><span class="cov0" title="0">{
+                return domain.ErrForbidden
+        }</span>
+
+        <span class="cov0" title="0">err = s.repo.Delete(ctx, groupUUID)
         if err != nil </span><span class="cov0" title="0">{
                 if err == sql.ErrNoRows </span><span class="cov0" title="0">{
                         return domain.ErrGroupNotFound
@@ -4985,11 +5110,11 @@ func (s *GroupService) GetByUUID(ctx context.Context, uuid uuid.UUID) (*domain.G
 }
 
 func (s *GroupService) GetByUUIDForUser(ctx context.Context, groupUUID, userUUID uuid.UUID) (*domain.Group, error) <span class="cov0" title="0">{
-        isMember, err := s.repo.IsMember(ctx, groupUUID, userUUID)
+        member, err := s.memberRepo.GetMember(ctx, groupUUID, userUUID)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, fmt.Errorf("group service: getByUUIDForUser: %w", err)
         }</span>
-        <span class="cov0" title="0">if !isMember </span><span class="cov0" title="0">{
+        <span class="cov0" title="0">if member == nil </span><span class="cov0" title="0">{
                 return nil, domain.ErrForbidden
         }</span>
 
@@ -5054,8 +5179,19 @@ import (
         "github.com/ukma-cs-ssdm-2025/team-circus/internal/domain"
 )
 
-func (s *GroupService) Update(ctx context.Context, uuid uuid.UUID, name string) (*domain.Group, error) <span class="cov0" title="0">{
-        group, err := s.repo.Update(ctx, uuid, name)
+func (s *GroupService) Update(ctx context.Context, userUUID, groupUUID uuid.UUID, name string) (*domain.Group, error) <span class="cov0" title="0">{
+        member, err := s.memberRepo.GetMember(ctx, groupUUID, userUUID)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("group service: update member: %w", err)
+        }</span>
+        <span class="cov0" title="0">if member == nil </span><span class="cov0" title="0">{
+                return nil, domain.ErrForbidden
+        }</span>
+        <span class="cov0" title="0">if member.Role != domain.RoleAuthor </span><span class="cov0" title="0">{
+                return nil, domain.ErrForbidden
+        }</span>
+
+        <span class="cov0" title="0">group, err := s.repo.Update(ctx, groupUUID, name)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, fmt.Errorf("group service: update: %w", err)
         }</span>

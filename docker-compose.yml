@@ -39,15 +39,18 @@ services:
     restart: unless-stopped
 
   migrator:
-    build:
-      context: .
-      dockerfile: backend/Dockerfile
+    image: migrate/migrate:v4.16.2
+    volumes:
+      - ./backend/db/migrations:/migrations:ro
     environment:
       <<: *db-env
     depends_on:
       postgres:
         condition: service_healthy
-    entrypoint: ["task", "db:migrate:up"]
+    entrypoint:
+      - sh
+      - -c
+      - migrate -path=/migrations -database "${DB_DRIVER}://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=disable" up
     restart: "no"
 
   backend:

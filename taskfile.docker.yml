@@ -59,7 +59,7 @@ tasks:
   migrator:build:
     desc: Build migrator
     cmds:
-      - docker compose build migrator
+      - docker compose pull migrator
 
   backend:build:
     desc: Build backend

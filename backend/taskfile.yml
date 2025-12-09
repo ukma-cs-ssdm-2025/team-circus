@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 
 tasks:
   default:
@@ -13,8 +13,8 @@ tasks:
     silent: false
 
   copy:env:optional:
-     desc: Ensure .env exists
-     cmds:
+    desc: Ensure .env exists
+    cmds:
       - |
         if [ ! -f .env ]; then
           echo ".env not found, copying from .env.sample"
@@ -24,7 +24,7 @@ tasks:
         fi
 
   lint:
-    desc: Run local linter config 
+    desc: Run local linter config
     cmds:
       - golangci-lint run
 
@@ -43,7 +43,7 @@ tasks:
     desc: Build functional tests
     cmds:
       - docker compose -f docker-compose.test.yml build
-  
+
   test:func:up:
     desc: Start functional tests
     cmds:
@@ -57,7 +57,7 @@ tasks:
   test:func:run:
     desc: Run functional tests
     cmds:
-      -  go test {{.CLI_ARGS | default "./..."}} -v -tags=func_test
+      - go test {{.CLI_ARGS | default "./..."}} -v -tags=func_test
 
   test:func:
     desc: Run functional tests
@@ -66,7 +66,6 @@ tasks:
       - sleep 2
       - defer: task test:func:down
       - task: test:func:run
-
 
   test:unit:
     desc: Run unit tests
@@ -81,8 +80,21 @@ tasks:
 
   test:unit:coverage:html:
     desc: Generate HTML coverage report
+    deps:
+      - task: test:unit:coverage
     cmds:
-      - go tool cover -html=./coverage/coverage.out -o /root/team-circus/docs/testing/htmlcov/coverage.html
+      - mkdir -p ../docs/testing/htmlcov
+      - go tool cover -html=./coverage/coverage.out -o ../docs/testing/htmlcov/coverage.html
+
+  test:coverage:
+    desc: Alias for unit coverage run
+    cmds:
+      - task: test:unit:coverage
+
+  test:coverage:html:
+    desc: Generate HTML coverage report (runs coverage first)
+    cmds:
+      - task: test:unit:coverage:html
 
   install:
     desc: Install dependencies
@@ -126,7 +138,6 @@ tasks:
     cmds:
       - go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@v4.16.2
 
-  
   db:migrate:up:
     desc: Run migrations
     cmds:
