@@ -35,4 +35,4 @@ USER appuser
 
 # Health check (using swagger endpoint as health check)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:${API_PORT:-8080}/swagger/index.html || exit 1
+    CMD wget --no-verbose --tries=1 -O /dev/null http://localhost:8080/swagger/index.html || exit 1

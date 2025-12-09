@@ -2,7 +2,7 @@
 # STAGE 1: Build Stage
 # ====================================================================
 # 1. ЗМІНА БАЗОВОГО ОБРАЗУ: Використовуємо образ, який містить Bun
-FROM oven/bun:alpine AS builder
+FROM oven/bun:1.3.2-alpine AS builder
 
 WORKDIR /app
 
@@ -38,7 +38,7 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 # Тут є потенційна проблема: якщо вихідний код був скопійований як COPY frontend/ . в builder,
 # то файл frontend/nginx.conf може бути відсутній.
 # ВИПРАВЛЕННЯ: якщо nginx.conf знаходиться в локальній папці frontend, то:
-COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
+COPY nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf
 
 # 4. Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
