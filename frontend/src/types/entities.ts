@@ -24,6 +24,12 @@ export interface CreateDocumentPayload {
 	content: string;
 }
 
+export interface ShareLinkResponse {
+	document_uuid: string;
+	url: string;
+	expires_at: string;
+}
+
 export interface GroupsResponse {
 	groups: GroupItem[];
 }

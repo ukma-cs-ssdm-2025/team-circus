@@ -19,6 +19,7 @@ import {
 	Home,
 	Login,
 	NotFound,
+	PublicDocument,
 	Register,
 	Settings,
 } from "./pages";
@@ -47,6 +48,10 @@ function App() {
 							{/* Public routes */}
 							<Route path={ROUTES.LOGIN} element={<Login />} />
 							<Route path={ROUTES.REGISTER} element={<Register />} />
+							<Route
+								path={stripLeadingSlash(ROUTES.PUBLIC_DOCUMENT)}
+								element={<PublicDocument />}
+							/>
 
 							{/* Protected routes */}
 							<Route element={<ProtectedRoute />}>

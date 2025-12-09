@@ -29,6 +29,16 @@ func NewApp() *app.App {
 			AllowCredentials: true,
 			MaxAge:           43200,
 		},
+		HashingCost:     1,
+		SecretToken:     "test-secret",
+		AccessDuration:  3600,
+		RefreshDuration: 7200,
+		Share: config.ShareConfig{
+			HMACSecret:            "test-share-secret",
+			BaseURL:               "http://localhost:3000",
+			DefaultExpirationDays: 7,
+			MaxExpirationDays:     90,
+		},
 	}
 	return app.New(&cfg, zap.NewNop())
 }

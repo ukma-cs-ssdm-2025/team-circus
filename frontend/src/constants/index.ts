@@ -15,6 +15,8 @@ export const API_ENDPOINTS = {
 		BASE: "/documents",
 		SEARCH: "/documents/search",
 		DETAIL: (uuid: string) => `/documents/${uuid}`,
+		SHARE: (uuid: string) => `/documents/${uuid}/share`,
+		PUBLIC: "/documents/public",
 	},
 	GROUPS: {
 		BASE: "/groups",
@@ -33,6 +35,7 @@ export const ROUTES = {
 	PROFILE: "/profile",
 	SETTINGS: "/settings",
 	DOCUMENTS: "/documents",
+	PUBLIC_DOCUMENT: "/documents/public",
 	GROUPS: "/groups",
 	GROUP_DETAILS: "/groups/:uuid",
 	NOT_FOUND: "/404",

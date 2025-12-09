@@ -6,5 +6,6 @@ export { default as Groups } from "./Groups";
 export { default as Home } from "./Home";
 export { Login } from "./Login";
 export { default as NotFound } from "./NotFound";
+export { default as PublicDocument } from "./PublicDocument";
 export { Register } from "./Register";
 export { default as Settings } from "./Settings";

@@ -49,7 +49,16 @@ func (a *App) setupRouter() *gin.Engine {
 	groupService := groupservice.NewGroupService(groupRepo, memberRepo)
 
 	documentRepo := documentrepo.NewDocumentRepository(a.DB)
-	documentService := documentservice.NewDocumentService(documentRepo, memberRepo)
+	documentService := documentservice.NewDocumentService(
+		documentRepo,
+		memberRepo,
+		documentservice.ShareConfig{
+			Secret:                a.cfg.Share.HMACSecret,
+			BaseURL:               a.cfg.Share.BaseURL,
+			DefaultExpirationDays: a.cfg.Share.DefaultExpirationDays,
+			MaxExpirationDays:     a.cfg.Share.MaxExpirationDays,
+		},
+	)
 	documentPersistence := collabrepo.NewDocumentPersistence(a.DB)
 
 	userRepo := userrepo.NewUserRepository(a.DB)
@@ -70,6 +79,7 @@ func (a *App) setupRouter() *gin.Engine {
 		public.POST("/auth/login", authhandler.NewLogInHandler(userRepo, a.l,
 			a.cfg.SecretToken, a.cfg.AccessDuration, a.cfg.RefreshDuration))
 		public.POST("/auth/refresh", authhandler.NewRefreshTokenHandler(userRepo, a.l, a.cfg.SecretToken, a.cfg.AccessDuration))
+		public.GET("/documents/public", documenthandler.NewGetPublicDocumentHandler(documentService, a.l))
 	}
 
 	protected := apiV1.Group("")
@@ -100,6 +110,7 @@ func (a *App) setupRouter() *gin.Engine {
 			documents.GET("/:uuid", documenthandler.NewGetDocumentHandler(documentService, a.l))
 			documents.GET("", documenthandler.NewGetAllDocumentsHandler(documentService, a.l))
 			documents.PUT("/:uuid", documenthandler.NewUpdateDocumentHandler(documentService, a.l))
+			documents.POST("/:uuid/share", documenthandler.NewShareDocumentHandler(documentService, a.l))
 			documents.DELETE("/:uuid", documenthandler.NewDeleteDocumentHandler(documentService, a.l))
 		}
 

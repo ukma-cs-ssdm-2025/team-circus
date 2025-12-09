@@ -8,11 +8,24 @@ import (
 type DocumentService struct {
 	repo       *document.DocumentRepository
 	memberRepo *member.MemberRepository
+	shareCfg   ShareConfig
 }
 
-func NewDocumentService(repo *document.DocumentRepository, memberRepo *member.MemberRepository) *DocumentService {
+type ShareConfig struct {
+	Secret                string
+	BaseURL               string
+	DefaultExpirationDays int
+	MaxExpirationDays     int
+}
+
+func NewDocumentService(
+	repo *document.DocumentRepository,
+	memberRepo *member.MemberRepository,
+	shareCfg ShareConfig,
+) *DocumentService {
 	return &DocumentService{
 		repo:       repo,
 		memberRepo: memberRepo,
+		shareCfg:   shareCfg,
 	}
 }

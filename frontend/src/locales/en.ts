@@ -142,6 +142,35 @@ export const en = {
 	"documentEditor.shortcutSave": "Ctrl/Cmd + S",
 	"documentEditor.liveStatusConnected": "Live sync via WebSocket",
 	"documentEditor.liveStatusConnecting": "Connecting live sync...",
+	"documentEditor.shareButton": "Share",
+
+	// Share dialog
+	"shareDialog.title": "Share document",
+	"shareDialog.subtitle": "Generate a read-only link with a timed expiry.",
+	"shareDialog.info":
+		"Anyone with the link can view this document until it expires. Editing is disabled for shared links.",
+	"shareDialog.expirationLabel": "Expiration",
+	"shareDialog.daysLabel": "days",
+	"shareDialog.expirationHint":
+		"Links can last between 1 and 90 days. You can generate a new link at any time.",
+	"shareDialog.linkLabel": "Shareable link",
+	"shareDialog.readOnlyTag": "Read-only",
+	"shareDialog.expiresAtLabel": "Expires",
+	"shareDialog.generateButton": "Generate link",
+	"shareDialog.generating": "Generating...",
+	"shareDialog.error": "Unable to generate a share link right now.",
+
+	// Public document viewer
+	"publicDocument.readOnlyNote": "You are viewing a shared, read-only document.",
+	"publicDocument.expiryLabel": "Link expires",
+	"publicDocument.missingParams": "This share link is missing required information.",
+	"publicDocument.expiredTitle": "This link has expired",
+	"publicDocument.expiredMessage": "Ask the document owner to create a new link.",
+	"publicDocument.invalidTitle": "This link is not valid",
+	"publicDocument.invalidMessage": "Check the URL or request a fresh link from the owner.",
+	"publicDocument.error": "We couldn't load this shared document.",
+	"publicDocument.metaCreated": "Created",
+	"publicDocument.metaId": "Document ID",
 
 	// Group details page
 	"groupDetails.titleFallback": "Group",

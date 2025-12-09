@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import styles from "./EditorHeader.module.css";
 import { useLanguage } from "../../contexts/LanguageContext";
 import DownloadIcon from "../icons/DownloadIcon";
+import ShareIcon from "../icons/ShareIcon";
 
 type ExportFormat = "md" | "html" | "pdf";
 
@@ -10,6 +11,8 @@ type EditorHeaderProps = {
 	onNameChange: (name: string) => void;
 	onExport: (format: ExportFormat) => void;
 	isConnected: boolean;
+	onShare?: () => void;
+	shareDisabled?: boolean;
 };
 
 export const EditorHeader = ({
@@ -17,6 +20,8 @@ export const EditorHeader = ({
 	onNameChange,
 	onExport,
 	isConnected,
+	onShare,
+	shareDisabled,
 }: EditorHeaderProps) => {
 	const { t } = useLanguage();
 	const [isExportOpen, setIsExportOpen] = useState(false);
@@ -91,6 +96,19 @@ export const EditorHeader = ({
 						</div>
 					)}
 				</div>
+
+				{onShare && (
+					<button
+						type="button"
+						className={styles.shareButton}
+						onClick={onShare}
+						disabled={shareDisabled}
+						title={t("documentEditor.shareButton")}
+					>
+						<ShareIcon className={styles.shareIcon} />
+						<span>{t("documentEditor.shareButton")}</span>
+					</button>
+				)}
 			</div>
 
 			<div className={styles.right}>

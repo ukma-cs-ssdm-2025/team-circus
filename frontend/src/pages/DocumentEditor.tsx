@@ -11,14 +11,17 @@ import {
 	ErrorAlert,
 	LoadingSpinner,
 	MarkdownPreview,
+	ShareDialog,
 } from "../components";
 import { ROUTES } from "../constants";
 import { useAuth } from "../contexts/AuthContextBase";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useCollaborativeEditor, useDebounce, useDocumentSync } from "../hooks";
-import type { BaseComponentProps } from "../types";
+import { generateShareLink } from "../services";
+import type { BaseComponentProps, ShareLinkResponse } from "../types";
 
 type DocumentEditorProps = BaseComponentProps;
+const DEFAULT_SHARE_EXPIRATION_DAYS = 7;
 
 const escapeHtml = (value: string): string =>
 	value
@@ -74,6 +77,10 @@ const DocumentEditor = ({ className = "" }: DocumentEditorProps) => {
 		refetch,
 	} = useDocumentSync(documentId);
 
+	const [shareDialogOpen, setShareDialogOpen] = useState(false);
+	const [shareLink, setShareLink] = useState<ShareLinkResponse | null>(null);
+	const [shareError, setShareError] = useState<string | null>(null);
+	const [shareLoading, setShareLoading] = useState(false);
 	const [docName, setDocName] = useState(documentData?.name ?? "");
 
 	const {
@@ -112,8 +119,8 @@ const DocumentEditor = ({ className = "" }: DocumentEditorProps) => {
 			const rawTitle = docName || t("documentEditor.fallbackTitle");
 			const escapedTitle = escapeHtml(rawTitle);
 
-			const downloadFile = (content: string, type: string) => {
-				const blob = new Blob([content], { type });
+			const downloadFile = (value: string, type: string) => {
+				const blob = new Blob([value], { type });
 				const url = URL.createObjectURL(blob);
 				const link = window.document.createElement("a");
 				link.href = url;
@@ -150,6 +157,45 @@ const DocumentEditor = ({ className = "" }: DocumentEditorProps) => {
 			printable.print();
 		},
 		[buildFileName, content, docName, t],
+	);
+
+	const handleShareOpen = useCallback(() => {
+		setShareDialogOpen(true);
+		setShareLink(null);
+		setShareError(null);
+	}, []);
+
+	const handleShareClose = useCallback(() => {
+		if (shareLoading) {
+			return;
+		}
+		setShareDialogOpen(false);
+		setShareError(null);
+	}, [shareLoading]);
+
+	const handleGenerateShare = useCallback(
+		async (expirationDays: number) => {
+			if (!documentId) {
+				return;
+			}
+			setShareLoading(true);
+			setShareError(null);
+			setShareLink(null);
+
+			try {
+				const result = await generateShareLink(documentId, expirationDays);
+				setShareLink(result);
+			} catch (shareErr) {
+				const message =
+					shareErr instanceof Error
+						? shareErr.message
+						: t("shareDialog.error");
+				setShareError(message || t("shareDialog.error"));
+			} finally {
+				setShareLoading(false);
+			}
+		},
+		[documentId, t],
 	);
 
 	if (!documentId) {
@@ -196,6 +242,10 @@ const DocumentEditor = ({ className = "" }: DocumentEditorProps) => {
 						onNameChange={setDocName}
 						onExport={handleExport}
 						isConnected={isConnected}
+						wordCount={wordCount}
+						readingTime={readingTime}
+						onShare={documentData ? handleShareOpen : undefined}
+						shareDisabled={shareLoading || !documentData}
 					/>
 
 					<div className={styles.editorShell}>
@@ -205,9 +255,9 @@ const DocumentEditor = ({ className = "" }: DocumentEditorProps) => {
 								onChange={setContent}
 								onCursorChange={updateCursorPosition}
 								isConnected={isConnected}
-								remoteUsers={remoteUsers.map((user) => ({
-									...user,
-									name: user.name ?? user.id,
+								remoteUsers={remoteUsers.map((remoteUser) => ({
+									...remoteUser,
+									name: remoteUser.name ?? remoteUser.id,
 								}))}
 							/>
 							<MarkdownPreview
@@ -218,6 +268,16 @@ const DocumentEditor = ({ className = "" }: DocumentEditorProps) => {
 					</div>
 				</div>
 			)}
+
+			<ShareDialog
+				open={shareDialogOpen}
+				onClose={handleShareClose}
+				onGenerate={handleGenerateShare}
+				loading={shareLoading}
+				link={shareLink}
+				error={shareError}
+				defaultExpirationDays={DEFAULT_SHARE_EXPIRATION_DAYS}
+			/>
 		</div>
 	);
 };
