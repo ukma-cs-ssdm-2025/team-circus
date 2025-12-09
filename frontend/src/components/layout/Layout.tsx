@@ -7,11 +7,25 @@ import Sidebar from "./Sidebar";
 
 interface LayoutProps extends BaseComponentProps {
 	children: React.ReactNode;
+	hideFooter?: boolean;
+	noPadding?: boolean;
 }
 
-const Layout = ({ children, className = "" }: LayoutProps) => {
+const Layout = ({
+	children,
+	className = "",
+	hideFooter = false,
+	noPadding = false,
+}: LayoutProps) => {
 	const theme = useTheme();
 	const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+	const background =
+		noPadding || hideFooter
+			? theme.palette.background.default
+			: theme.palette.mode === "light"
+				? "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)"
+				: "linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)";
 
 	const handleOpenSidebar = () => setIsSidebarOpen(true);
 	const handleCloseSidebar = () => setIsSidebarOpen(false);
@@ -21,10 +35,7 @@ const Layout = ({ children, className = "" }: LayoutProps) => {
 			className={className}
 			sx={{
 				minHeight: "100vh",
-				background:
-					theme.palette.mode === "light"
-						? "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)"
-						: "linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)",
+				background,
 				display: "flex",
 				flexDirection: "column",
 			}}
@@ -36,8 +47,8 @@ const Layout = ({ children, className = "" }: LayoutProps) => {
 					flex: 1,
 					display: "flex",
 					flexDirection: "column",
-					px: { xs: 1.5, md: 3 },
-					py: { xs: 2, md: 3 },
+					px: noPadding ? 0 : { xs: 1.5, md: 3 },
+					py: noPadding ? 0 : { xs: 2, md: 3 },
 				}}
 			>
 				<Box
@@ -52,7 +63,7 @@ const Layout = ({ children, className = "" }: LayoutProps) => {
 					{children}
 				</Box>
 			</Box>
-			<Footer />
+			{!hideFooter && <Footer />}
 			<Sidebar open={isSidebarOpen} onClose={handleCloseSidebar} />
 		</Box>
 	);
