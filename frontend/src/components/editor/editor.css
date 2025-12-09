@@ -46,7 +46,6 @@
 .editor-frame {
 	display: flex;
 	flex-direction: column;
-	gap: 12px;
 	height: 100%;
 	background: var(--color-bg-primary);
 	border: 1px solid var(--color-border-primary);
@@ -55,6 +54,7 @@
 	transition:
 		background-color var(--editor-transition),
 		border-color var(--editor-transition);
+	min-height: 0;
 }
 
 .editor-toolbar {
@@ -65,6 +65,44 @@
 	padding: 10px 14px;
 	background: var(--color-bg-secondary);
 	border-bottom: 1px solid var(--color-border-primary);
+	flex-wrap: nowrap;
+	min-height: 56px;
+}
+
+.editor-body {
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: column;
+	gap: 0;
+	min-height: 0;
+	background: var(--color-bg-primary);
+	color: var(--color-text-primary);
+}
+
+.editor-pane {
+	flex: 1;
+	min-width: 0;
+	padding: 0;
+	background: var(--color-bg-primary);
+	overflow: hidden;
+}
+
+.editor-host {
+	height: 100%;
+	min-height: 0;
+	position: relative;
+	display: flex;
+	overflow: hidden;
+}
+
+.editor-host .cm-editor {
+	height: 100%;
+	width: 100%;
+}
+
+.editor-host .cm-scroller {
+	height: 100%;
+	overflow: auto;
 }
 
 .editor-status-badge {
@@ -78,7 +116,8 @@
 	text-transform: uppercase;
 	color: var(--color-text-primary);
 	background: color-mix(in srgb, var(--color-cursor-other-2) 18%, transparent);
-	border: 1px solid color-mix(in srgb, var(--color-cursor-other-2) 35%, transparent);
+	border: 1px solid
+		color-mix(in srgb, var(--color-cursor-other-2) 35%, transparent);
 }
 
 .editor-status-dot {
@@ -86,7 +125,8 @@
 	height: 8px;
 	border-radius: 50%;
 	background: var(--color-cursor-other-2);
-	box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-cursor-other-2) 15%, transparent);
+	box-shadow: 0 0 0 4px
+		color-mix(in srgb, var(--color-cursor-other-2) 15%, transparent);
 }
 
 .editor-toolbar-subtle {
@@ -118,7 +158,8 @@
 }
 
 .editor-line-number {
-	font-family: "Monaco", "Courier New", "SFMono-Regular", ui-monospace, monospace;
+	font-family:
+		"Monaco", "Courier New", "SFMono-Regular", ui-monospace, monospace;
 	font-size: 14px;
 	line-height: var(--editor-line-height);
 	height: var(--editor-line-height);
@@ -127,13 +168,19 @@
 	justify-content: flex-end;
 	padding-right: 6px;
 	border-radius: 6px;
-	transition: background-color var(--editor-transition), color var(--editor-transition);
+	transition:
+		background-color var(--editor-transition),
+		color var(--editor-transition);
 	font-variant-numeric: tabular-nums;
 }
 
 .editor-line-number.active {
 	color: var(--color-line-number-active);
-	background: color-mix(in srgb, var(--color-line-number-active) 18%, transparent);
+	background: color-mix(
+		in srgb,
+		var(--color-line-number-active) 18%,
+		transparent
+	);
 	font-weight: 700;
 }
 
@@ -149,7 +196,8 @@
 	flex: 1;
 	padding: 12px 16px;
 	overflow: auto;
-	font-family: "Monaco", "Courier New", "SFMono-Regular", ui-monospace, monospace;
+	font-family:
+		"Monaco", "Courier New", "SFMono-Regular", ui-monospace, monospace;
 	font-size: 14px;
 	line-height: var(--editor-line-height);
 	white-space: pre-wrap;
@@ -177,7 +225,9 @@
 	border-radius: 6px;
 	position: relative;
 	outline: none;
-	transition: background-color var(--editor-transition), border-color var(--editor-transition);
+	transition:
+		background-color var(--editor-transition),
+		border-color var(--editor-transition);
 }
 
 .editor-line:focus-visible {
@@ -186,7 +236,11 @@
 }
 
 .editor-line.active {
-	background: color-mix(in srgb, var(--color-line-number-active) 12%, transparent);
+	background: color-mix(
+		in srgb,
+		var(--color-line-number-active) 12%,
+		transparent
+	);
 }
 
 .editor-line:hover {
@@ -208,12 +262,20 @@
 }
 
 .editor-content-area::-webkit-scrollbar-thumb {
-	background: color-mix(in srgb, var(--color-border-secondary) 70%, transparent);
+	background: color-mix(
+		in srgb,
+		var(--color-border-secondary) 70%,
+		transparent
+	);
 	border-radius: 10px;
 }
 
 .editor-content-area::-webkit-scrollbar-thumb:hover {
-	background: color-mix(in srgb, var(--color-border-secondary) 90%, transparent);
+	background: color-mix(
+		in srgb,
+		var(--color-border-secondary) 90%,
+		transparent
+	);
 }
 
 .editor-content-overlay {
@@ -242,27 +304,33 @@
 	color: var(--color-text-primary);
 	background: color-mix(in srgb, var(--color-bg-secondary) 80%, transparent);
 	backdrop-filter: blur(6px);
-	border: 1px solid color-mix(in srgb, var(--color-border-secondary) 70%, transparent);
+	border: 1px solid
+		color-mix(in srgb, var(--color-border-secondary) 70%, transparent);
 	white-space: nowrap;
 }
 
 .remote-preview-panel {
-	width: 280px;
+	width: 100%;
 	flex-shrink: 0;
-	border-left: 1px solid var(--color-border-primary);
 	background: var(--color-bg-secondary);
 	color: var(--color-text-primary);
 	display: flex;
-	flex-direction: column;
-	gap: 12px;
-	padding: 12px 14px;
+	align-items: center;
+	gap: 10px;
+	padding: 8px 14px;
+	min-width: 0;
+	border-top: 1px solid var(--color-border-primary);
+	border-radius: 0;
 }
 
 .remote-panel-header {
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
+	justify-content: flex-start;
 	gap: 10px;
+	flex: 1 1 auto;
+	flex-wrap: wrap;
+	min-width: 0;
 }
 
 .remote-panel-labels {
@@ -270,6 +338,7 @@
 	gap: 8px;
 	align-items: center;
 	flex-wrap: wrap;
+	min-width: 0;
 }
 
 .remote-badge {
@@ -298,19 +367,21 @@
 
 .remote-users {
 	display: flex;
-	flex-direction: column;
 	gap: 8px;
 	margin: 0;
 	padding: 0;
 	list-style: none;
+	align-items: center;
+	flex-wrap: wrap;
+	overflow: hidden;
+	min-width: 0;
 }
 
 .remote-user {
-	display: grid;
-	grid-template-columns: auto 1fr auto;
+	display: inline-flex;
 	align-items: center;
 	gap: 8px;
-	padding: 8px 10px;
+	padding: 6px 10px;
 	border: 1px solid var(--color-border-secondary);
 	border-radius: 10px;
 	background: color-mix(in srgb, var(--color-bg-primary) 90%, transparent);
@@ -406,23 +477,13 @@
 	color: var(--color-text-primary);
 	border-color: var(--color-border-primary);
 	background: color-mix(in srgb, var(--color-bg-tertiary) 70%, transparent);
-	box-shadow: 0 6px 20px color-mix(in srgb, var(--color-bg-tertiary) 35%, transparent);
+	box-shadow: 0 6px 20px
+		color-mix(in srgb, var(--color-bg-tertiary) 35%, transparent);
 }
 
 .remote-panel-toggle svg {
 	width: 16px;
 	height: 16px;
-}
-
-.remote-panel-collapsed {
-	width: 46px;
-	flex-shrink: 0;
-	border-left: 1px solid var(--color-border-primary);
-	background: var(--color-bg-secondary);
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	padding: 12px 8px;
 }
 
 .sr-only {
@@ -445,12 +506,5 @@
 		width: 100%;
 		border-left: none;
 		border-top: 1px solid var(--color-border-primary);
-	}
-
-	.remote-panel-collapsed {
-		width: 100%;
-		border-left: none;
-		border-top: 1px solid var(--color-border-primary);
-		justify-content: flex-end;
 	}
 }

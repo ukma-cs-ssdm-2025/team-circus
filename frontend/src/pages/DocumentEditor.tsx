@@ -94,20 +94,6 @@ const DocumentEditor = ({ className = "" }: DocumentEditorProps) => {
 	}, [documentData?.name]);
 
 	const debouncedContent = useDebounce(content, 300);
-	const wordCount = useMemo(() => {
-		const trimmed = content.trim();
-		if (!trimmed) {
-			return 0;
-		}
-		return trimmed.split(/\s+/).filter(Boolean).length;
-	}, [content]);
-
-	const readingTime = useMemo(() => {
-		if (wordCount === 0) {
-			return 0;
-		}
-		return Math.ceil(wordCount / 200);
-	}, [wordCount]);
 
 	const buildFileName = useCallback(
 		(extension: string) => {
@@ -210,8 +196,6 @@ const DocumentEditor = ({ className = "" }: DocumentEditorProps) => {
 						onNameChange={setDocName}
 						onExport={handleExport}
 						isConnected={isConnected}
-						wordCount={wordCount}
-						readingTime={readingTime}
 					/>
 
 					<div className={styles.editorShell}>

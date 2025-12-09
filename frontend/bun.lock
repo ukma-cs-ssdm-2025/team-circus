@@ -1,10 +1,13 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 1,
   "workspaces": {
     "": {
       "name": "frontend",
       "dependencies": {
+        "@codemirror/commands": "^6.10.0",
+        "@codemirror/language": "^6.11.3",
+        "@codemirror/state": "^6.5.2",
+        "@codemirror/view": "^6.39.0",
         "@emotion/react": "^11.14.0",
         "@emotion/styled": "^11.14.1",
         "@mui/icons-material": "^7.3.5",
