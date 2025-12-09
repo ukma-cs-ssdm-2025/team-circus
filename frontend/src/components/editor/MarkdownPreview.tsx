@@ -2,6 +2,7 @@ import { memo, useMemo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { Components } from "react-markdown";
+import type { HTMLAttributes, ReactNode } from "react";
 import styles from "./MarkdownPreview.module.css";
 import { useLanguage } from "../../contexts/LanguageContext";
 
@@ -15,16 +16,24 @@ export const MarkdownPreview = memo(
 		const { t } = useLanguage();
 		const trimmedContent = content.trim();
 
-		const components = useMemo<Components>(
-			() => ({
-				code: ({ inline, children }) =>
-					inline ? (
+		type CodeProps = HTMLAttributes<HTMLElement> & {
+			inline?: boolean;
+			children?: ReactNode;
+			className?: string;
+		};
+
+		const components = useMemo<Components>(() => {
+			return {
+				code: (props) => {
+					const { inline, children, className } = props as CodeProps;
+					return inline ? (
 						<code className={styles.inlineCode}>{children}</code>
 					) : (
 						<pre className={styles.codeBlock}>
-							<code>{children}</code>
+							<code className={className}>{children}</code>
 						</pre>
-					),
+					);
+				},
 				a: ({ href, children }) => (
 					<a className={styles.link} href={href} target="_blank" rel="noreferrer">
 						{children}
@@ -40,9 +49,8 @@ export const MarkdownPreview = memo(
 				),
 				th: ({ children }) => <th className={styles.tableHeader}>{children}</th>,
 				td: ({ children }) => <td className={styles.tableCell}>{children}</td>,
-			}),
-			[],
-		);
+			};
+		}, []);
 
 		const rendered = useMemo(() => {
 			if (!trimmedContent) {
