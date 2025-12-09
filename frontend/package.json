@@ -6,7 +6,7 @@
 	"type": "module",
 	"scripts": {
 		"dev": "bunx --bun vite",
-		"build": "bunx --bun tsc -b && bunx --bun vite build",
+		"build": "bunx --bun tsc -p tsconfig.app.json --noEmit && bunx --bun vite build",
 		"lint": "bunx --bun eslint .",
 		"preview": "bunx --bun vite preview"
 	},
@@ -16,12 +16,15 @@
 		"@mui/icons-material": "^7.3.5",
 		"@mui/lab": "^7.0.1-beta.19",
 		"@mui/material": "^7.3.5",
-		"@types/react-router-dom": "^5.3.3",
+		"codemirror": "^6.0.0",
 		"react": "^19.2.0",
 		"react-dom": "^19.2.0",
 		"react-markdown": "^9.1.0",
 		"react-router-dom": "^7.9.5",
-		"remark-gfm": "^4.0.1"
+		"remark-gfm": "^4.0.1",
+		"y-codemirror.next": "^0.3.5",
+		"y-websocket": "^1.5.0",
+		"yjs": "^13.6.0"
 	},
 	"devDependencies": {
 		"@eslint/js": "^9.39.1",

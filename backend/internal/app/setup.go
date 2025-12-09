@@ -13,7 +13,9 @@ import (
 	memberhandler "github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/member"
 	reghandler "github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/reg"
 	userhandler "github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/user"
+	websockethandler "github.com/ukma-cs-ssdm-2025/team-circus/internal/handler/websocket"
 	"github.com/ukma-cs-ssdm-2025/team-circus/internal/middleware"
+	collabrepo "github.com/ukma-cs-ssdm-2025/team-circus/internal/repo"
 	documentrepo "github.com/ukma-cs-ssdm-2025/team-circus/internal/repo/document"
 	grouprepo "github.com/ukma-cs-ssdm-2025/team-circus/internal/repo/group"
 	memberrepo "github.com/ukma-cs-ssdm-2025/team-circus/internal/repo/member"
@@ -48,6 +50,7 @@ func (a *App) setupRouter() *gin.Engine {
 
 	documentRepo := documentrepo.NewDocumentRepository(a.DB)
 	documentService := documentservice.NewDocumentService(documentRepo, memberRepo)
+	documentPersistence := collabrepo.NewDocumentPersistence(a.DB)
 
 	userRepo := userrepo.NewUserRepository(a.DB)
 	userService := userservice.NewUserService(userRepo, a.cfg.HashingCost)
@@ -58,6 +61,8 @@ func (a *App) setupRouter() *gin.Engine {
 	memberService := memberservice.NewMemberService(memberRepo, groupRepo, userRepo)
 
 	apiV1 := router.Group("/api/v1")
+
+	wsHubManager := websockethandler.NewHubManager(a.l, documentPersistence)
 
 	public := apiV1.Group("")
 	{
@@ -105,6 +110,16 @@ func (a *App) setupRouter() *gin.Engine {
 			users.PUT("/:uuid", userhandler.NewUpdateUserHandler(userService, a.l))
 			users.DELETE("/:uuid", userhandler.NewDeleteUserHandler(userService, a.l))
 		}
+	}
+
+	wsGroup := router.Group("/ws")
+	wsGroup.Use(middleware.AuthMiddleware(userRepo, a.cfg.SecretToken))
+	{
+		wsGroup.GET("/documents/:uuid", websockethandler.NewWebSocketHandler(
+			documentService,
+			wsHubManager,
+			a.l,
+		))
 	}
 	return router
 }
