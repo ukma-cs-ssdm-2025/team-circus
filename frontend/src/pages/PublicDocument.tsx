@@ -36,10 +36,15 @@ const formatDateTime = (value: string | number) => {
 
 const PublicDocument = () => {
 	const createFallbackGuestId = useCallback(() => {
-		if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-			return crypto.randomUUID().slice(0, 8);
+		if (typeof crypto !== "undefined") {
+			if (typeof crypto.randomUUID === "function") {
+				return crypto.randomUUID().slice(0, 8);
+			}
+			const buffer = new Uint32Array(2);
+			crypto.getRandomValues(buffer);
+			return `${buffer[0].toString(16)}${buffer[1].toString(16)}`.slice(0, 8);
 		}
-		return `${Date.now().toString(16)}${Math.floor(Math.random() * 1e6).toString(16)}`.slice(0, 8);
+		return `${Date.now().toString(16)}fallback`;
 	}, []);
 
 	const { t } = useLanguage();
