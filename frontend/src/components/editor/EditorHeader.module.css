@@ -47,7 +47,9 @@
 	background: var(--editor-surface, #ffffff);
 	color: var(--editor-text, #0f172a);
 	outline: none;
-	transition: border-color 0.2s ease, box-shadow 0.2s ease;
+	transition:
+		border-color 0.2s ease,
+		box-shadow 0.2s ease;
 }
 
 .nameInput:focus {
@@ -64,7 +66,10 @@
 	font-weight: 700;
 	font-size: 14px;
 	cursor: pointer;
-	transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+	transition:
+		transform 0.15s ease,
+		box-shadow 0.2s ease,
+		opacity 0.2s ease;
 	box-shadow: 0 10px 25px rgba(37, 99, 235, 0.3);
 }
 
@@ -195,7 +200,9 @@
 	font-weight: 700;
 	cursor: pointer;
 	min-width: 42px;
-	transition: transform 0.15s ease, box-shadow 0.2s ease;
+	transition:
+		transform 0.15s ease,
+		box-shadow 0.2s ease;
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;

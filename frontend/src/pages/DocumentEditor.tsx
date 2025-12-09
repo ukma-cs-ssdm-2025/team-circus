@@ -38,9 +38,9 @@ const DocumentEditor = ({ className = "" }: DocumentEditorProps) => {
 
 	const buildFileName = useCallback(
 		(extension: string) => {
-			const safeTitle =
-				state.name.trim() || t("documentEditor.fallbackTitle");
-			const sanitized = safeTitle.replace(/[\\/:*?"<>|]+/g, "").trim() || "document";
+			const safeTitle = state.name.trim() || t("documentEditor.fallbackTitle");
+			const sanitized =
+				safeTitle.replace(/[\\/:*?"<>|]+/g, "").trim() || "document";
 			return `${sanitized}.${extension}`;
 		},
 		[state.name, t],
@@ -69,9 +69,7 @@ const DocumentEditor = ({ className = "" }: DocumentEditorProps) => {
 			const htmlBody = renderToStaticMarkup(
 				<article>
 					<h1>{state.name || t("documentEditor.fallbackTitle")}</h1>
-					<ReactMarkdown remarkPlugins={[remarkGfm]}>
-						{markdown}
-					</ReactMarkdown>
+					<ReactMarkdown remarkPlugins={[remarkGfm]}>{markdown}</ReactMarkdown>
 				</article>,
 			);
 			const htmlDocument = `<!doctype html><html><head><meta charset="utf-8" /><title>${state.name}</title></head><body>${htmlBody}</body></html>`;
@@ -157,9 +155,7 @@ const DocumentEditor = ({ className = "" }: DocumentEditorProps) => {
 			{loading && <LoadingSpinner py={4} />}
 
 			{!loading && !error && !documentData && (
-				<div className={styles.emptyState}>
-					{t("documentEditor.notFound")}
-				</div>
+				<div className={styles.emptyState}>{t("documentEditor.notFound")}</div>
 			)}
 
 			{!loading && documentData && (

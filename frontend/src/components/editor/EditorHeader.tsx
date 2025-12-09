@@ -150,8 +150,12 @@ export const EditorHeader = ({
 					role="status"
 					aria-live="polite"
 				>
-					{saveStatus === "success" && <span className={styles.dot} aria-hidden />}
-					{saveStatus === "error" && <span className={styles.dot} aria-hidden />}
+					{saveStatus === "success" && (
+						<span className={styles.dot} aria-hidden />
+					)}
+					{saveStatus === "error" && (
+						<span className={styles.dot} aria-hidden />
+					)}
 					{statusLabel}
 				</div>
 			</div>

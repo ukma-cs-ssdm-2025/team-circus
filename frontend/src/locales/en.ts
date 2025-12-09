@@ -108,7 +108,8 @@ export const en = {
 	"documents.deleteConfirmAction": "Delete",
 
 	// Document editor page
-	"documentEditor.subtitle": "Edit the document and preview changes in real time",
+	"documentEditor.subtitle":
+		"Edit the document and preview changes in real time",
 	"documentEditor.fallbackTitle": "Document",
 	"documentEditor.nameLabel": "Document name",
 	"documentEditor.namePlaceholder": "Enter a name",
@@ -125,8 +126,7 @@ export const en = {
 		"We could not save the document. Please try again.",
 	"documentEditor.backToList": "Back to documents",
 	"documentEditor.loadError": "Failed to load the document.",
-	"documentEditor.notFound":
-		"The document was not found or has been removed.",
+	"documentEditor.notFound": "The document was not found or has been removed.",
 	"documentEditor.exportLabel": "Export",
 	"documentEditor.exportPlaceholder": "Choose a format",
 	"documentEditor.exportMd": "Markdown (.md)",

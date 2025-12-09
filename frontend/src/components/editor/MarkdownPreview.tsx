@@ -35,7 +35,12 @@ export const MarkdownPreview = memo(
 					);
 				},
 				a: ({ href, children }) => (
-					<a className={styles.link} href={href} target="_blank" rel="noreferrer">
+					<a
+						className={styles.link}
+						href={href}
+						target="_blank"
+						rel="noreferrer"
+					>
 						{children}
 					</a>
 				),
@@ -47,7 +52,9 @@ export const MarkdownPreview = memo(
 						<table>{children}</table>
 					</div>
 				),
-				th: ({ children }) => <th className={styles.tableHeader}>{children}</th>,
+				th: ({ children }) => (
+					<th className={styles.tableHeader}>{children}</th>
+				),
 				td: ({ children }) => <td className={styles.tableCell}>{children}</td>,
 			};
 		}, []);

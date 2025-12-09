@@ -45,9 +45,7 @@ export function useEditorState(
 	const [name, setName] = useState(initialName);
 	const [content, setContent] = useState(initialContent);
 	const [lastSaved, setLastSaved] = useState<SavedState | null>(
-		initialDocument
-			? { name: initialName, content: initialContent }
-			: null,
+		initialDocument ? { name: initialName, content: initialContent } : null,
 	);
 	const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
 

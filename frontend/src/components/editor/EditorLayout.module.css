@@ -1,6 +1,9 @@
 .container {
 	display: grid;
-	grid-template-columns: var(--editor-left-width, 1fr) var(--editor-right-width, 1fr);
+	grid-template-columns: var(--editor-left-width, 1fr) var(
+			--editor-right-width,
+			1fr
+		);
 	grid-template-rows: 1fr;
 	gap: 0;
 	width: 100%;
@@ -41,7 +44,9 @@
 		rgba(148, 163, 184, 0.65) 50%,
 		rgba(148, 163, 184, 0) 100%
 	);
-	transition: background-color 0.2s ease, width 0.2s ease;
+	transition:
+		background-color 0.2s ease,
+		width 0.2s ease;
 }
 
 .divider:hover {

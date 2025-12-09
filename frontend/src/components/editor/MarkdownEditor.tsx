@@ -22,10 +22,7 @@ export const MarkdownEditor = memo(
 		const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
 		const updateValue = useCallback(
-			(
-				nextValue: string,
-				selection?: { start: number; end: number },
-			) => {
+			(nextValue: string, selection?: { start: number; end: number }) => {
 				if (readOnly) {
 					return;
 				}

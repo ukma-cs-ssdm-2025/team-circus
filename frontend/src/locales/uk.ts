@@ -126,8 +126,7 @@ export const uk = {
 	"documentEditor.saveButton": "Зберегти зміни",
 	"documentEditor.savingButton": "Збереження...",
 	"documentEditor.saveSuccess": "Документ успішно збережено.",
-	"documentEditor.saveError":
-		"Не вдалося зберегти документ. Спробуйте ще раз.",
+	"documentEditor.saveError": "Не вдалося зберегти документ. Спробуйте ще раз.",
 	"documentEditor.backToList": "Повернутися до документів",
 	"documentEditor.loadError": "Не вдалося завантажити документ.",
 	"documentEditor.notFound": "Документ не знайдено або він був видалений.",
@@ -159,8 +158,7 @@ export const uk = {
 	"groupDetails.fieldRequired": "Поле є обовʼязковим",
 	"groupDetails.addMemberSubmit": "Додати",
 	"groupDetails.addMemberSubmitting": "Додавання...",
-	"groupDetails.permissionsHint":
-		"Лише автор групи може керувати учасниками.",
+	"groupDetails.permissionsHint": "Лише автор групи може керувати учасниками.",
 	"groupDetails.membersTitle": "Учасники",
 	"groupDetails.membersEmpty": "У цій групі поки немає учасників.",
 	"groupDetails.memberColumnUser": "Користувач",

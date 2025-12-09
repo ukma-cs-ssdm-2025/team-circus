@@ -39,12 +39,7 @@
 	min-height: 0;
 	height: 100%;
 	font-family:
-		"SFMono-Regular",
-		Menlo,
-		Monaco,
-		Consolas,
-		"Courier New",
-		monospace;
+		"SFMono-Regular", Menlo, Monaco, Consolas, "Courier New", monospace;
 	font-size: 14px;
 	line-height: 1.6;
 	resize: none;
@@ -79,10 +74,7 @@
 }
 
 .textarea::-webkit-scrollbar-thumb:hover {
-	background: var(
-		--editor-scrollbar-thumb-hover,
-		rgba(102, 126, 234, 0.55)
-	);
+	background: var(--editor-scrollbar-thumb-hover, rgba(102, 126, 234, 0.55));
 }
 
 @media (max-width: 768px) {
