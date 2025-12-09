@@ -315,6 +315,10 @@ export const Editor = ({
 							)}
 							{resolvedRemoteUsers.map((user) => {
 								const status = user.status ?? "online";
+								const roleLabel =
+									user.role && user.role.length > 0
+										? `${user.role.charAt(0).toUpperCase()}${user.role.slice(1)}`
+										: "Editor";
 								return (
 									<li key={user.id} className="remote-user">
 										<span className={`user-status-dot ${status}`} />
@@ -328,7 +332,7 @@ export const Editor = ({
 													style={{ background: user.color }}
 													aria-hidden="true"
 												/>
-												{user.role ?? "Editor"}
+												{roleLabel}
 											</span>
 										</div>
 									</li>

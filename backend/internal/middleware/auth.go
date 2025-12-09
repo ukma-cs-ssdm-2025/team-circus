@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -20,6 +21,16 @@ type userRepository interface {
 
 func AuthMiddleware(userRepo userRepository, secretToken string) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		fullPath := c.FullPath()
+		if fullPath == "" {
+			fullPath = c.Request.URL.Path
+		}
+		if strings.HasSuffix(fullPath, "/documents/public") {
+			c.Set("user_role", domain.RoleViewer)
+			c.Next()
+			return
+		}
+
 		tokenString, err := c.Cookie("accessToken")
 		if err != nil || tokenString == "" {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "authorization token required"})
@@ -75,6 +86,7 @@ func AuthMiddleware(userRepo userRepository, secretToken string) gin.HandlerFunc
 		}
 
 		c.Set("user_uid", user.UUID)
+		c.Set("user_role", domain.RoleAuthor)
 
 		c.Next()
 	}

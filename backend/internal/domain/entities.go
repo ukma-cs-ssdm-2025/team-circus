@@ -44,6 +44,8 @@ var (
 	ErrForbidden        = errors.New("forbidden")
 	ErrAlreadyExists    = errors.New("already exists")
 	ErrOnlyAuthor       = errors.New("there should be one author")
+	ErrShareLinkInvalid = errors.New("invalid share link")
+	ErrShareLinkExpired = errors.New("expired share link")
 )
 
 const (

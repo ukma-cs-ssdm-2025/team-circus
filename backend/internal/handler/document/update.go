@@ -34,6 +34,13 @@ type updateDocumentService interface {
 // @Router /documents/{uuid} [put]
 func NewUpdateDocumentHandler(service updateDocumentService, logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		if role, exists := c.Get("user_role"); exists {
+			if roleStr, ok := role.(string); ok && roleStr == domain.RoleViewer {
+				c.JSON(http.StatusForbidden, gin.H{"error": "access forbidden"})
+				return
+			}
+		}
+
 		uuidParam := c.Param("uuid")
 		docUUID, err := uuid.Parse(uuidParam)
 		if err != nil {

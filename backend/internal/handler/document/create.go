@@ -32,6 +32,13 @@ type createDocumentService interface {
 // @Router /documents [post]
 func NewCreateDocumentHandler(service createDocumentService, logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		if role, exists := c.Get("user_role"); exists {
+			if roleStr, ok := role.(string); ok && roleStr == domain.RoleViewer {
+				c.JSON(http.StatusForbidden, gin.H{"error": "access forbidden"})
+				return
+			}
+		}
+
 		userUUIDValue, exists := c.Get("user_uid")
 		if !exists {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "user context missing"})

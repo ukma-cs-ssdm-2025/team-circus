@@ -120,8 +120,7 @@ export const uk = {
 	"documentEditor.contentLabel": "Вміст документа",
 	"documentEditor.contentPlaceholder": "Напишіть текст у форматі Markdown...",
 	"documentEditor.previewTitle": "Попередній перегляд",
-	"documentEditor.previewEmpty":
-		"Почніть вводити текст, щоб побачити попередній перегляд.",
+	"documentEditor.previewEmpty": "Порожній текст.",
 	"documentEditor.createdAtLabel": "Створено",
 	"documentEditor.saveButton": "Зберегти зміни",
 	"documentEditor.savingButton": "Збереження...",
@@ -145,6 +144,37 @@ export const uk = {
 	"documentEditor.shortcutSave": "Ctrl/Cmd + S",
 	"documentEditor.liveStatusConnected": "Живий синхрон через WebSocket",
 	"documentEditor.liveStatusConnecting": "Підключення живого синхрону...",
+	"documentEditor.shareButton": "Поділитися",
+
+	// Share dialog
+	"shareDialog.title": "Спільне посилання",
+	"shareDialog.subtitle": "Створіть посилання лише для читання з терміном дії.",
+	"shareDialog.info":
+		"За посиланням документ доступний у режимі перегляду до завершення терміну. Редагування вимкнено.",
+	"shareDialog.expirationLabel": "Термін дії",
+	"shareDialog.daysLabel": "днів",
+	"shareDialog.expirationHint":
+		"Посилання можуть діяти від 1 до 90 днів. Ви можете створити нове у будь-який момент.",
+	"shareDialog.linkLabel": "Посилання для перегляду",
+	"shareDialog.readOnlyTag": "Лише перегляд",
+	"shareDialog.expiresAtLabel": "Діє до",
+	"shareDialog.generateButton": "Створити посилання",
+	"shareDialog.generating": "Створення...",
+	"shareDialog.error": "Не вдалося створити посилання зараз.",
+
+	// Public document viewer
+	"publicDocument.readOnlyNote":
+		"Ви переглядаєте спільний документ у режимі лише для читання.",
+	"publicDocument.expiryLabel": "Посилання діє до",
+	"publicDocument.missingParams": "У посиланні не вистачає потрібних параметрів.",
+	"publicDocument.expiredTitle": "Посилання більше не дійсне",
+	"publicDocument.expiredMessage":
+		"Попросіть власника документа створити нове посилання.",
+	"publicDocument.invalidTitle": "Посилання недійсне",
+	"publicDocument.invalidMessage": "Перевірте URL або попросіть нове посилання у власника.",
+	"publicDocument.error": "Не вдалося завантажити цей документ.",
+	"publicDocument.metaCreated": "Створено",
+	"publicDocument.metaId": "ID документа",
 
 	// Group details page
 	"groupDetails.titleFallback": "Група",

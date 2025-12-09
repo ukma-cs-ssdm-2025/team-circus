@@ -9,6 +9,10 @@ x-db-env: &db-env
 x-backend-env: &backend-env
   API_PORT: ${API_PORT}
   SECRET_TOKEN: ${SECRET_TOKEN}
+  SHARE_HMAC_SECRET: ${SHARE_HMAC_SECRET}
+  APP_BASE_URL: ${APP_BASE_URL}
+  SHARE_DEFAULT_EXPIRATION_DAYS: ${SHARE_DEFAULT_EXPIRATION_DAYS}
+  SHARE_MAX_EXPIRATION_DAYS: ${SHARE_MAX_EXPIRATION_DAYS}
   HASHING_COST: ${HASHING_COST}
   ACCESS_DURATION: ${ACCESS_DURATION}
   REFRESH_DURATION: ${REFRESH_DURATION}
@@ -44,6 +48,8 @@ services:
       dockerfile: backend/Dockerfile
     environment:
       <<: *db-env
+    volumes:
+      - ./backend/db/migrations:/app/db/migrations:ro
     depends_on:
       postgres:
         condition: service_healthy

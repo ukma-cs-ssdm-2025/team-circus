@@ -35,6 +35,13 @@ type CORSConfig struct {
 	MaxAge           int      `envconfig:"CORS_MAX_AGE" required:"true"`
 }
 
+type ShareConfig struct {
+	HMACSecret            string `envconfig:"SHARE_HMAC_SECRET" required:"true"`
+	BaseURL               string `envconfig:"APP_BASE_URL" required:"true"`
+	DefaultExpirationDays int    `envconfig:"SHARE_DEFAULT_EXPIRATION_DAYS" default:"7"`
+	MaxExpirationDays     int    `envconfig:"SHARE_MAX_EXPIRATION_DAYS" default:"90"`
+}
+
 type Config struct {
 	DB              DBConfig
 	Srv             SrvConfig
@@ -43,6 +50,7 @@ type Config struct {
 	SecretToken     string `envconfig:"SECRET_TOKEN" required:"true"`
 	AccessDuration  int    `envconfig:"ACCESS_DURATION" required:"true"`
 	RefreshDuration int    `envconfig:"REFRESH_DURATION" required:"true"`
+	Share           ShareConfig
 }
 
 func Load() (*Config, error) {
