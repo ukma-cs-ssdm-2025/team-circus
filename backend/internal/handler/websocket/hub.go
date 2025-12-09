@@ -115,7 +115,11 @@ func (m *HubManager) registerClient(hub *DocumentHub, client *ClientConnection) 
 		select {
 		case client.Send <- hub.YjsDoc:
 		default:
-			m.logger.Warn("dropping initial state, client send buffer full", zap.String("document_id", hub.DocumentID.String()), zap.String("user_id", client.UserID.String()))
+			m.logger.Warn(
+				"dropping initial state, client send buffer full",
+				zap.String("document_id", hub.DocumentID.String()),
+				zap.String("user_id", client.UserID.String()),
+			)
 		}
 	}
 }

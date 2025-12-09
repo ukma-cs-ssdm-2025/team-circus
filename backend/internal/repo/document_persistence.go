@@ -50,7 +50,13 @@ func NewDocumentPersistence(db *sql.DB) *DocumentPersistence {
 }
 
 // SaveSnapshot upserts the latest snapshot for a document.
-func (p *DocumentPersistence) SaveSnapshot(ctx context.Context, documentID uuid.UUID, yjsSnapshot []byte, version int, modifiedBy uuid.UUID) error {
+func (p *DocumentPersistence) SaveSnapshot(
+	ctx context.Context,
+	documentID uuid.UUID,
+	yjsSnapshot []byte,
+	version int,
+	modifiedBy uuid.UUID,
+) error {
 	query := `
 		INSERT INTO document_snapshots (document_id, yjs_snapshot, version, modified_by, updated_at)
 		VALUES ($1, $2, $3, $4, NOW())

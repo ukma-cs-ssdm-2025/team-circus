@@ -2,9 +2,12 @@ package websocket
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/binary"
 	"errors"
-	"math/rand"
+	"hash/crc32"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -21,6 +24,14 @@ const (
 	pingPeriod     = 30 * time.Second
 	maxMessageSize = 65536
 )
+
+func generateAwarenessID() (uint32, error) {
+	var buf [4]byte
+	if _, err := rand.Read(buf[:]); err != nil {
+		return 0, err
+	}
+	return binary.LittleEndian.Uint32(buf[:]), nil
+}
 
 // createUpgrader creates a websocket upgrader with secure origin checking.
 func createUpgrader(allowedOrigins []string) websocket.Upgrader {
@@ -119,6 +130,12 @@ func NewWebSocketHandler(
 			return
 		}
 
+		awarenessID, err := generateAwarenessID()
+		if err != nil {
+			logger.Warn("failed to generate awareness id, falling back to timestamp", zap.Error(err))
+			awarenessID = crc32.ChecksumIEEE([]byte(strconv.FormatInt(time.Now().UnixNano(), 10)))
+		}
+
 		client := &ClientConnection{
 			ID:          uuid.New(),
 			UserID:      userUUID,
@@ -128,7 +145,7 @@ func NewWebSocketHandler(
 			Send:        make(chan []byte, initialSendBufferSize),
 			Done:        make(chan struct{}),
 			LastSeen:    time.Now(),
-			AwarenessID: rand.New(rand.NewSource(time.Now().UnixNano())).Uint32(),
+			AwarenessID: awarenessID,
 		}
 
 		hub := hubManager.GetOrCreateHub(documentID)
@@ -155,15 +172,21 @@ func writePump(client *ClientConnection, logger *zap.Logger) {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
-		_ = client.Conn.WriteMessage(websocket.CloseMessage, []byte{})
-		_ = client.Conn.Close()
+		if err := client.Conn.WriteMessage(websocket.CloseMessage, []byte{}); err != nil {
+			logger.Debug("failed to write close message in writePump defer", zap.Error(err))
+		}
+		if err := client.Conn.Close(); err != nil {
+			logger.Debug("failed to close websocket in writePump defer", zap.Error(err))
+		}
 	}()
 
 	for {
 		select {
 		case message, ok := <-client.Send:
 			if !ok {
-				_ = client.Conn.WriteMessage(websocket.CloseMessage, []byte{})
+				if err := client.Conn.WriteMessage(websocket.CloseMessage, []byte{}); err != nil {
+					logger.Debug("failed to write close message when channel closed", zap.Error(err))
+				}
 				return
 			}
 
@@ -212,7 +235,9 @@ func readPump(
 		default:
 		}
 		close(client.Done)
-		_ = client.Conn.Close()
+		if err := client.Conn.Close(); err != nil {
+			logger.Debug("failed to close websocket in readPump defer", zap.Error(err))
+		}
 	}()
 
 	client.Conn.SetReadLimit(maxMessageSize)
@@ -248,33 +273,7 @@ func readPump(
 			break
 		}
 
-		client.LastSeen = time.Now()
-		if len(message) == 0 {
-			continue
-		}
-
-		msgType := message[0]
-		switch msgType {
-		case MessageTypeAwareness:
-			handleAwareness(hub, client, message)
-		default:
-			select {
-			case hub.Broadcast <- message:
-			default:
-				logger.Warn("dropping broadcast message; channel full", zap.String("document_id", hub.DocumentID.String()))
-			}
-
-			if msgType == YjsUpdate && hubManager.persistence != nil {
-				versionToStore := hub.Version
-				if versionToStore < 1 {
-					versionToStore = defaultHubVersion
-				}
-				err = hubManager.persistence.SaveUpdate(requestCtx, hub.DocumentID, client.UserID, message, versionToStore+1)
-				if err != nil {
-					logger.Warn("failed to persist update", zap.Error(err), zap.String("document_id", hub.DocumentID.String()))
-				}
-			}
-		}
+		handleClientMessage(requestCtx, hubManager, hub, client, logger, message)
 
 		select {
 		case <-requestCtx.Done():
@@ -289,5 +288,54 @@ func handleAwareness(hub *DocumentHub, client *ClientConnection, message []byte)
 	select {
 	case hub.Broadcast <- message:
 	default:
+	}
+}
+
+func handleClientMessage(
+	requestCtx context.Context,
+	hubManager *HubManager,
+	hub *DocumentHub,
+	client *ClientConnection,
+	logger *zap.Logger,
+	message []byte,
+) {
+	client.LastSeen = time.Now()
+	if len(message) == 0 {
+		return
+	}
+
+	msgType := message[0]
+	switch msgType {
+	case MessageTypeAwareness:
+		handleAwareness(hub, client, message)
+	default:
+		select {
+		case hub.Broadcast <- message:
+		default:
+			logger.Warn(
+				"dropping broadcast message; channel full",
+				zap.String("document_id", hub.DocumentID.String()),
+			)
+		}
+
+		if msgType == YjsUpdate && hubManager.persistence != nil {
+			versionToStore := hub.Version
+			if versionToStore < 1 {
+				versionToStore = defaultHubVersion
+			}
+			if err := hubManager.persistence.SaveUpdate(
+				requestCtx,
+				hub.DocumentID,
+				client.UserID,
+				message,
+				versionToStore+1,
+			); err != nil {
+				logger.Warn(
+					"failed to persist update",
+					zap.Error(err),
+					zap.String("document_id", hub.DocumentID.String()),
+				)
+			}
+		}
 	}
 }
