@@ -11,53 +11,51 @@ type MarkdownPreviewProps = {
 	emptyText?: string;
 };
 
+type CodeProps = HTMLAttributes<HTMLElement> & {
+	inline?: boolean;
+	children?: ReactNode;
+	className?: string;
+};
+
+const componentsMap: Components = {
+	code: (props) => {
+		const { inline, children, className } = props as CodeProps;
+		return inline ? (
+			<code className={styles.inlineCode}>{children}</code>
+		) : (
+			<pre className={styles.codeBlock}>
+				<code className={className}>{children}</code>
+			</pre>
+		);
+	},
+	a: ({ href, children }) => (
+		<a
+			className={styles.link}
+			href={href}
+			target="_blank"
+			rel="noreferrer noopener"
+		>
+			{children}
+		</a>
+	),
+	blockquote: ({ children }) => (
+		<blockquote className={styles.blockquote}>{children}</blockquote>
+	),
+	table: ({ children }) => (
+		<div className={styles.tableWrapper}>
+			<table>{children}</table>
+		</div>
+	),
+	th: ({ children }) => <th className={styles.tableHeader}>{children}</th>,
+	td: ({ children }) => <td className={styles.tableCell}>{children}</td>,
+};
+
 export const MarkdownPreview = memo(
 	({ content, emptyText }: MarkdownPreviewProps) => {
 		const { t } = useLanguage();
 		const trimmedContent = content.trim();
 
-		type CodeProps = HTMLAttributes<HTMLElement> & {
-			inline?: boolean;
-			children?: ReactNode;
-			className?: string;
-		};
-
-		const components = useMemo<Components>(() => {
-			return {
-				code: (props) => {
-					const { inline, children, className } = props as CodeProps;
-					return inline ? (
-						<code className={styles.inlineCode}>{children}</code>
-					) : (
-						<pre className={styles.codeBlock}>
-							<code className={className}>{children}</code>
-						</pre>
-					);
-				},
-				a: ({ href, children }) => (
-					<a
-						className={styles.link}
-						href={href}
-						target="_blank"
-						rel="noreferrer"
-					>
-						{children}
-					</a>
-				),
-				blockquote: ({ children }) => (
-					<blockquote className={styles.blockquote}>{children}</blockquote>
-				),
-				table: ({ children }) => (
-					<div className={styles.tableWrapper}>
-						<table>{children}</table>
-					</div>
-				),
-				th: ({ children }) => (
-					<th className={styles.tableHeader}>{children}</th>
-				),
-				td: ({ children }) => <td className={styles.tableCell}>{children}</td>,
-			};
-		}, []);
+		const components = useMemo<Components>(() => componentsMap, []);
 
 		const rendered = useMemo(() => {
 			if (!trimmedContent) {
