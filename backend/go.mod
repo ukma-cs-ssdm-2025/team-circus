@@ -1,6 +1,6 @@
 module github.com/ukma-cs-ssdm-2025/team-circus
 
-go 1.22
+go 1.23
 
 require (
 	github.com/gin-contrib/cors v1.7.6

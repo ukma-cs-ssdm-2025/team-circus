@@ -1,4 +1,4 @@
-FROM golang:1.22 AS builder
+FROM golang:1.23 AS builder
 WORKDIR /app
 
 # Install a Task version compatible with Go 1.22 and the migrator binary directly
@@ -9,12 +9,15 @@ RUN go install github.com/go-task/task/v3/cmd/task@${TASK_VERSION}
 COPY backend/go.mod backend/go.sum ./
 WORKDIR /app/backend
 
-# Download dependencies
+# Download dependencies (module graph only)
 RUN go mod download
-RUN go mod vendor
 
 # Copy source code
 COPY backend/ .
+
+# Ensure module files are up to date and vendor is in sync for the build
+RUN go mod tidy
+RUN go mod vendor
 
 # Build the application
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags '-extldflags "-static"' -o ./bin/backend cmd/main.go
